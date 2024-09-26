@@ -1,4 +1,5 @@
-import {App, Editor, Hotkey, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {App, Editor, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {ViewUpdate, PluginValue, EditorView, ViewPlugin } from "@codemirror/view";
 
 interface ExpandSelectPluginSettings {
 	hotkey?: string;
@@ -8,16 +9,50 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	hotkey: 'Ctrl+`'
 }
 
+const inter_plugin_state: any = {
+	state: {}
+}
+
+class BlazeViewPlugin implements PluginValue {
+
+	update(update: ViewUpdate) {
+		if (inter_plugin_state.state['editor_callback'])
+			inter_plugin_state.state['editor_callback'](update);
+	}
+
+	destroy() {
+		inter_plugin_state.state = {};
+	}
+}
+
+export const blaze_jump_plugin = ViewPlugin.fromClass(
+	BlazeViewPlugin,
+	// TODO
+);
+
 export default class BlazeJumpPlugin extends Plugin {
 	settings: ExpandSelectPluginSettings;
 
 	statusBar?: HTMLElement;
 
+	callback_start_search: any;
 	active: boolean = false;
-	callback: any;
+
+	range_from: number;
+	range_to: number;
 
 	async onload() {
+
+		inter_plugin_state.state['editor_callback'] = (update: ViewUpdate) => {
+			if (update.view.visibleRanges.length <= 0)
+				return;
+			const range = update.view.visibleRanges[0];
+			this.range_from = range.from;
+			this.range_to = range.to;
+		};
+
 		await this.loadSettings();
+		this.registerEditorExtension(blaze_jump_plugin);
 
 		let extra: any = {};
 		if (this.settings.hotkey) {
@@ -53,6 +88,7 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	onunload() {
+		inter_plugin_state.state = {};
 		this.resetAction();
 	}
 
@@ -68,12 +104,11 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	resetAction(editor?: Editor) {
-		console.log('Reset');
 		this.active = false;
 		this.statusClear();
 
-		if (this.callback)
-			window.removeEventListener("keydown", this.callback);
+		if (this.callback_start_search)
+			window.removeEventListener("keydown", this.callback_start_search);
 	}
 
 	startAction(editor: Editor) {
@@ -94,22 +129,22 @@ export default class BlazeJumpPlugin extends Plugin {
 				this.resetAction(editor);
 		};
 
-		this.callback = callback;
+		this.callback_start_search = callback;
 		window.addEventListener("keydown", callback, { once: true });
 	}
 
 	performSearch(editor: Editor, search: string) {
 		const search_lower = search.toLowerCase();
-
 		const visible_text = editor.getValue().toLowerCase();
+		const search_area = visible_text.substring(this.range_from, this.range_to);
 		const positions = [];
 
-		let index = visible_text.indexOf(search_lower);
+		let index = search_area.indexOf(search_lower);
 		while (index > -1) {
-			const start = editor.offsetToPos(index);
-			const end = editor.offsetToPos(index + search.length);
+			const start = editor.offsetToPos(index + this.range_from);
+			const end = editor.offsetToPos(index + this.range_from + search.length);
 			positions.push({start: start, end: end});
-			index = visible_text.indexOf(search_lower, index + 1);
+			index = search_area.indexOf(search_lower, index + 1);
 		}
 
 		console.log(positions);
