@@ -1,4 +1,4 @@
-import {App, Editor, EditorPosition, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {App, Editor, EditorPosition, MarkdownView, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import {
 	ViewUpdate,
 	PluginValue,
@@ -47,6 +47,11 @@ export class BlazeFoundAreaWidget extends WidgetType {
 
 class BlazeViewPlugin implements PluginValue {
 	decorations: DecorationSet = Decoration.none;
+
+	constructor() {
+		inter_plugin_state.state['plugin_draw_callback'] =
+			() => this.build_decorations();
+	}
 
 	update(update: ViewUpdate) {
 		if (inter_plugin_state.state['editor_callback'])
@@ -133,7 +138,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.addCommand({
 			id: "blaze-jump-start",
 			name: "BlazeJump",
-			editorCallback: (editor) => this.startAction(editor),
+			editorCallback: (editor, ctx) => this.startAction(editor, ctx),
 			...extra
 		});
 
@@ -179,9 +184,10 @@ export default class BlazeJumpPlugin extends Plugin {
 		inter_plugin_state.state['positions'] = undefined;
 	}
 
-	startAction(editor: Editor) {
+	startAction(editor: Editor, view: any) {
 		console.log('start');
 		console.log(editor);
+		console.log(view);
 
 		this.statusSet("BlazeMode: ");
 
@@ -199,7 +205,15 @@ export default class BlazeJumpPlugin extends Plugin {
 				console.log(positions);
 			} else
 				this.resetAction(editor);
+
+			if (inter_plugin_state.state['plugin_draw_callback'])
+				inter_plugin_state.state['plugin_draw_callback']();
+
+			// forcing re-render
+			editor.setCursor(editor.getCursor());
 		};
+
+
 
 		this.callback_start_search = callback;
 		window.addEventListener("keydown", callback, { once: true });
