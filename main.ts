@@ -20,6 +20,7 @@ interface SearchPosition {
 	end: EditorPosition;
 	index_s: number;
 	index_e: number;
+	value: string;
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
@@ -40,7 +41,15 @@ export class BlazeFoundAreaWidget extends WidgetType {
 
 	toDOM(view: EditorView): HTMLElement {
 		const div = document.createElement("span");
-		div.innerText = '👉';
+		// div.style.zIndex = '1000';
+		// div.style.position = 'fixed';
+		div.innerText = this.replace_text;
+		div.style.backgroundColor = 'red';
+		div.style.color = 'white';
+		// div.style.border = 'thin solid white';
+		// div.style.position = "absolute";
+		// div.style.backgroundColor = 'red';
+		// div.innerText = '';
 		return div;
 	}
 }
@@ -56,9 +65,6 @@ class BlazeViewPlugin implements PluginValue {
 	update(update: ViewUpdate) {
 		if (inter_plugin_state.state['editor_callback'])
 			inter_plugin_state.state['editor_callback'](update);
-
-		if (inter_plugin_state.state['positions'])
-			this.build_decorations();
 	}
 
 	destroy() {
@@ -80,8 +86,11 @@ class BlazeViewPlugin implements PluginValue {
 			builder.add(
 				position.index_s,
 				position.index_e,
-				Decoration.replace({
-					widget: new BlazeFoundAreaWidget()
+				// Decoration.replace({
+				// 	widget: new BlazeFoundAreaWidget()
+				// })
+				Decoration.widget({
+					widget: new BlazeFoundAreaWidget(position.value),
 				})
 			);
 		}
@@ -233,7 +242,8 @@ export default class BlazeJumpPlugin extends Plugin {
 				start: start,
 				end: end,
 				index_s: index + this.range_from,
-				index_e: index + this.range_from + search.length
+				index_e: index + this.range_from + search.length,
+				value: editor.getRange(start, end)
 			});
 			index = search_area.indexOf(search_lower, index + 1);
 		}
