@@ -1,8 +1,25 @@
-import {App, Editor, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
-import {ViewUpdate, PluginValue, EditorView, ViewPlugin } from "@codemirror/view";
+import {App, Editor, EditorPosition, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {
+	ViewUpdate,
+	PluginValue,
+	EditorView,
+	ViewPlugin,
+	WidgetType,
+	PluginSpec,
+	DecorationSet,
+	Decoration
+} from "@codemirror/view";
+import {RangeSetBuilder} from "@codemirror/state";
 
 interface ExpandSelectPluginSettings {
 	hotkey?: string;
+}
+
+interface SearchPosition {
+	start: EditorPosition;
+	end: EditorPosition;
+	index_s: number;
+	index_e: number;
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
@@ -13,21 +30,70 @@ const inter_plugin_state: any = {
 	state: {}
 }
 
+export class BlazeFoundAreaWidget extends WidgetType {
+	replace_text: string = '👉';
+
+	constructor(replace_text: string = '👉') {
+		super();
+		this.replace_text = replace_text;
+	}
+
+	toDOM(view: EditorView): HTMLElement {
+		const div = document.createElement("span");
+		div.innerText = '👉';
+		return div;
+	}
+}
+
 class BlazeViewPlugin implements PluginValue {
+	decorations: DecorationSet = Decoration.none;
 
 	update(update: ViewUpdate) {
 		if (inter_plugin_state.state['editor_callback'])
 			inter_plugin_state.state['editor_callback'](update);
+
+		if (inter_plugin_state.state['positions'])
+			this.build_decorations();
 	}
 
 	destroy() {
 		inter_plugin_state.state = {};
 	}
+
+	build_decorations() {
+		console.log('UPDATE');
+
+		const positions: SearchPosition[] = inter_plugin_state.state['positions'];
+		if (!positions) {
+			this.decorations = Decoration.none;
+			return;
+		}
+
+		const builder = new RangeSetBuilder<Decoration>();
+
+		for (let position of positions) {
+			builder.add(
+				position.index_s,
+				position.index_e,
+				Decoration.replace({
+					widget: new BlazeFoundAreaWidget()
+				})
+			);
+		}
+
+		console.log('UPDATED');
+		this.decorations = builder.finish();
+	}
+
+}
+
+const plugin_spec: PluginSpec<BlazeViewPlugin> = {
+	decorations: v => v.decorations
 }
 
 export const blaze_jump_plugin = ViewPlugin.fromClass(
 	BlazeViewPlugin,
-	// TODO
+	plugin_spec
 );
 
 export default class BlazeJumpPlugin extends Plugin {
@@ -109,13 +175,14 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		if (this.callback_start_search)
 			window.removeEventListener("keydown", this.callback_start_search);
+
+		inter_plugin_state.state['positions'] = undefined;
 	}
 
 	startAction(editor: Editor) {
 		console.log('start');
 		console.log(editor);
 
-		this.active = true;
 		this.statusSet("BlazeMode: ");
 
 		const callback = (event: any) => {
@@ -124,7 +191,12 @@ export default class BlazeJumpPlugin extends Plugin {
 				event.preventDefault();
 				event.stopPropagation();
 				window.removeEventListener("keydown", callback);
-				this.performSearch(editor, char);
+
+				const positions = this.performSearch(editor, char);
+				this.active = true;
+
+				inter_plugin_state.state['positions'] = [...positions];
+				console.log(positions);
 			} else
 				this.resetAction(editor);
 		};
@@ -143,13 +215,16 @@ export default class BlazeJumpPlugin extends Plugin {
 		while (index > -1) {
 			const start = editor.offsetToPos(index + this.range_from);
 			const end = editor.offsetToPos(index + this.range_from + search.length);
-			positions.push({start: start, end: end});
+			positions.push(<SearchPosition> {
+				start: start,
+				end: end,
+				index_s: index + this.range_from,
+				index_e: index + this.range_from + search.length
+			});
 			index = search_area.indexOf(search_lower, index + 1);
 		}
 
-		console.log(positions);
-
-		this.active = false;
+		return positions;
 	}
 
 	parseModifiers(hotkey: string): Modifier[] {
