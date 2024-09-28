@@ -64,8 +64,6 @@ class BlazeViewPlugin implements PluginValue {
 	}
 
 	build_decorations() {
-		// console.log('UPDATE');
-
 		const positions: SearchPosition[] = inter_plugin_state.state['positions'];
 		if (!positions) {
 			this.decorations = Decoration.none;
@@ -77,10 +75,7 @@ class BlazeViewPlugin implements PluginValue {
 		for (let position of positions) {
 			builder.add(
 				position.index_s,
-				position.index_e,
-				// Decoration.replace({
-				// 	widget: new BlazeFoundAreaWidget()
-				// })
+				position.index_s,
 				Decoration.widget({
 					widget: new BlazeFoundAreaWidget(position.value),
 				})
@@ -221,7 +216,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		const callback_on_provided = (event: any) => {
 			try {
-				const char = event.key;
+				// const char = event.key;
 
 				event.preventDefault();
 				event.stopPropagation();
