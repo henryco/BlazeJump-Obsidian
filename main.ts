@@ -212,7 +212,6 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	startAction(editor: Editor, _: any) {
 		this.statusSet("BlazeMode: ");
-		console.log('start');
 
 		const callback_on_provided = (event: any) => {
 			try {
@@ -242,7 +241,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		const callback_on_start = (event: any) => {
 			try {
 				const char = event.key;
-				if (char.length <= 2) {
+				if (char.length <= 2 && char.trim().length > 0) {
 					event.preventDefault();
 					event.stopPropagation();
 					window.removeEventListener("keydown", callback_on_start);
@@ -264,8 +263,12 @@ export default class BlazeJumpPlugin extends Plugin {
 
 					this.statusSet("BlazeMode: " + `${char}`);
 					window.addEventListener('keydown', callback_on_provided, { once: true });
-				} else
+				} else {
+					event.preventDefault();
+					event.stopPropagation();
+					window.removeEventListener("keydown", callback_on_start);
 					this.resetAction(editor);
+				}
 
 				if (inter_plugin_state.state['plugin_draw_callback'])
 					inter_plugin_state.state['plugin_draw_callback']();
