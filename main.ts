@@ -8,12 +8,20 @@ interface ExpandSelectPluginSettings {
 	status_color_text?: string;
 }
 
+interface Coord {
+	bottom: number;
+	left: number;
+	right: number;
+	top: number;
+}
+
 interface SearchPosition {
 	start: EditorPosition;
 	end: EditorPosition;
 	index_s: number;
 	index_e: number;
 	value: string;
+	coord: Coord;
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
@@ -27,15 +35,22 @@ const inter_plugin_state: any = {
 }
 
 export class BlazeFoundAreaWidget extends WidgetType {
-	replace_text: string = '👉';
+	search_position: SearchPosition;
+	replace_text: string;
 
-	constructor(replace_text: string = '👉') {
+	constructor(replace_text: string, search_position: SearchPosition) {
 		super();
+		this.search_position = search_position;
 		this.replace_text = replace_text;
 	}
 
+
 	toDOM(view: EditorView): HTMLElement {
+		// console.log('toDom', view);
+		// console.log(this.position);
+
 		const div = document.createElement("span");
+		div.style.wordBreak = 'break-word';
 		div.innerText = this.replace_text;
 		div.style.backgroundColor = 'red';
 		div.style.color = 'white';
@@ -77,12 +92,11 @@ class BlazeViewPlugin implements PluginValue {
 				position.index_s,
 				position.index_s,
 				Decoration.widget({
-					widget: new BlazeFoundAreaWidget(position.value),
+					widget: new BlazeFoundAreaWidget(position.value, position)
 				})
 			);
 		}
 
-		// console.log('UPDATED');
 		this.decorations = builder.finish();
 	}
 
@@ -290,7 +304,8 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	performSearch(editor: Editor, search: string) {
-		// console.log('search: ' + search);
+		// @ts-ignore
+		const view = (<EditorView>editor.cm);
 
 		const search_lower = search.toLowerCase();
 		const visible_text = editor.getValue().toLowerCase();
@@ -306,7 +321,8 @@ export default class BlazeJumpPlugin extends Plugin {
 				end: end,
 				index_s: index + this.range_from,
 				index_e: index + this.range_from + search.length,
-				value: editor.getRange(start, end)
+				value: editor.getRange(start, end),
+				coord: view.coordsAtPos(index + this.range_from)
 			});
 			index = search_area.indexOf(search_lower, index + 1);
 		}
