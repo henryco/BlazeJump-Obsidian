@@ -174,7 +174,7 @@ export default class BlazeJumpPlugin extends Plugin {
 			background-color: ${this.settings.status_color_bg ?? 'transparent'}; 
 			color: ${this.settings.status_color_text ?? 'red'};
 			font-size: xx-small;
-			border: thin solid red;
+			border: thin solid ${this.settings.status_color_text ?? 'red'};
 			border-radius: 5px;
 			display: inline-grid;
 			align-items: center;
