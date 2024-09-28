@@ -39,7 +39,7 @@ export class BlazeFoundAreaWidget extends WidgetType {
 		div.innerText = this.replace_text;
 		div.style.backgroundColor = 'red';
 		div.style.color = 'white';
-		div.style.position = 'fixed';
+		div.style.position = 'absolute';
 		div.style.zIndex = '9999';
 		div.style.border = 'thin solid white';
 		return div;
@@ -77,7 +77,7 @@ class BlazeViewPlugin implements PluginValue {
 		for (let position of positions) {
 			builder.add(
 				position.index_s,
-				position.index_s,
+				position.index_e,
 				// Decoration.replace({
 				// 	widget: new BlazeFoundAreaWidget()
 				// })
