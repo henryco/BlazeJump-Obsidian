@@ -1,4 +1,4 @@
-import {App, Editor, EditorPosition, MarkdownView, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {App, Editor, EditorPosition, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import {ViewUpdate, PluginValue, EditorView, ViewPlugin, WidgetType, PluginSpec, DecorationSet, Decoration} from "@codemirror/view";
 import {RangeSetBuilder} from "@codemirror/state";
 
@@ -55,9 +55,8 @@ class BlazeViewPlugin implements PluginValue {
 	}
 
 	update(update: ViewUpdate) {
-		console.log('update');
 		if (inter_plugin_state.state['editor_callback'])
-			inter_plugin_state.state['editor_callback'](update);
+			inter_plugin_state.state['editor_callback'](update.view);
 	}
 
 	destroy() {
@@ -97,8 +96,9 @@ class BlazeViewPlugin implements PluginValue {
 const plugin_spec: PluginSpec<BlazeViewPlugin> = {
 	decorations: v => v.decorations,
 	eventObservers: {
-		keydown: (event, view: EditorView) => {
-			// view.requestMeasure();
+		keydown: (_, view: EditorView) => {
+			if (inter_plugin_state.state['editor_callback'])
+				inter_plugin_state.state['editor_callback'](view);
 		}
 	}
 }
@@ -122,10 +122,11 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	async onload() {
 
-		inter_plugin_state.state['editor_callback'] = (update: ViewUpdate) => {
-			if (update.view.visibleRanges.length <= 0)
+		inter_plugin_state.state['editor_callback'] = (view: EditorView) => {
+			if (view.visibleRanges.length <= 0)
 				return;
-			const range = update.view.visibleRanges[0];
+			const range = view.visibleRanges[0];
+			console.log(range);
 			this.range_from = range.from;
 			this.range_to = range.to;
 		};
@@ -199,7 +200,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.statusBar = undefined;
 	}
 
-	resetAction(editor?: Editor) {
+	resetAction(_?: Editor) {
 		this.active = false;
 		this.statusClear();
 
@@ -214,7 +215,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		inter_plugin_state.state['positions'] = undefined;
 	}
 
-	startAction(editor: Editor, view: any) {
+	startAction(editor: Editor, _: any) {
 		this.statusSet("BlazeMode: ");
 		console.log('start');
 
