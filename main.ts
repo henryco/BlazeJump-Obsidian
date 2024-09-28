@@ -121,7 +121,6 @@ export default class BlazeJumpPlugin extends Plugin {
 			if (view.visibleRanges.length <= 0)
 				return;
 			const range = view.visibleRanges[0];
-			console.log(range);
 			this.range_from = range.from;
 			this.range_to = range.to;
 		};
