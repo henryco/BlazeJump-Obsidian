@@ -1,4 +1,4 @@
-import {App, Editor, EditorPosition, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {App, Editor, EditorPosition, MarkdownView, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import {ViewUpdate, PluginValue, EditorView, ViewPlugin, WidgetType, PluginSpec, DecorationSet, Decoration} from "@codemirror/view";
 import {RangeSetBuilder} from "@codemirror/state";
 
@@ -55,6 +55,7 @@ class BlazeViewPlugin implements PluginValue {
 	}
 
 	update(update: ViewUpdate) {
+		console.log('update');
 		if (inter_plugin_state.state['editor_callback'])
 			inter_plugin_state.state['editor_callback'](update);
 	}
@@ -94,7 +95,12 @@ class BlazeViewPlugin implements PluginValue {
 }
 
 const plugin_spec: PluginSpec<BlazeViewPlugin> = {
-	decorations: v => v.decorations
+	decorations: v => v.decorations,
+	eventObservers: {
+		keydown: (event, view: EditorView) => {
+			// view.requestMeasure();
+		}
+	}
 }
 
 export const blaze_jump_plugin = ViewPlugin.fromClass(
@@ -210,6 +216,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	startAction(editor: Editor, view: any) {
 		this.statusSet("BlazeMode: ");
+		console.log('start');
 
 		const callback_on_provided = (event: any) => {
 			try {
@@ -224,12 +231,14 @@ export default class BlazeJumpPlugin extends Plugin {
 				this.resetAction(editor);
 				if (inter_plugin_state.state['plugin_draw_callback'])
 					inter_plugin_state.state['plugin_draw_callback']();
-				editor.setCursor(editor.getCursor());
+				// @ts-ignore
+				editor['cm'].dispatch();
 
 			} catch (e) {
 				console.error(e);
 				this.resetAction(editor);
-				editor.setCursor(editor.getCursor());
+				// @ts-ignore
+				editor['cm'].dispatch();
 				throw e;
 			}
 		}
@@ -244,12 +253,12 @@ export default class BlazeJumpPlugin extends Plugin {
 
 					const positions = this.performSearch(editor, char);
 					if (!positions || positions.length <= 0) {
-						// console.warn('nothing found');
 						this.resetAction(editor);
 						if (inter_plugin_state.state['plugin_draw_callback'])
 							inter_plugin_state.state['plugin_draw_callback']();
 						// forcing re-render
-						editor.setCursor(editor.getCursor());
+						// @ts-ignore
+						editor['cm'].dispatch();
 						return;
 					}
 
@@ -266,12 +275,13 @@ export default class BlazeJumpPlugin extends Plugin {
 					inter_plugin_state.state['plugin_draw_callback']();
 
 				// forcing re-render
-				editor.setCursor(editor.getCursor());
-
+				// @ts-ignore
+				editor['cm'].dispatch();
 			} catch (e) {
 				console.error(e);
 				this.resetAction(editor);
-				editor.setCursor(editor.getCursor());
+				// @ts-ignore
+				editor['cm'].dispatch();
 				throw e;
 			}
 		};
