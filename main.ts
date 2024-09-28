@@ -48,7 +48,7 @@ export class BlazeFoundAreaWidget extends WidgetType {
 	toDOM(view: EditorView): HTMLElement {
 		// console.log('toDom', view);
 		// console.log(this.position);
-
+		// TODO
 		const div = document.createElement("span");
 		div.style.wordBreak = 'break-word';
 		div.innerText = this.replace_text;
