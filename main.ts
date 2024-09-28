@@ -169,14 +169,21 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.statusClear();
 		this.statusBar = this.addStatusBarItem();
 
-		this.statusBar.createEl("span", { text: ` ${text} `, attr: {
+		this.statusBar.createEl("span", { text: `${text} `, attr: {
 			style: `
 			background-color: ${this.settings.status_color_bg ?? 'transparent'}; 
 			color: ${this.settings.status_color_text ?? 'red'};
-			font-size: smaller;
+			font-size: xx-small;
 			border: thin solid red;
 			border-radius: 5px;
-			
+			display: inline-grid;
+			align-items: center;
+			align-content: center;
+			text-align: center;
+			line-height: 13px;
+			margin: -3px;
+			padding-left: 4px;
+			padding-right: 4px;
 			`
 		}});
 	}
