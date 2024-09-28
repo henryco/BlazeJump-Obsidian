@@ -64,7 +64,7 @@ class BlazeViewPlugin implements PluginValue {
 	}
 
 	build_decorations() {
-		console.log('UPDATE');
+		// console.log('UPDATE');
 
 		const positions: SearchPosition[] = inter_plugin_state.state['positions'];
 		if (!positions) {
@@ -87,7 +87,7 @@ class BlazeViewPlugin implements PluginValue {
 			);
 		}
 
-		console.log('UPDATED');
+		// console.log('UPDATED');
 		this.decorations = builder.finish();
 	}
 
@@ -243,6 +243,16 @@ export default class BlazeJumpPlugin extends Plugin {
 					window.removeEventListener("keydown", callback_on_start);
 
 					const positions = this.performSearch(editor, char);
+					if (!positions || positions.length <= 0) {
+						// console.warn('nothing found');
+						this.resetAction(editor);
+						if (inter_plugin_state.state['plugin_draw_callback'])
+							inter_plugin_state.state['plugin_draw_callback']();
+						// forcing re-render
+						editor.setCursor(editor.getCursor());
+						return;
+					}
+
 					this.active = true;
 
 					inter_plugin_state.state['positions'] = [...positions];
@@ -272,7 +282,7 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	performSearch(editor: Editor, search: string) {
-		console.log('search: ' + search);
+		// console.log('search: ' + search);
 
 		const search_lower = search.toLowerCase();
 		const visible_text = editor.getValue().toLowerCase();
