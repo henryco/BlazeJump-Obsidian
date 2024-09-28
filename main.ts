@@ -4,6 +4,8 @@ import {RangeSetBuilder} from "@codemirror/state";
 
 interface ExpandSelectPluginSettings {
 	hotkey?: string;
+	status_color_bg?: string;
+	status_color_text?: string;
 }
 
 interface SearchPosition {
@@ -15,7 +17,9 @@ interface SearchPosition {
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
-	hotkey: 'Ctrl+`'
+	hotkey: 'Ctrl+`',
+	status_color_bg: 'transparent',
+	status_color_text: 'red',
 }
 
 const inter_plugin_state: any = {
@@ -162,9 +166,19 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	statusSet(text: string) {
-		if (!this.statusBar)
-			this.statusBar = this.addStatusBarItem();
-		this.statusBar.setText(text);
+		this.statusClear();
+		this.statusBar = this.addStatusBarItem();
+
+		this.statusBar.createEl("span", { text: ` ${text} `, attr: {
+			style: `
+			background-color: ${this.settings.status_color_bg ?? 'transparent'}; 
+			color: ${this.settings.status_color_text ?? 'red'};
+			font-size: smaller;
+			border: thin solid red;
+			border-radius: 5px;
+			
+			`
+		}});
 	}
 
 	statusClear() {
@@ -191,41 +205,58 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.statusSet("BlazeMode: ");
 
 		const callback_on_provided = (event: any) => {
-			console.log('Another event');
-			event.preventDefault();
-			event.stopPropagation();
-			window.removeEventListener("keydown", callback_on_provided);
+			try {
+				const char = event.key;
 
-			// TODO
+				event.preventDefault();
+				event.stopPropagation();
+				window.removeEventListener("keydown", callback_on_provided);
 
-			this.resetAction(editor);
-			if (inter_plugin_state.state['plugin_draw_callback'])
-				inter_plugin_state.state['plugin_draw_callback']();
-			editor.setCursor(editor.getCursor());
+				// TODO
+
+				this.resetAction(editor);
+				if (inter_plugin_state.state['plugin_draw_callback'])
+					inter_plugin_state.state['plugin_draw_callback']();
+				editor.setCursor(editor.getCursor());
+
+			} catch (e) {
+				console.error(e);
+				this.resetAction(editor);
+				editor.setCursor(editor.getCursor());
+				throw e;
+			}
 		}
 
 		const callback_on_start = (event: any) => {
-			const char = event.key;
-			if (char.length <= 2) {
-				event.preventDefault();
-				event.stopPropagation();
-				window.removeEventListener("keydown", callback_on_start);
+			try {
+				const char = event.key;
+				if (char.length <= 2) {
+					event.preventDefault();
+					event.stopPropagation();
+					window.removeEventListener("keydown", callback_on_start);
 
-				const positions = this.performSearch(editor, char);
-				this.active = true;
+					const positions = this.performSearch(editor, char);
+					this.active = true;
 
-				inter_plugin_state.state['positions'] = [...positions];
+					inter_plugin_state.state['positions'] = [...positions];
 
-				this.statusSet("BlazeMode: " + `${char}`);
-				window.addEventListener('keydown', callback_on_provided, { once: true });
-			} else
+					this.statusSet("BlazeMode: " + `${char}`);
+					window.addEventListener('keydown', callback_on_provided, { once: true });
+				} else
+					this.resetAction(editor);
+
+				if (inter_plugin_state.state['plugin_draw_callback'])
+					inter_plugin_state.state['plugin_draw_callback']();
+
+				// forcing re-render
+				editor.setCursor(editor.getCursor());
+
+			} catch (e) {
+				console.error(e);
 				this.resetAction(editor);
-
-			if (inter_plugin_state.state['plugin_draw_callback'])
-				inter_plugin_state.state['plugin_draw_callback']();
-
-			// forcing re-render
-			editor.setCursor(editor.getCursor());
+				editor.setCursor(editor.getCursor());
+				throw e;
+			}
 		};
 
 		this.callback_provided_input = callback_on_provided;
@@ -234,6 +265,8 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	performSearch(editor: Editor, search: string) {
+		console.log('search: ' + search);
+
 		const search_lower = search.toLowerCase();
 		const visible_text = editor.getValue().toLowerCase();
 		const search_area = visible_text.substring(this.range_from, this.range_to);
