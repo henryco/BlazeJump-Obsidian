@@ -1,6 +1,7 @@
 import {App, Editor, EditorPosition, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import {ViewUpdate, PluginValue, EditorView, ViewPlugin, WidgetType, PluginSpec, DecorationSet, Decoration} from "@codemirror/view";
 import {RangeSetBuilder} from "@codemirror/state";
+import {dom} from "@typescript-eslint/scope-manager/dist/lib/dom";
 
 interface ExpandSelectPluginSettings {
 	hotkey?: string;
@@ -44,17 +45,16 @@ export class BlazeFoundAreaWidget extends WidgetType {
 		this.replace_text = replace_text;
 	}
 
-
 	toDOM(view: EditorView): HTMLElement {
 		// console.log('toDom', view);
 		// console.log(this.position);
 		// TODO
-		const div = document.createElement("span");
+		const div = document.createElement("mark");
 		div.style.wordBreak = 'break-word';
 		div.innerText = this.replace_text;
 		div.style.backgroundColor = 'red';
 		div.style.color = 'white';
-		div.style.position = 'absolute';
+		div.style.position = 'relative';
 		div.style.zIndex = '9999';
 		div.style.border = 'thin solid white';
 		return div;
@@ -90,9 +90,14 @@ class BlazeViewPlugin implements PluginValue {
 		for (let position of positions) {
 			builder.add(
 				position.index_s,
-				position.index_s,
-				Decoration.widget({
-					widget: new BlazeFoundAreaWidget(position.value, position)
+				position.index_e,
+				Decoration.mark({
+					// widget: new BlazeFoundAreaWidget(position.value, position),
+					// side: -9999,
+					tagName: 'span',
+					attributes: {
+						style: `background-color: red; color: white; white-space: normal;`,
+					}
 				})
 			);
 		}
@@ -314,16 +319,25 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		let index = search_area.indexOf(search_lower);
 		while (index > -1) {
-			const start = editor.offsetToPos(index + this.range_from);
 			const end = editor.offsetToPos(index + this.range_from + search.length);
-			positions.push(<SearchPosition> {
-				start: start,
-				end: end,
-				index_s: index + this.range_from,
-				index_e: index + this.range_from + search.length,
-				value: editor.getRange(start, end),
-				coord: view.coordsAtPos(index + this.range_from)
-			});
+			const start = editor.offsetToPos(index + this.range_from);
+
+			const pre = editor.offsetToPos((index > 0 ? index - 1 : index) + this.range_from);
+			const nv = editor.getRange(pre, end).trim();
+
+			if (nv.length == 1) {
+				positions.push(<SearchPosition> {
+					start: start,
+					end: end,
+					index_s: index + this.range_from,
+					index_e: index + this.range_from + search.length,
+					value: editor.getRange(start, end),
+					coord: view.coordsAtPos(index + this.range_from)
+				});
+			}
+
+			console.log(nv);
+
 			index = search_area.indexOf(search_lower, index + 1);
 		}
 
