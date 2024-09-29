@@ -6,13 +6,29 @@ type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator' | null;
 
 interface ExpandSelectPluginSettings {
 	status_color_bg?: string;
-	status_color_text?: string;
-
 	status_color_start?: string;
 	status_color_end?: string;
 	status_color_any?: string;
 	status_color_line?: string;
 	status_color_terminator?: string;
+
+	search_color_bg_start?: string;
+	search_color_bg_end?: string;
+	search_color_bg_any?: string;
+	search_color_bg_line?: string;
+	search_color_bg_terminator?: string;
+
+	search_color_text_start?: string;
+	search_color_text_end?: string;
+	search_color_text_any?: string;
+	search_color_text_line?: string;
+	search_color_text_terminator?: string;
+
+	search_color_border_start?: string;
+	search_color_border_end?: string;
+	search_color_border_any?: string;
+	search_color_border_line?: string;
+	search_color_border_terminator?: string;
 }
 
 interface Coord {
@@ -20,6 +36,12 @@ interface Coord {
 	left: number;
 	right: number;
 	top: number;
+}
+
+interface SearchStyle {
+	bg: string,
+	text: string,
+	border: string
 }
 
 interface SearchPosition {
@@ -33,7 +55,6 @@ interface SearchPosition {
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	status_color_bg: 'transparent',
-	status_color_text: 'red',
 
 	status_color_start: 'Crimson',
 	status_color_end: 'Blue',
@@ -48,21 +69,22 @@ const inter_plugin_state: any = {
 
 export class BlazeFoundAreaWidget extends WidgetType {
 	search_position: SearchPosition;
+	style: SearchStyle;
 	replace_text: string;
 
-	constructor(replace_text: string, search_position: SearchPosition) {
+	constructor(replace_text: string, search_position: SearchPosition, style: SearchStyle) {
 		super();
 		this.search_position = search_position;
 		this.replace_text = replace_text;
+		this.style = style;
 	}
 
 	toDOM(_: EditorView): HTMLElement {
 		const el = document.createElement("mark");
 		el.innerText = this.replace_text.toLowerCase();
-		// TODO styling
-		el.style.backgroundColor = 'white';
-		el.style.color = 'red';
-		el.style.border = 'thin dashed red';
+		el.style.backgroundColor = `${this.style.bg}`;
+		el.style.color = `${this.style.text}`;
+		el.style.border = `thin dashed ${this.style.border}`;
 		el.style.position = 'absolute';
 		el.style.zIndex = '9999';
 		el.style.fontWeight = 'bold';
@@ -97,6 +119,7 @@ class BlazeViewPlugin implements PluginValue {
 			return;
 		}
 
+		const search_style: SearchStyle = inter_plugin_state.state['style_provider']();
 		const builder = new RangeSetBuilder<Decoration>();
 
 		for (let position of positions) {
@@ -104,7 +127,10 @@ class BlazeViewPlugin implements PluginValue {
 				position.index_s,
 				position.index_s,
 				Decoration.replace({
-					widget: new BlazeFoundAreaWidget(position.value, position),
+					widget: new BlazeFoundAreaWidget(
+						position.value,
+						position,
+						search_style),
 					inclusive: false
 				})
 			);
@@ -154,7 +180,19 @@ export default class BlazeJumpPlugin extends Plugin {
 		}[this.mode ?? 'start'];
 	}
 
+	resolveSearchColor(): SearchStyle {
+		const settings = <any> this.settings;
+		const st = this.resolveStatusColor();
+		return {
+			bg: settings[`search_color_bg_${this.mode}`] ?? 'white',
+			text: settings[`search_color_text_${this.mode}`] ?? st,
+			border: settings[`search_color_border_${this.mode}`] ?? st
+		}
+	}
+
 	async onload() {
+
+		inter_plugin_state.state['style_provider'] = () => this.resolveSearchColor();
 
 		inter_plugin_state.state['editor_callback'] = (view: EditorView) => {
 			if (view.visibleRanges.length <= 0)
@@ -223,7 +261,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		const mode_map = {
 			'start': 'end',
 			'end': 'any',
-			'any': 'line'
+			'any': 'start'
 		};
 		// @ts-ignore
 		const mode = this.mode ? mode_map[this.mode] : 'start';
@@ -331,8 +369,7 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	performSearch(editor: Editor, search: string) {
-		// @ts-ignore
-		const view = (<EditorView>editor.cm);
+		const view = (<EditorView> (<any> editor)['cm']);
 
 		const search_lower = search.toLowerCase();
 		const visible_text = editor.getValue().toLowerCase();
@@ -385,8 +422,6 @@ export default class BlazeJumpPlugin extends Plugin {
 					});
 				}
 			}
-
-			// TODO line / terminator
 
 			index = search_area.indexOf(search_lower, index + 1);
 		}
