@@ -258,9 +258,9 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.statusBar.createEl("span", { text: `${text} `, attr: {
 			style: `
 			background-color: ${this.settings.status_color_bg ?? 'transparent'}; 
+			border: thin solid ${this.resolveStatusColor() ?? 'red'};
 			color: ${this.resolveStatusColor() ?? 'red'};
 			font-size: xx-small;
-			border: thin solid ${this.resolveStatusColor() ?? 'red'};
 			border-radius: 5px;
 			display: inline-grid;
 			align-items: center;
