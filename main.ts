@@ -1,10 +1,18 @@
-import {App, Editor, EditorPosition, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {App, Editor, EditorPosition, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import {ViewUpdate, PluginValue, EditorView, ViewPlugin, WidgetType, PluginSpec, DecorationSet, Decoration} from "@codemirror/view";
 import {RangeSetBuilder} from "@codemirror/state";
+
+type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator' | null;
 
 interface ExpandSelectPluginSettings {
 	status_color_bg?: string;
 	status_color_text?: string;
+
+	status_color_start?: string;
+	status_color_end?: string;
+	status_color_any?: string;
+	status_color_line?: string;
+	status_color_terminator?: string;
 }
 
 interface Coord {
@@ -26,6 +34,12 @@ interface SearchPosition {
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	status_color_bg: 'transparent',
 	status_color_text: 'red',
+
+	status_color_start: 'Crimson',
+	status_color_end: 'Blue',
+	status_color_any: 'Green',
+	status_color_line: 'Magenta',
+	status_color_terminator: 'DimGray'
 }
 
 const inter_plugin_state: any = {
@@ -119,7 +133,7 @@ export const blaze_jump_plugin = ViewPlugin.fromClass(
 export default class BlazeJumpPlugin extends Plugin {
 	settings: ExpandSelectPluginSettings;
 
-	mode: 'start' | 'end' | 'any' | 'line' | 'terminator' | null = null;
+	mode: MODE_TYPE = null;
 
 	statusBar?: HTMLElement;
 
@@ -129,6 +143,16 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	range_from: number;
 	range_to: number;
+
+	resolveStatusColor(): string {
+		return <string> {
+			'start': this.settings.status_color_start,
+			'end': this.settings.status_color_end,
+			'any': this.settings.status_color_any,
+			'line': this.settings.status_color_line,
+			'terminator': this.settings.status_color_terminator,
+		}[this.mode ?? 'start'];
+	}
 
 	async onload() {
 
@@ -174,9 +198,9 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.statusBar.createEl("span", { text: `${text} `, attr: {
 			style: `
 			background-color: ${this.settings.status_color_bg ?? 'transparent'}; 
-			color: ${this.settings.status_color_text ?? 'red'};
+			color: ${this.resolveStatusColor() ?? 'red'};
 			font-size: xx-small;
-			border: thin solid ${this.settings.status_color_text ?? 'red'};
+			border: thin solid ${this.resolveStatusColor() ?? 'red'};
 			border-radius: 5px;
 			display: inline-grid;
 			align-items: center;
@@ -196,21 +220,18 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	toggleMode(_?: Editor) {
-		console.log('toggle');
 		const mode_map = {
 			'start': 'end',
 			'end': 'any',
 			'any': 'line',
 			'line': 'terminator',
-			'terminator': null,
+			'terminator': 'start',
 		};
 		// @ts-ignore
 		this.mode = this.mode ? mode_map[this.mode] : 'start' ;
 	}
 
 	resetAction(_?: Editor) {
-		console.log('reset');
-
 		this.active = false;
 		this.statusClear();
 
