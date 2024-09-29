@@ -156,21 +156,8 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.addCommand({
 			id: 'blaze-jump-abort',
 			name: "BlazeJump abort search",
-			editorCallback: (editor) => this.resetAction(editor),
-			hotkeys: [{
-				modifiers: ['Ctrl'],
-				key: 'G'
-			}, {
-				modifiers: [],
-				key: 'Esc'
-			}]
+			editorCallback: (editor) => this.resetAction(editor)
 		});
-
-		this.addCommand({
-			id: 'blaze-jump-toggle-mode',
-			name: "BlazeJump toggle search mode",
-			editorCallback: (editor) => this.toggleMode(editor)
-		})
 
 		this.addSettingTab(new BlazeJumpSettingTab(this.app, this));
 	}
@@ -239,9 +226,9 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	startAction(editor: Editor, _: any) {
-		this.statusSet("BlazeMode: ");
+		this.toggleMode(editor);
 
-		this.mode = 'start';
+		this.statusSet("BlazeMode: ");
 
 		const callback_on_provided = (event: any) => {
 			try {
