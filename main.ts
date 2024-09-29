@@ -17,7 +17,7 @@ interface ExpandSelectPluginSettings {
 	default_action: MODE_TYPE;
 	keyboard_layout: string;
 	keyboard_allowed: string;
-	keyboard_distance: number;
+	keyboard_depth: number;
 
 	status_color_bg?: string;
 	status_color_start?: string;
@@ -71,7 +71,7 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	default_action: "start",
 	keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
 	keyboard_allowed: "0123456789abcdefghijklmnopqrstuvwxyz",
-	keyboard_distance: -1,
+	keyboard_depth: -1,
 
 	status_color_bg: 'transparent',
 
@@ -92,9 +92,12 @@ export class SearchState {
 	layout_height: number;
 	layout_distance: number;
 
+	search_tree: any;
+
 	constructor(keyboard_layout: string, keyboard_allowed: string, distance: number) {
 		this.initKeyboardLayout(keyboard_layout, keyboard_allowed);
 		this.layout_distance = distance;
+		this.search_tree = {};
 	}
 
 	initKeyboardLayout(keyboard_layout: string, keyboard_allowed: string): void {
@@ -125,11 +128,13 @@ export class SearchState {
 	assign(input: string, position: SearchPosition): string {
 		const [x, y] = this.coord(input);
 
+
+
 		return "";
 	}
 
 	reset(): void {
-
+		this.search_tree = {};
 	}
 }
 
