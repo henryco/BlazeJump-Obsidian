@@ -223,9 +223,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		const mode_map = {
 			'start': 'end',
 			'end': 'any',
-			'any': 'line',
-			'line': 'terminator',
-			'terminator': 'start',
+			'any': 'line'
 		};
 		// @ts-ignore
 		const mode = this.mode ? mode_map[this.mode] : 'start';
@@ -346,10 +344,7 @@ export default class BlazeJumpPlugin extends Plugin {
 			const end = editor.offsetToPos(index + this.range_from + search.length);
 			const start = editor.offsetToPos(index + this.range_from);
 
-			const pre = editor.offsetToPos((index > 0 ? index - 1 : index) + this.range_from);
-			const nv = editor.getRange(pre, end).trim();
-
-			if (nv.length == 1) {
+			if (this.mode === 'any') {
 				positions.push(<SearchPosition> {
 					start: start,
 					end: end,
@@ -359,6 +354,38 @@ export default class BlazeJumpPlugin extends Plugin {
 					coord: view.coordsAtPos(index + this.range_from)
 				});
 			}
+
+			if (this.mode === 'start') {
+				const pre = editor.offsetToPos((index > 0 ? index - 1 : index) + this.range_from);
+				const nv = editor.getRange(pre, end).trim();
+				if (nv.length == 1) {
+					positions.push(<SearchPosition> {
+						start: start,
+						end: end,
+						index_s: index + this.range_from,
+						index_e: index + this.range_from + search.length,
+						value: editor.getRange(start, end),
+						coord: view.coordsAtPos(index + this.range_from)
+					});
+				}
+			}
+
+			if (this.mode === 'end') {
+				const post = editor.offsetToPos(Math.min(search_area.length - 1, index + 1) + this.range_from);
+				const nv = editor.getRange(start, post).trim();
+				if (nv.length == 1) {
+					positions.push(<SearchPosition> {
+						start: start,
+						end: end,
+						index_s: index + this.range_from,
+						index_e: index + this.range_from + search.length,
+						value: editor.getRange(start, end),
+						coord: view.coordsAtPos(index + this.range_from)
+					});
+				}
+			}
+
+			// TODO line / terminator
 
 			index = search_area.indexOf(search_lower, index + 1);
 		}
