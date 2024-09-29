@@ -154,11 +154,9 @@ export class SearchState {
 			iy = Math.sign(dx) * (-1);
 		}
 
-		return [
-			x + ix,
-			y + iy,
-			depth
-		];
+		const nx = x + ix;
+		const ny = y + iy;
+		return [nx, ny, Math.max(Math.abs(mx - nx), Math.abs(my - ny))];
 	}
 
 	assign(input: string, position: SearchPosition): string {
