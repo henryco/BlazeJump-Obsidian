@@ -310,29 +310,26 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	blazeAction(editor: Editor, _: any) {
 		this.toggleMode(editor);
-		this.statusSet("BlazeMode: ");
 		this.searchAction(editor);
 	}
 
 	startAction(editor: Editor, _: any) {
 		this.mode = 'start';
-		this.statusSet("BlazeMode: ");
 		this.searchAction(editor);
 	}
 
 	endAction(editor: Editor, _: any) {
 		this.mode = 'end';
-		this.statusSet("BlazeMode: ");
 		this.searchAction(editor);
 	}
 
 	anyAction(editor: Editor, _: any) {
 		this.mode = 'any';
-		this.statusSet("BlazeMode: ");
 		this.searchAction(editor);
 	}
 
 	searchAction(editor: Editor) {
+		this.statusSet("BlazeMode: ");
 		const callback_on_provided = (event: any) => {
 			try {
 				// const char = event.key;
