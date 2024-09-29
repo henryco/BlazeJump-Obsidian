@@ -476,45 +476,33 @@ export default class BlazeJumpPlugin extends Plugin {
 			const end = editor.offsetToPos(index + this.range_from + search.length);
 			const start = editor.offsetToPos(index + this.range_from);
 
+			const search_position = <SearchPosition>{
+				start: start,
+				end: end,
+				index_s: index + this.range_from,
+				index_e: index + this.range_from + search.length,
+				value: editor.getRange(start, end),
+				coord: view.coordsAtPos(index + this.range_from)
+			};
+
 			if (this.mode === 'any') {
-				positions.push(<SearchPosition> {
-					start: start,
-					end: end,
-					index_s: index + this.range_from,
-					index_e: index + this.range_from + search.length,
-					value: editor.getRange(start, end),
-					coord: view.coordsAtPos(index + this.range_from)
-				});
+				positions.push(search_position);
 			}
 
-			if (this.mode === 'start') {
+			else if (this.mode === 'start') {
 				const pre = editor.offsetToPos((index > 0 ? index - 1 : index) + this.range_from);
 				const nv = editor.getRange(pre, end).trim();
 				if (nv.length == 1) {
-					positions.push(<SearchPosition> {
-						start: start,
-						end: end,
-						index_s: index + this.range_from,
-						index_e: index + this.range_from + search.length,
-						value: editor.getRange(start, end),
-						coord: view.coordsAtPos(index + this.range_from)
-					});
+					positions.push(search_position);
 				}
 			}
 
-			if (this.mode === 'end') {
+			else if (this.mode === 'end') {
 				// TODO FIXME
 				const post = editor.offsetToPos(Math.min(search_area.length - 1, index + 1) + this.range_from);
 				const nv = editor.getRange(start, post).trim();
 				if (nv.length == 1) {
-					positions.push(<SearchPosition> {
-						start: start,
-						end: end,
-						index_s: index + this.range_from,
-						index_e: index + this.range_from + search.length,
-						value: editor.getRange(start, end),
-						coord: view.coordsAtPos(index + this.range_from)
-					});
+					positions.push(search_position);
 				}
 			}
 
