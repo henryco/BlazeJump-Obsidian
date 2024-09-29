@@ -93,9 +93,11 @@ export class SearchState {
 	layout_distance: number;
 
 	search_tree: any;
+	search_position?: [number, number];
 
 	constructor(keyboard_layout: string, keyboard_allowed: string, distance: number) {
 		this.initKeyboardLayout(keyboard_layout, keyboard_allowed);
+		this.search_position = undefined;
 		this.layout_distance = distance;
 		this.search_tree = {};
 	}
@@ -125,8 +127,43 @@ export class SearchState {
 		return this.layout_characters[x + (this.layout_width * y)];
 	}
 
+	nextPos(pos: [number, number], mid: [number, number], depth: number): [nx: number, ny: number, nd: number] {
+		const [x, y] = pos;
+		const [mx, my] = mid;
+
+		if (depth <= 0)
+			return [mx, my, 1];
+
+		// spiral movement
+
+		const dx = mx - x;
+		const dy = my - y;
+
+		const md = Math.max(Math.abs(dx), Math.abs(dy));
+		if (md < depth)
+			return [mx - depth, my, depth];
+
+		let ix: number;
+		let iy: number;
+
+		if (Math.abs(dx) < depth) {
+			ix = dy <= 0 ? (-1) : 1;
+			iy = 0;
+		} else {
+			ix = 0;
+			iy = Math.sign(dx) * (-1);
+		}
+
+		return [
+			x + ix,
+			y + iy,
+			depth
+		];
+	}
+
 	assign(input: string, position: SearchPosition): string {
 		const [x, y] = this.coord(input);
+		const [lx, ly] = this.search_position ?? [x, y];
 
 
 
@@ -134,6 +171,7 @@ export class SearchState {
 	}
 
 	reset(): void {
+		this.search_position = undefined;
 		this.search_tree = {};
 	}
 }
