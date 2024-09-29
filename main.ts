@@ -46,18 +46,19 @@ export class BlazeFoundAreaWidget extends WidgetType {
 	}
 
 	toDOM(view: EditorView): HTMLElement {
-		// console.log('toDom', view);
-		// console.log(this.position);
-		// TODO
-		const div = document.createElement("mark");
-		div.style.wordBreak = 'break-word';
-		div.innerText = this.replace_text;
-		div.style.backgroundColor = 'red';
-		div.style.color = 'white';
-		div.style.position = 'relative';
-		div.style.zIndex = '9999';
-		div.style.border = 'thin solid white';
-		return div;
+		const el = document.createElement("mark");
+		el.innerText = this.replace_text.toLowerCase();
+		// TODO styling
+		el.style.backgroundColor = 'white';
+		el.style.color = 'red';
+		el.style.border = 'thin dashed red';
+		el.style.position = 'absolute';
+		el.style.zIndex = '9999';
+		el.style.fontWeight = 'bold';
+		el.style.paddingLeft = '2px';
+		el.style.paddingRight = '2px';
+		el.style.whiteSpace = 'pre';
+		return el;
 	}
 }
 
@@ -90,14 +91,10 @@ class BlazeViewPlugin implements PluginValue {
 		for (let position of positions) {
 			builder.add(
 				position.index_s,
-				position.index_e,
-				Decoration.mark({
-					// widget: new BlazeFoundAreaWidget(position.value, position),
-					// side: -9999,
-					tagName: 'span',
-					attributes: {
-						style: `background-color: red; color: white; white-space: normal;`,
-					}
+				position.index_s,
+				Decoration.replace({
+					widget: new BlazeFoundAreaWidget(position.value, position),
+					inclusive: false
 				})
 			);
 		}
