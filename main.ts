@@ -68,7 +68,7 @@ export class BlazeFoundAreaWidget extends WidgetType {
 		el.style.fontWeight = 'bold';
 		el.style.paddingLeft = '2px';
 		el.style.paddingRight = '2px';
-		el.style.whiteSpace = 'pre';
+		el.style.whiteSpace = 'pre-wrap';
 		return el;
 	}
 }
@@ -371,6 +371,7 @@ export default class BlazeJumpPlugin extends Plugin {
 			}
 
 			if (this.mode === 'end') {
+				// TODO FIXME
 				const post = editor.offsetToPos(Math.min(search_area.length - 1, index + 1) + this.range_from);
 				const nv = editor.getRange(start, post).trim();
 				if (nv.length == 1) {
