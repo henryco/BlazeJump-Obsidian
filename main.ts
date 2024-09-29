@@ -1,11 +1,21 @@
 import {App, Editor, EditorPosition, Plugin, PluginSettingTab, Setting} from 'obsidian';
-import {ViewUpdate, PluginValue, EditorView, ViewPlugin, WidgetType, PluginSpec, DecorationSet, Decoration} from "@codemirror/view";
+import {
+	Decoration,
+	DecorationSet,
+	EditorView,
+	PluginSpec,
+	PluginValue,
+	ViewPlugin,
+	ViewUpdate,
+	WidgetType
+} from "@codemirror/view";
 import {RangeSetBuilder} from "@codemirror/state";
 
 type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator';
 
 interface ExpandSelectPluginSettings {
 	default_action: MODE_TYPE;
+	keyboard_layout: string;
 
 	status_color_bg?: string;
 	status_color_start?: string;
@@ -57,6 +67,7 @@ interface SearchPosition {
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	default_action: "start",
+	keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
 
 	status_color_bg: 'transparent',
 
@@ -174,6 +185,25 @@ export default class BlazeJumpPlugin extends Plugin {
 	range_from: number;
 	range_to: number;
 
+	layout_characters: (string | null)[];
+	layout_width: number;
+	layout_height: number;
+
+	initKeyboardLayout(): void {
+		const arr = this.settings.keyboard_layout.trim().split(/\s+|\n+/);
+		const width = arr.reduce((p, c) => Math.max(p, c.length), 0);
+		this.layout_characters = arr.reduce((p, c) => [...p, ...c, ...Array(width - c.length).fill(null)], [])
+			.map(x => x !== '#' ? x : null);
+		this.layout_height = arr.length;
+		this.layout_width = width;
+	}
+
+	fromLayout(x: number, y: number): string | null {
+		if (x < 0 || y < 0 || y >= this.layout_height || x >= this.layout_width)
+			return null;
+		return this.layout_characters[x + (this.layout_width * y)];
+	}
+
 	resolveStatusColor(): string {
 		return <string> {
 			'start': this.settings.status_color_start,
@@ -195,6 +225,8 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	async onload() {
+		await this.loadSettings();
+		this.initKeyboardLayout();
 
 		inter_plugin_state.state['style_provider'] = () => this.resolveSearchColor();
 
@@ -206,7 +238,6 @@ export default class BlazeJumpPlugin extends Plugin {
 			this.range_to = range.to;
 		};
 
-		await this.loadSettings();
 		this.registerEditorExtension(blaze_jump_plugin);
 
 		this.addCommand({
