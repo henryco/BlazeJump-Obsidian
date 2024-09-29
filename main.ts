@@ -17,6 +17,7 @@ interface ExpandSelectPluginSettings {
 	default_action: MODE_TYPE;
 	keyboard_layout: string;
 	keyboard_allowed: string;
+	keyboard_distance: number;
 
 	status_color_bg?: string;
 	status_color_start?: string;
@@ -70,6 +71,7 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	default_action: "start",
 	keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
 	keyboard_allowed: "0123456789abcdefghijklmnopqrstuvwxyz",
+	keyboard_distance: -1,
 
 	status_color_bg: 'transparent',
 
@@ -88,9 +90,11 @@ export class SearchState {
 	layout_characters: (string | null)[];
 	layout_width: number;
 	layout_height: number;
+	layout_distance: number;
 
-	constructor(keyboard_layout: string, keyboard_allowed: string) {
+	constructor(keyboard_layout: string, keyboard_allowed: string, distance: number) {
 		this.initKeyboardLayout(keyboard_layout, keyboard_allowed);
+		this.layout_distance = distance;
 	}
 
 	initKeyboardLayout(keyboard_layout: string, keyboard_allowed: string): void {
@@ -103,13 +107,23 @@ export class SearchState {
 		this.layout_width = width;
 	}
 
+	coord(input: string): [x: number, y: number] {
+		let index = this.layout_characters.indexOf(input.toLowerCase());
+		if (index <= -1)
+			index = this.layout_characters.length / 2;
+		const y = Math.floor(index / this.layout_width);
+		const x = index - (this.layout_width * y);
+		return [x, y];
+	}
+
 	from(x: number, y: number): string | null {
 		if (x < 0 || y < 0 || y >= this.layout_height || x >= this.layout_width)
 			return null;
 		return this.layout_characters[x + (this.layout_width * y)];
 	}
 
-	assign(input: string): string {
+	assign(input: string, position: SearchPosition): string {
+		const [x, y] = this.coord(input);
 
 		return "";
 	}
@@ -248,7 +262,8 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		this.search_state = new SearchState(
 			this.settings.keyboard_layout,
-			this.settings.keyboard_allowed
+			this.settings.keyboard_allowed,
+			this.search_state.layout_distance
 		);
 
 		inter_plugin_state.state['style_provider'] = () => this.resolveSearchColor();
