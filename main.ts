@@ -84,6 +84,32 @@ const inter_plugin_state: any = {
 	state: {}
 }
 
+export class SearchState {
+	layout_characters: (string | null)[];
+	layout_width: number;
+	layout_height: number;
+
+	constructor(keyboard_layout: string, keyboard_allowed: string) {
+		this.initKeyboardLayout(keyboard_layout, keyboard_allowed);
+	}
+
+	initKeyboardLayout(keyboard_layout: string, keyboard_allowed: string): void {
+		const arr = keyboard_layout.toLowerCase().trim().split(/\s+|\n+/);
+		const width = arr.reduce((p, c) => Math.max(p, c.length), 0);
+		this.layout_characters = arr.reduce((p, c) => [...p, ...c, ...Array(width - c.length).fill(null)], [])
+			.map(x => keyboard_allowed.toLowerCase().includes(x) ? x : null)
+			.map(x => x !== '#' ? x : null);
+		this.layout_height = arr.length;
+		this.layout_width = width;
+	}
+
+	from(x: number, y: number): string | null {
+		if (x < 0 || y < 0 || y >= this.layout_height || x >= this.layout_width)
+			return null;
+		return this.layout_characters[x + (this.layout_width * y)];
+	}
+}
+
 export class BlazeFoundAreaWidget extends WidgetType {
 	search_position: SearchPosition;
 	style: SearchStyle;
@@ -176,6 +202,7 @@ export const blaze_jump_plugin = ViewPlugin.fromClass(
 export default class BlazeJumpPlugin extends Plugin {
 	settings: ExpandSelectPluginSettings;
 
+	search_state: SearchState;
 	mode?: MODE_TYPE = undefined;
 
 	statusBar?: HTMLElement;
@@ -186,26 +213,6 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	range_from: number;
 	range_to: number;
-
-	layout_characters: (string | null)[];
-	layout_width: number;
-	layout_height: number;
-
-	initKeyboardLayout(): void {
-		const arr = this.settings.keyboard_layout.toLowerCase().trim().split(/\s+|\n+/);
-		const width = arr.reduce((p, c) => Math.max(p, c.length), 0);
-		this.layout_characters = arr.reduce((p, c) => [...p, ...c, ...Array(width - c.length).fill(null)], [])
-			.map(x => this.settings.keyboard_allowed.toLowerCase().includes(x) ? x : null)
-			.map(x => x !== '#' ? x : null);
-		this.layout_height = arr.length;
-		this.layout_width = width;
-	}
-
-	fromLayout(x: number, y: number): string | null {
-		if (x < 0 || y < 0 || y >= this.layout_height || x >= this.layout_width)
-			return null;
-		return this.layout_characters[x + (this.layout_width * y)];
-	}
 
 	resolveStatusColor(): string {
 		return <string> {
@@ -229,7 +236,11 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		this.initKeyboardLayout();
+
+		this.search_state = new SearchState(
+			this.settings.keyboard_layout,
+			this.settings.keyboard_allowed
+		);
 
 		inter_plugin_state.state['style_provider'] = () => this.resolveSearchColor();
 
