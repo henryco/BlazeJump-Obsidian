@@ -121,6 +121,8 @@ export const blaze_jump_plugin = ViewPlugin.fromClass(
 export default class BlazeJumpPlugin extends Plugin {
 	settings: ExpandSelectPluginSettings;
 
+	mode: 'start' | 'end' | 'any' | 'line' | 'terminator' | null = null;
+
 	statusBar?: HTMLElement;
 
 	callback_provided_input: any;
@@ -173,6 +175,12 @@ export default class BlazeJumpPlugin extends Plugin {
 			}]
 		});
 
+		this.addCommand({
+			id: 'blaze-jump-toggle-mode',
+			name: "BlazeJump toggle search mode",
+			editorCallback: (editor) => this.toggleMode(editor)
+		})
+
 		this.addSettingTab(new BlazeJumpSettingTab(this.app, this));
 	}
 
@@ -209,7 +217,22 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.statusBar = undefined;
 	}
 
+	toggleMode(_?: Editor) {
+		console.log('toggle');
+		const mode_map = {
+			'start': 'end',
+			'end': 'any',
+			'any': 'line',
+			'line': 'terminator',
+			'terminator': null,
+		};
+		// @ts-ignore
+		this.mode = this.mode ? mode_map[this.mode] : 'start' ;
+	}
+
 	resetAction(_?: Editor) {
+		console.log('reset');
+
 		this.active = false;
 		this.statusClear();
 
@@ -226,6 +249,8 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	startAction(editor: Editor, _: any) {
 		this.statusSet("BlazeMode: ");
+
+		this.mode = 'start';
 
 		const callback_on_provided = (event: any) => {
 			try {
@@ -331,8 +356,6 @@ export default class BlazeJumpPlugin extends Plugin {
 					coord: view.coordsAtPos(index + this.range_from)
 				});
 			}
-
-			console.log(nv);
 
 			index = search_area.indexOf(search_lower, index + 1);
 		}
