@@ -323,7 +323,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.search_state = new SearchState(
 			this.settings.keyboard_layout,
 			this.settings.keyboard_allowed,
-			this.search_state.layout_depth
+			this.settings.keyboard_depth
 		);
 
 		inter_plugin_state.state['style_provider'] = () => this.resolveSearchColor();
@@ -551,7 +551,7 @@ export default class BlazeJumpPlugin extends Plugin {
 			const end = editor.offsetToPos(index + this.range_from + search.length);
 			const start = editor.offsetToPos(index + this.range_from);
 
-			const search_position = <SearchPosition>{
+			let search_position = <SearchPosition>{
 				start: start,
 				end: end,
 				index_s: index + this.range_from,
@@ -561,6 +561,8 @@ export default class BlazeJumpPlugin extends Plugin {
 			};
 
 			if (this.mode === 'any') {
+				const n_val = this.search_state.assign(search_lower, search_position);
+				search_position.value = n_val;
 				positions.push(search_position);
 			}
 
@@ -568,6 +570,8 @@ export default class BlazeJumpPlugin extends Plugin {
 				const pre = editor.offsetToPos((index > 0 ? index - 1 : index) + this.range_from);
 				const nv = editor.getRange(pre, end).trim();
 				if (nv.length == 1) {
+					const n_val = this.search_state.assign(search_lower, search_position);
+					search_position.value = n_val;
 					positions.push(search_position);
 				}
 			}
@@ -577,6 +581,8 @@ export default class BlazeJumpPlugin extends Plugin {
 				const post = editor.offsetToPos(Math.min(search_area.length - 1, index + 1) + this.range_from);
 				const nv = editor.getRange(start, post).trim();
 				if (nv.length == 1) {
+					const n_val = this.search_state.assign(search_lower, search_position);
+					search_position.value = n_val;
 					positions.push(search_position);
 				}
 			}
