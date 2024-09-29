@@ -354,17 +354,6 @@ export default class BlazeJumpPlugin extends Plugin {
 		return positions;
 	}
 
-	parseModifiers(hotkey: string): Modifier[] {
-		const parts = hotkey.split('+');
-		// @ts-ignore
-		return parts.slice(0, parts.length - 1);
-	}
-
-	parseKey(hotkey: string): string {
-		const parts = hotkey.split('+');
-		return parts[parts.length - 1];
-	}
-
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
