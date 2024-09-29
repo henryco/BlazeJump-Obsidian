@@ -228,7 +228,10 @@ export default class BlazeJumpPlugin extends Plugin {
 			'terminator': 'start',
 		};
 		// @ts-ignore
-		this.mode = this.mode ? mode_map[this.mode] : 'start' ;
+		const mode = this.mode ? mode_map[this.mode] : 'start';
+		this.resetAction();
+
+		this.mode = <MODE_TYPE> mode;
 	}
 
 	resetAction(_?: Editor) {
@@ -242,6 +245,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		this.callback_provided_input = null;
 		this.callback_start_search = null;
+		this.mode = null;
 
 		inter_plugin_state.state['positions'] = undefined;
 	}
