@@ -108,6 +108,15 @@ export class SearchState {
 			return null;
 		return this.layout_characters[x + (this.layout_width * y)];
 	}
+
+	assign(input: string): string {
+
+		return "";
+	}
+
+	reset(): void {
+
+	}
 }
 
 export class BlazeFoundAreaWidget extends WidgetType {
@@ -340,6 +349,7 @@ export default class BlazeJumpPlugin extends Plugin {
 	resetAction(_?: Editor) {
 		this.active = false;
 		this.statusClear();
+		this.search_state.reset();
 
 		if (this.callback_start_search)
 			window.removeEventListener("keydown", this.callback_start_search);
