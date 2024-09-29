@@ -16,6 +16,7 @@ type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator';
 interface ExpandSelectPluginSettings {
 	default_action: MODE_TYPE;
 	keyboard_layout: string;
+	keyboard_allowed: string;
 
 	status_color_bg?: string;
 	status_color_start?: string;
@@ -68,6 +69,7 @@ interface SearchPosition {
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	default_action: "start",
 	keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
+	keyboard_allowed: "0123456789abcdefghijklmnopqrstuvwxyz",
 
 	status_color_bg: 'transparent',
 
@@ -190,9 +192,10 @@ export default class BlazeJumpPlugin extends Plugin {
 	layout_height: number;
 
 	initKeyboardLayout(): void {
-		const arr = this.settings.keyboard_layout.trim().split(/\s+|\n+/);
+		const arr = this.settings.keyboard_layout.toLowerCase().trim().split(/\s+|\n+/);
 		const width = arr.reduce((p, c) => Math.max(p, c.length), 0);
 		this.layout_characters = arr.reduce((p, c) => [...p, ...c, ...Array(width - c.length).fill(null)], [])
+			.map(x => this.settings.keyboard_allowed.toLowerCase().includes(x) ? x : null)
 			.map(x => x !== '#' ? x : null);
 		this.layout_height = arr.length;
 		this.layout_width = width;
