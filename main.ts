@@ -129,7 +129,11 @@ export class SearchState {
 		return this.layout_characters[x + (this.layout_width * y)];
 	}
 
-	nextPos(pos: [number, number], mid: [number, number], depth: number): [nx: number, ny: number, nd: number] {
+	nextPos(pos: [number, number],
+			mid: [number, number],
+			depth: number
+	): [nx: number, ny: number, nd: number] {
+
 		const [x, y] = pos;
 		const [mx, my] = mid;
 
@@ -138,28 +142,75 @@ export class SearchState {
 
 		// spiral movement
 
-		const dx = mx - x;
-		const dy = my - y;
+		const sx = mx - depth;
+		const sy = my - depth;
 
-		const md = Math.max(Math.abs(dx), Math.abs(dy));
-		if (md < depth)
-			return [mx - depth, my, depth];
+		let px = x;
+		let py = y;
 
-		let ix: number;
-		let iy: number;
-
-		if (Math.abs(dx) < depth) {
-			ix = dy <= 0 ? (-1) : 1;
-			iy = 0;
-		} else {
-			ix = 0;
-			iy = Math.sign(dx) * (-1);
+		if (py < 0) {
+			px = mx + depth;
 		}
 
-		let nx = x + ix;
-		let ny = y + iy;
+		if (px >= this.layout_width) {
+			py = my + depth;
+		}
 
-		return [nx, ny, Math.max(Math.abs(mx - nx), Math.abs(my - ny))];
+		if (py >= this.layout_height) {
+			px = mx - depth;
+		}
+
+		if (px < 0) {
+			py = my - depth;
+		}
+
+		// full circle
+		if (px === sx && py === sy && (px !== x || py !== y)) {
+			if (px < 0 || py < 0 || px >= this.layout_width || py >= this.layout_height) {
+				// out of range
+				return [...mid, -1];
+			}
+
+			// depth += 1
+			return this.nextPos([px - 1, py - 1], mid, depth + 1);
+		}
+
+		if (py >= this.layout_height && px >= 0) {
+			py = this.layout_height - 1;
+		}
+
+		if (py < 0 && px >= 0) {
+			py = 0;
+		}
+
+		const dx = mx - px;
+		const dy = my - py;
+
+		if (Math.abs(dx) === depth && Math.abs(dy) === depth) {
+			if (dx > 0 && dy > 0)
+				px += 1;
+			else if (dx > 0 && dy < 0)
+				py -= 1;
+			else if (dx < 0 && dy > 0)
+				py += 1;
+			else
+				px -= 1;
+		}
+
+		else if (Math.abs(dx) < depth) {
+			px += (dy <= 0 ? (-1) : 1);
+		}
+
+		else if (Math.abs(dy) < depth) {
+			py += (Math.sign(dx) * (-1));
+		}
+
+		if (px === sx && py === sy) {
+			// depth += 1
+			return this.nextPos([px - 1, py - 1], mid, depth + 1);
+		}
+
+		return [px, py, depth];
 	}
 
 	assign(input: string, position: SearchPosition): string {
@@ -167,23 +218,32 @@ export class SearchState {
 
 		let char: string | null = null;
 		let loop = 0;
-		while (!char) {
-			if (loop++ >= 100)
-				break; // prevent from dead-spinning
+		while (true) {
+			if (loop++ >= 100) {
+				// TODO
+				return '#'; // prevent from dead-spinning
+			}
 
 			const [last_x, last_y] = this.search_position ?? [x, y];
-			const [n_x, n_y, n_d] = this.nextPos([last_x, last_y], [x, y], this.search_depth);
+			const [n_x, n_y, depth] = this.nextPos([last_x, last_y], [x, y], this.search_depth);
 
 			this.search_position = [n_x, n_y];
-			this.search_depth = n_d;
+			this.search_depth = depth;
 
 			char = this.from(n_x, n_y);
+
+			if (char === null) {
+				continue;
+			}
+
+			const prev = this.search_tree[char];
+			if (!prev) {
+				this.search_tree[char] = position;
+				return char;
+			}
+
+			return char;
 		}
-
-		if (!char)
-			return input;
-		return char;
-
 	}
 
 	reset(): void {
