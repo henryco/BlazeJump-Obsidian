@@ -1,7 +1,6 @@
 import {App, Editor, EditorPosition, Modifier, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import {ViewUpdate, PluginValue, EditorView, ViewPlugin, WidgetType, PluginSpec, DecorationSet, Decoration} from "@codemirror/view";
 import {RangeSetBuilder} from "@codemirror/state";
-import {dom} from "@typescript-eslint/scope-manager/dist/lib/dom";
 
 interface ExpandSelectPluginSettings {
 	hotkey?: string;
@@ -45,7 +44,7 @@ export class BlazeFoundAreaWidget extends WidgetType {
 		this.replace_text = replace_text;
 	}
 
-	toDOM(view: EditorView): HTMLElement {
+	toDOM(_: EditorView): HTMLElement {
 		const el = document.createElement("mark");
 		el.innerText = this.replace_text.toLowerCase();
 		// TODO styling
