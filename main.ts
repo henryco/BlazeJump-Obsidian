@@ -3,7 +3,6 @@ import {ViewUpdate, PluginValue, EditorView, ViewPlugin, WidgetType, PluginSpec,
 import {RangeSetBuilder} from "@codemirror/state";
 
 interface ExpandSelectPluginSettings {
-	hotkey?: string;
 	status_color_bg?: string;
 	status_color_text?: string;
 }
@@ -25,7 +24,6 @@ interface SearchPosition {
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
-	hotkey: 'Ctrl+`',
 	status_color_bg: 'transparent',
 	status_color_text: 'red',
 }
@@ -145,21 +143,14 @@ export default class BlazeJumpPlugin extends Plugin {
 		await this.loadSettings();
 		this.registerEditorExtension(blaze_jump_plugin);
 
-		let extra: any = {};
-		if (this.settings.hotkey) {
-			extra = {
-				hotkeys: [{
-					modifiers: this.parseModifiers(this.settings.hotkey),
-					key: this.parseKey(this.settings.hotkey),
-				}]
-			}
-		}
-
 		this.addCommand({
 			id: "blaze-jump-start",
 			name: "BlazeJump",
 			editorCallback: (editor, ctx) => this.startAction(editor, ctx),
-			...extra
+			hotkeys: [{
+				modifiers: ['Ctrl'],
+				key: '`',
+			}]
 		});
 
 		this.addCommand({
@@ -398,19 +389,5 @@ class BlazeJumpSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("BlazeJump Settings")
 			.setHeading();
-
-		new Setting(containerEl)
-			.setName("Hotkey (Plugin restart required)")
-			.setDesc("Set the hotkey (requires restart)")
-			.addText((text) =>
-				text
-					.setPlaceholder("Enter hotkey")
-					.setValue(this.plugin.settings.hotkey ?? '')
-					.onChange(async (value) => {
-						this.plugin.settings.hotkey = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
 	}
 }
