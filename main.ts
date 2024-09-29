@@ -2,9 +2,11 @@ import {App, Editor, EditorPosition, Plugin, PluginSettingTab, Setting} from 'ob
 import {ViewUpdate, PluginValue, EditorView, ViewPlugin, WidgetType, PluginSpec, DecorationSet, Decoration} from "@codemirror/view";
 import {RangeSetBuilder} from "@codemirror/state";
 
-type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator' | null;
+type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator';
 
 interface ExpandSelectPluginSettings {
+	default_action: MODE_TYPE;
+
 	status_color_bg?: string;
 	status_color_start?: string;
 	status_color_end?: string;
@@ -54,6 +56,8 @@ interface SearchPosition {
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
+	default_action: "start",
+
 	status_color_bg: 'transparent',
 
 	status_color_start: 'Crimson',
@@ -159,7 +163,7 @@ export const blaze_jump_plugin = ViewPlugin.fromClass(
 export default class BlazeJumpPlugin extends Plugin {
 	settings: ExpandSelectPluginSettings;
 
-	mode: MODE_TYPE = null;
+	mode?: MODE_TYPE = undefined;
 
 	statusBar?: HTMLElement;
 
@@ -177,16 +181,16 @@ export default class BlazeJumpPlugin extends Plugin {
 			'any': this.settings.status_color_any,
 			'line': this.settings.status_color_line,
 			'terminator': this.settings.status_color_terminator,
-		}[this.mode ?? 'start'];
+		}[this.mode ?? this.settings.default_action];
 	}
 
 	resolveSearchColor(): SearchStyle {
 		const settings = <any> this.settings;
 		const st = this.resolveStatusColor();
 		return {
-			bg: settings[`search_color_bg_${this.mode}`] ?? 'white',
-			text: settings[`search_color_text_${this.mode}`] ?? st,
-			border: settings[`search_color_border_${this.mode}`] ?? st
+			bg: settings[`search_color_bg_${this.mode ?? this.settings.default_action}`] ?? 'white',
+			text: settings[`search_color_text_${this.mode ?? this.settings.default_action}`] ?? st,
+			border: settings[`search_color_border_${this.mode ?? this.settings.default_action}`] ?? st
 		}
 	}
 
@@ -206,13 +210,31 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.registerEditorExtension(blaze_jump_plugin);
 
 		this.addCommand({
-			id: "blaze-jump-start",
-			name: "BlazeJump",
-			editorCallback: (editor, ctx) => this.startAction(editor, ctx),
+			id: "blaze-jump-toggle",
+			name: "BlazeJump toggle and jump",
+			editorCallback: (editor, ctx) => this.blazeAction(editor, ctx),
 			hotkeys: [{
 				modifiers: ['Ctrl'],
 				key: '`',
 			}]
+		});
+
+		this.addCommand({
+			id: "blaze-jump-start",
+			name: "BlazeJump start",
+			editorCallback: (editor, ctx) => this.startAction(editor, ctx)
+		});
+
+		this.addCommand({
+			id: "blaze-jump-end",
+			name: "BlazeJump end",
+			editorCallback: (editor, ctx) => this.endAction(editor, ctx)
+		});
+
+		this.addCommand({
+			id: "blaze-jump-any",
+			name: "BlazeJump any",
+			editorCallback: (editor, ctx) => this.anyAction(editor, ctx)
 		});
 
 		this.addCommand({
@@ -264,7 +286,7 @@ export default class BlazeJumpPlugin extends Plugin {
 			'any': 'start'
 		};
 		// @ts-ignore
-		const mode = this.mode ? mode_map[this.mode] : 'start';
+		const mode = this.mode ? mode_map[this.mode] : this.settings.default_action;
 		this.resetAction();
 
 		this.mode = <MODE_TYPE> mode;
@@ -281,16 +303,36 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		this.callback_provided_input = null;
 		this.callback_start_search = null;
-		this.mode = null;
+		this.mode = undefined;
 
 		inter_plugin_state.state['positions'] = undefined;
 	}
 
-	startAction(editor: Editor, _: any) {
+	blazeAction(editor: Editor, _: any) {
 		this.toggleMode(editor);
-
 		this.statusSet("BlazeMode: ");
+		this.searchAction(editor);
+	}
 
+	startAction(editor: Editor, _: any) {
+		this.mode = 'start';
+		this.statusSet("BlazeMode: ");
+		this.searchAction(editor);
+	}
+
+	endAction(editor: Editor, _: any) {
+		this.mode = 'end';
+		this.statusSet("BlazeMode: ");
+		this.searchAction(editor);
+	}
+
+	anyAction(editor: Editor, _: any) {
+		this.mode = 'any';
+		this.statusSet("BlazeMode: ");
+		this.searchAction(editor);
+	}
+
+	searchAction(editor: Editor) {
 		const callback_on_provided = (event: any) => {
 			try {
 				// const char = event.key;
@@ -367,6 +409,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.callback_start_search = callback_on_start;
 		window.addEventListener("keydown", callback_on_start, { once: true });
 	}
+
 
 	performSearch(editor: Editor, search: string) {
 		const view = (<EditorView> (<any> editor)['cm']);
