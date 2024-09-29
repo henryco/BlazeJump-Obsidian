@@ -90,16 +90,18 @@ export class SearchState {
 	layout_characters: (string | null)[];
 	layout_width: number;
 	layout_height: number;
-	layout_distance: number;
+	layout_depth: number;
 
 	search_tree: any;
+	search_depth: number;
 	search_position?: [number, number];
 
 	constructor(keyboard_layout: string, keyboard_allowed: string, distance: number) {
 		this.initKeyboardLayout(keyboard_layout, keyboard_allowed);
 		this.search_position = undefined;
-		this.layout_distance = distance;
+		this.layout_depth = distance;
 		this.search_tree = {};
+		this.search_depth = 0;
 	}
 
 	initKeyboardLayout(keyboard_layout: string, keyboard_allowed: string): void {
@@ -154,22 +156,39 @@ export class SearchState {
 			iy = Math.sign(dx) * (-1);
 		}
 
-		const nx = x + ix;
-		const ny = y + iy;
+		let nx = x + ix;
+		let ny = y + iy;
+
 		return [nx, ny, Math.max(Math.abs(mx - nx), Math.abs(my - ny))];
 	}
 
 	assign(input: string, position: SearchPosition): string {
 		const [x, y] = this.coord(input);
-		const [lx, ly] = this.search_position ?? [x, y];
 
+		let char: string | null = null;
+		let loop = 0;
+		while (!char) {
+			if (loop++ >= 100)
+				break; // prevent from dead-spinning
 
+			const [last_x, last_y] = this.search_position ?? [x, y];
+			const [n_x, n_y, n_d] = this.nextPos([last_x, last_y], [x, y], this.search_depth);
 
-		return "";
+			this.search_position = [n_x, n_y];
+			this.search_depth = n_d;
+
+			char = this.from(n_x, n_y);
+		}
+
+		if (!char)
+			return input;
+		return char;
+
 	}
 
 	reset(): void {
 		this.search_position = undefined;
+		this.search_depth = 0;
 		this.search_tree = {};
 	}
 }
@@ -304,7 +323,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.search_state = new SearchState(
 			this.settings.keyboard_layout,
 			this.settings.keyboard_allowed,
-			this.search_state.layout_distance
+			this.search_state.layout_depth
 		);
 
 		inter_plugin_state.state['style_provider'] = () => this.resolveSearchColor();
