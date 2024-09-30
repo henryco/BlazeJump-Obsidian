@@ -57,6 +57,7 @@ interface SearchStyle {
 	text: string;
 	border: string;
 	fix?: number;
+	idx: number;
 }
 
 interface SearchPosition {
@@ -298,8 +299,8 @@ export class BlazeFoundAreaWidget extends WidgetType {
 		el.style.backgroundColor = `${this.style.bg}`;
 		el.style.color = `${this.style.text}`;
 		el.style.border = `thin dashed ${this.style.border}`;
+		el.style.zIndex = `${8000 + this.style.idx}`;
 		el.style.position = 'absolute';
-		el.style.zIndex = '9999';
 		el.style.fontWeight = 'bold';
 		el.style.paddingLeft = '2px';
 		el.style.paddingRight = '2px';
@@ -338,9 +339,8 @@ class BlazeViewPlugin implements PluginValue {
 			return;
 		}
 
-		let search_style: SearchStyle = inter_plugin_state.state['style_provider']();
+		let i = 0;
 		const builder = new RangeSetBuilder<Decoration>();
-
 		for (let position of positions) {
 			const fix = position.start.ch > 0 ? 0 : 1;
 			builder.add(
@@ -351,7 +351,7 @@ class BlazeViewPlugin implements PluginValue {
 						position.value,
 						position,
 						<SearchStyle> {
-							...search_style,
+							...(<SearchStyle> (inter_plugin_state.state['style_provider'](i++))),
 							fix: (fix > 0) ? -10 : undefined
 						}),
 					inclusive: false
@@ -404,13 +404,14 @@ export default class BlazeJumpPlugin extends Plugin {
 		}[this.mode ?? this.settings.default_action];
 	}
 
-	resolveSearchColor(): SearchStyle {
+	resolveSearchColor(idx: number = 0): SearchStyle {
 		const settings = <any> this.settings;
 		const st = this.resolveStatusColor();
 		return {
 			bg: settings[`search_color_bg_${this.mode ?? this.settings.default_action}`] ?? 'white',
 			text: settings[`search_color_text_${this.mode ?? this.settings.default_action}`] ?? st,
-			border: settings[`search_color_border_${this.mode ?? this.settings.default_action}`] ?? st
+			border: settings[`search_color_border_${this.mode ?? this.settings.default_action}`] ?? st,
+			idx: idx
 		}
 	}
 
@@ -423,7 +424,7 @@ export default class BlazeJumpPlugin extends Plugin {
 			this.settings.keyboard_depth
 		);
 
-		inter_plugin_state.state['style_provider'] = () => this.resolveSearchColor();
+		inter_plugin_state.state['style_provider'] = (idx: number = 0) => this.resolveSearchColor(idx);
 
 		inter_plugin_state.state['editor_callback'] = (view: EditorView) => {
 			if (view.visibleRanges.length <= 0)
