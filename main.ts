@@ -268,12 +268,12 @@ export class SearchState {
 
 			char = this.from(n_x, n_y);
 
-			if (char === null) {
-				continue;
-			}
-
 			if (loop++ >= max_spin) {
 				return ['#', search_depth, orig, search_position];
+			}
+
+			if (char === null) {
+				continue;
 			}
 
 			const prev = search_tree[char];
