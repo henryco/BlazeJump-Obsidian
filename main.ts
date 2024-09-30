@@ -69,6 +69,10 @@ interface SearchPosition {
 	coord: Coord;
 }
 
+interface SearchTree {
+	[key: string]: SearchPosition | SearchTree;
+}
+
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	default_action: "start",
 	keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
@@ -96,7 +100,8 @@ export class SearchState {
 	layout_height: number;
 	layout_depth: number;
 
-	search_tree: any;
+	search_tree: SearchTree;
+
 	search_depth: number;
 	search_position?: [number, number];
 
