@@ -228,7 +228,13 @@ export class SearchState {
 		return [px, py, depth];
 	}
 
-	assign(input: string, position: SearchPosition | SearchTree): string {
+	register(
+
+		input: string,
+		search_tree: SearchTree,
+		position: SearchPosition | SearchTree
+
+	): string {
 		const [x, y] = this.coord(input);
 
 		const orig = this.from(...(this.search_position ?? [x, y]));
@@ -261,8 +267,8 @@ export class SearchState {
 
 			const prev = this.search_tree[char];
 			if (!prev) {
-				this.search_tree[char] = position;
-				(this.search_tree[char] as any)['not_map'] = true;
+				search_tree[char] = position;
+				(search_tree[char] as any)['not_map'] = true;
 				return char;
 			}
 
@@ -271,12 +277,12 @@ export class SearchState {
 			this.search_depth = 0;
 
 			const prev_key = orig ?? char;
-			const last = this.search_tree[prev_key];
+			const last = search_tree[prev_key];
 
 			let search_node: SearchTree = !!((last as any)['not_map'])
 				? <SearchTree>({[prev_key]: last})
 				: <SearchTree> last;
-			this.search_tree[prev_key] = search_node;
+			search_tree[prev_key] = search_node;
 
 			console.log('has: ', search_node);
 			// TODO
@@ -284,6 +290,10 @@ export class SearchState {
 			// @ts-ignore
 			return (!!prev ? '!' : '?') + prev_key + char;
 		}
+	}
+
+	assign(input: string, position: SearchPosition | SearchTree): string {
+		return this.register(input, this.search_tree, position);
 	}
 
 	reset(): void {
