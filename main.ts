@@ -229,11 +229,6 @@ export class SearchState {
 		let char: string | null = null;
 		let loop = 0;
 		while (true) {
-			if (loop++ >= 100) {
-				// TODO
-				return '#'; // prevent from dead-spinning
-			}
-
 			// console.log('spin');
 			const [last_x, last_y] = this.search_position ?? [x, y];
 			const [n_x, n_y, depth] = this.nextPos([last_x, last_y], [x, y], this.search_depth);
@@ -247,11 +242,19 @@ export class SearchState {
 				continue;
 			}
 
+			if (loop++ >= 100) {
+				char = this.from(x, y);
+				if (char === null)
+					return '#';
+			}
+
 			const prev = this.search_tree[char];
 			if (!prev) {
 				this.search_tree[char] = position;
 				return char;
 			}
+
+			// TODO
 
 			return '%';
 		}
