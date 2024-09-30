@@ -133,9 +133,6 @@ export class SearchState {
 			mid: [number, number],
 			depth: number
 	): [nx: number, ny: number, nd: number] {
-
-		console.log(pos, mid, depth);
-
 		if (depth >= this.layout_width && depth >= this.layout_height)
 			return [...mid, -1];
 
@@ -171,20 +168,17 @@ export class SearchState {
 
 		// full circle
 		if (px === sx && py === sy && (px !== x || py !== y)) {
-			console.log('circle', px, py)
 			// depth += 1
 			return this.nextPos([px - 1, py - 1], mid, depth + 1);
 		}
 
 		if (py >= this.layout_height && px >= 0) {
 			py = this.layout_height - 1;
-			console.log('pre1', px, py);
 			return [px, py, depth];
 		}
 
 		if (py < 0 && px >= 0) {
 			py = 0;
-			console.log('pre2', px, py);
 			return [px, py, depth];
 		}
 
@@ -194,8 +188,6 @@ export class SearchState {
 		console.log('p: ', px, py, dx, dy);
 
 		if (Math.abs(dx) === depth && Math.abs(dy) === depth) {
-			console.log('nope');
-
 			if (dx > 0 && dy > 0)
 				px += 1;
 			else if (dx > 0 && dy < 0)
@@ -215,22 +207,18 @@ export class SearchState {
 		}
 
 		else {
-			console.log('scratch');
 			return this.nextPos([sx, sy], mid, depth);
 		}
 
 		if (px < 0 || py < 0 || px >= this.layout_width || py >= this.layout_height) {
-			console.log('about cirlce')
 			return this.nextPos([px, py], mid, depth);
 		}
 
 		if (px === sx && py === sy) {
 			// depth += 1
-			console.log('rec');
 			return this.nextPos([px - 1, py - 1], mid, depth + 1);
 		}
 
-		console.log('>', px, py, depth);
 		return [px, py, depth];
 	}
 
@@ -654,7 +642,7 @@ export default class BlazeJumpPlugin extends Plugin {
 				if (nv.length == 1) {
 					const n_val = this.search_state.assign(search_lower, search_position);
 					search_position.value = n_val;
-					console.log('result: ', n_val);
+					console.log('result: ', n_val, search_position);
 					positions.push(search_position);
 				}
 			}
