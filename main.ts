@@ -228,7 +228,7 @@ export class SearchState {
 		return [px, py, depth];
 	}
 
-	assign(input: string, position: SearchPosition): string {
+	assign(input: string, position: SearchPosition | SearchTree): string {
 		const [x, y] = this.coord(input);
 
 		const orig = this.from(...(this.search_position ?? [x, y]));
@@ -276,6 +276,7 @@ export class SearchState {
 			let search_node: SearchTree = !!((last as any)['not_map'])
 				? <SearchTree>({[prev_key]: last})
 				: <SearchTree> last;
+			this.search_tree[prev_key] = search_node;
 
 			console.log('has: ', search_node);
 			// TODO
