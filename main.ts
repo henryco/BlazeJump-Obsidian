@@ -262,6 +262,7 @@ export class SearchState {
 			const prev = this.search_tree[char];
 			if (!prev) {
 				this.search_tree[char] = position;
+				(this.search_tree[char] as any)['not_map'] = true;
 				return char;
 			}
 
@@ -269,13 +270,18 @@ export class SearchState {
 			this.search_position = [rx, ry];
 			this.search_depth = 0;
 
-			const last = this.search_tree[orig ?? char];
+			const prev_key = orig ?? char;
+			const last = this.search_tree[prev_key];
 
-			console.log('has: ', last);
+			let search_node: SearchTree = !!((last as any)['not_map'])
+				? <SearchTree>({[prev_key]: last})
+				: <SearchTree> last;
+
+			console.log('has: ', search_node);
 			// TODO
 
 			// @ts-ignore
-			return (!!prev ? '!' : '?') + orig + char;
+			return (!!prev ? '!' : '?') + prev_key + char;
 		}
 	}
 
