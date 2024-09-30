@@ -244,6 +244,12 @@ export class SearchState {
 		previous_key?: string | null,
 		last_position?: [number, number],
 	] {
+
+		const max_spin = Math.min(
+			Math.pow(1 + (search_depth * 2), 2) + 1,
+			(this.layout_height + this.layout_width) * 2
+		);
+
 		const [x, y] = this.coord(input);
 
 		let char: string | null = null;
@@ -266,10 +272,8 @@ export class SearchState {
 				continue;
 			}
 
-			if (loop++ >= 100) {
-				char = this.from(x, y);
-				if (char === null)
-					return ['#', search_depth, orig, search_position]
+			if (loop++ >= max_spin) {
+				return ['#', search_depth, orig, search_position];
 			}
 
 			const prev = search_tree[char];
@@ -284,15 +288,17 @@ export class SearchState {
 			let last = search_tree[prev_key];
 			let search_node: SearchTree = {};
 
-			if (prev_key === input)
-				console.log('YEAH:', prev_key, last);
+			const is_node = !((last as any)['not_map']);
+
+			if (prev_key === input && !is_node) {
+				console.log('spin', max_spin);
+				continue;
+			}
 
 			console.log(`LAST[${prev_key}][${char}]`, search_position, position, search_tree, last);
 
-			const is_node = !((last as any)['not_map']);
-
 			if (!is_node) {
-				const [i_name, i_depth, i_prev_key, i_last_pos] = this.register(
+				const [i_name, i_depth, _, i_last_pos] = this.register(
 					prev_key,
 					last,
 					search_node,
@@ -319,12 +325,26 @@ export class SearchState {
 				prev_key,
 				search_position
 			);
+
+			console.log('t:', prev_key, i_name);
+
+			// if (i_depth < 0) {
+			// 	const n_prev_key = i_name;
+			//
+			// 	const [] = this.register(
+			// 		n_prev_key,
+			// 		position,
+			// 		search_node,
+			// 		0,
+			//
+			// 	)
+			// }
+
 			position.value = `${prev_key}${i_name}`;
 			search_position = i_last_pos;
 			search_depth = i_depth;
 			// todo extract ?
 
-			// @ts-ignore
 			return [
 				position.value,
 				search_depth,
