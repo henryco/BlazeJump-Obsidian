@@ -265,7 +265,7 @@ export class SearchState {
 					return '#';
 			}
 
-			const prev = this.search_tree[char];
+			const prev = search_tree[char];
 			if (!prev) {
 				search_tree[char] = position;
 				(search_tree[char] as any)['not_map'] = true;
@@ -293,7 +293,11 @@ export class SearchState {
 	}
 
 	assign(input: string, position: SearchPosition | SearchTree): string {
-		return this.register(input, this.search_tree, position);
+		const result = this.register(input, this.search_tree, position);
+
+		console.log(this.search_tree);
+
+		return result;
 	}
 
 	reset(): void {
