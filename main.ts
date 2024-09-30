@@ -53,9 +53,10 @@ interface Coord {
 }
 
 interface SearchStyle {
-	bg: string,
-	text: string,
-	border: string
+	bg: string;
+	text: string;
+	border: string;
+	fix?: number;
 }
 
 interface SearchPosition {
@@ -185,7 +186,7 @@ export class SearchState {
 		const dx = mx - px;
 		const dy = my - py;
 
-		console.log('p: ', px, py, dx, dy);
+		// console.log('p: ', px, py, dx, dy);
 
 		if (Math.abs(dx) === depth && Math.abs(dy) === depth) {
 			if (dx > 0 && dy > 0)
@@ -224,7 +225,7 @@ export class SearchState {
 
 	assign(input: string, position: SearchPosition): string {
 		const [x, y] = this.coord(input);
-		console.log('assign: ' + input);
+		// console.log('assign: ' + input);
 		let char: string | null = null;
 		let loop = 0;
 		while (true) {
@@ -233,7 +234,7 @@ export class SearchState {
 				return '#'; // prevent from dead-spinning
 			}
 
-			console.log('spin');
+			// console.log('spin');
 			const [last_x, last_y] = this.search_position ?? [x, y];
 			const [n_x, n_y, depth] = this.nextPos([last_x, last_y], [x, y], this.search_depth);
 
@@ -286,7 +287,13 @@ export class BlazeFoundAreaWidget extends WidgetType {
 		el.style.fontWeight = 'bold';
 		el.style.paddingLeft = '2px';
 		el.style.paddingRight = '2px';
-		el.style.whiteSpace = 'pre-wrap';
+
+		el.style.marginTop = '-1px';
+		if (this.style.fix !== undefined) {
+			el.style.marginLeft = `${this.style.fix}px`;
+		}
+		// el.style.whiteSpace = 'no-wrap';
+		// el.style.marginLeft = '-10px';
 		return el;
 	}
 }
@@ -315,18 +322,22 @@ class BlazeViewPlugin implements PluginValue {
 			return;
 		}
 
-		const search_style: SearchStyle = inter_plugin_state.state['style_provider']();
+		let search_style: SearchStyle = inter_plugin_state.state['style_provider']();
 		const builder = new RangeSetBuilder<Decoration>();
 
 		for (let position of positions) {
+			const fix = position.start.ch > 0 ? 0 : 1;
 			builder.add(
-				position.index_s,
-				position.index_s,
+				position.index_s + fix,
+				position.index_s + fix,
 				Decoration.replace({
 					widget: new BlazeFoundAreaWidget(
 						position.value,
 						position,
-						search_style),
+						<SearchStyle> {
+							...search_style,
+							fix: (fix > 0) ? -10 : undefined
+						}),
 					inclusive: false
 				})
 			);
@@ -642,7 +653,7 @@ export default class BlazeJumpPlugin extends Plugin {
 				if (nv.length == 1) {
 					const n_val = this.search_state.assign(search_lower, search_position);
 					search_position.value = n_val;
-					console.log('result: ', n_val, search_position);
+					// console.log('result: ', n_val, search_position);
 					positions.push(search_position);
 				}
 			}
