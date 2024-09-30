@@ -231,27 +231,33 @@ export class SearchState {
 	register(
 
 		input: string,
+		position: SearchPosition | SearchTree,
 		search_tree: SearchTree,
-		position: SearchPosition | SearchTree
+		search_depth: number,
+		search_position?: [number, number],
 
-	): string {
+	): [
+		name: string,
+		depth: number,
+		last_position?: [number, number],
+	] {
 		const [x, y] = this.coord(input);
 
-		const orig = this.from(...(this.search_position ?? [x, y]));
+		const orig = this.from(...(search_position ?? [x, y]));
 
 		let char: string | null = null;
 		let loop = 0;
 
 		while (true) {
 			const [n_x, n_y, depth] = SearchState.nextPos(
-				(this.search_position ?? [x, y]), // last_x, last_y
-				[x, y],                           // mid_x, mid_y
-				this.search_depth,
+				(search_position ?? [x, y]),    // last_x, last_y
+				[x, y],                         //  mid_x,  mid_y
+				search_depth,
 				this.layout_width,
 				this.layout_height);
 
-			this.search_position = [n_x, n_y];
-			this.search_depth = depth;
+			search_position = [n_x, n_y];
+			search_depth = depth;
 
 			char = this.from(n_x, n_y);
 
@@ -262,19 +268,19 @@ export class SearchState {
 			if (loop++ >= 100) {
 				char = this.from(x, y);
 				if (char === null)
-					return '#';
+					return ['#', search_depth, search_position]
 			}
 
 			const prev = search_tree[char];
 			if (!prev) {
 				search_tree[char] = position;
 				(search_tree[char] as any)['not_map'] = true;
-				return char;
+				return [char, search_depth, search_position];
 			}
 
 			const [rx, ry] = this.coord(char);
-			this.search_position = [rx, ry];
-			this.search_depth = 0;
+			search_position = [rx, ry];
+			search_depth = 0;
 
 			const prev_key = orig ?? char;
 			const last = search_tree[prev_key];
@@ -282,22 +288,37 @@ export class SearchState {
 			let search_node: SearchTree = !!((last as any)['not_map'])
 				? <SearchTree>({[prev_key]: last})
 				: <SearchTree> last;
-			search_tree[prev_key] = search_node;
+
+
 
 			console.log('has: ', search_node);
 			// TODO
 
 			// @ts-ignore
-			return (!!prev ? '!' : '?') + prev_key + char;
+			return [
+				(!!prev ? '!' : '?') + prev_key + char,
+				search_depth,
+				search_position
+			];
 		}
 	}
 
 	assign(input: string, position: SearchPosition | SearchTree): string {
-		const result = this.register(input, this.search_tree, position);
+
+		const [name, depth, last] = this.register(
+			input,
+			position,
+			this.search_tree,
+			this.search_depth,
+			this.search_position
+		);
+
+		this.search_depth = depth;
+		this.search_position = last;
 
 		console.log(this.search_tree);
 
-		return result;
+		return name;
 	}
 
 	reset(): void {
