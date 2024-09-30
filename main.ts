@@ -134,6 +134,11 @@ export class SearchState {
 			depth: number
 	): [nx: number, ny: number, nd: number] {
 
+		console.log(pos, mid, depth);
+
+		if (depth >= this.layout_width && depth >= this.layout_height)
+			return [...mid, -1];
+
 		const [x, y] = pos;
 		const [mx, my] = mid;
 
@@ -157,20 +162,16 @@ export class SearchState {
 		}
 
 		if (py >= this.layout_height) {
-			px = mx - depth;
+			px = sx;
 		}
 
 		if (px < 0) {
-			py = my - depth;
+			py = sy;
 		}
 
 		// full circle
 		if (px === sx && py === sy && (px !== x || py !== y)) {
-			if (px < 0 || py < 0 || px >= this.layout_width || py >= this.layout_height) {
-				// out of range
-				return [...mid, -1];
-			}
-
+			console.log('circle', px, py)
 			// depth += 1
 			return this.nextPos([px - 1, py - 1], mid, depth + 1);
 		}
@@ -186,7 +187,11 @@ export class SearchState {
 		const dx = mx - px;
 		const dy = my - py;
 
+		console.log('p: ', px, py, dx, dy);
+
 		if (Math.abs(dx) === depth && Math.abs(dy) === depth) {
+			console.log('nope');
+
 			if (dx > 0 && dy > 0)
 				px += 1;
 			else if (dx > 0 && dy < 0)
@@ -197,25 +202,37 @@ export class SearchState {
 				px -= 1;
 		}
 
-		else if (Math.abs(dx) < depth) {
+		else if (Math.abs(dx) < depth && Math.abs(dy) === depth) {
 			px += (dy <= 0 ? (-1) : 1);
 		}
 
-		else if (Math.abs(dy) < depth) {
+		else if (Math.abs(dy) < depth && Math.abs(dx) === depth) {
 			py += (Math.sign(dx) * (-1));
+		}
+
+		else {
+			console.log('scratch');
+			return this.nextPos([sx, sy], mid, depth);
+		}
+
+		if (px < 0 || py < 0 || px >= this.layout_width || py >= this.layout_height) {
+			console.log('about cirlce')
+			return this.nextPos([px, py], mid, depth);
 		}
 
 		if (px === sx && py === sy) {
 			// depth += 1
+			console.log('rec');
 			return this.nextPos([px - 1, py - 1], mid, depth + 1);
 		}
 
+		console.log('>', px, py, depth);
 		return [px, py, depth];
 	}
 
 	assign(input: string, position: SearchPosition): string {
 		const [x, y] = this.coord(input);
-
+		console.log('assign: ' + input);
 		let char: string | null = null;
 		let loop = 0;
 		while (true) {
@@ -224,6 +241,7 @@ export class SearchState {
 				return '#'; // prevent from dead-spinning
 			}
 
+			console.log('spin');
 			const [last_x, last_y] = this.search_position ?? [x, y];
 			const [n_x, n_y, depth] = this.nextPos([last_x, last_y], [x, y], this.search_depth);
 
