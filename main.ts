@@ -142,7 +142,8 @@ export class SearchState {
 				   mid: [number, number],
 				   depth: number,
 				   layout_width: number,
-				   layout_height: number
+				   layout_height: number,
+				   check: boolean = false,
 	): [nx: number, ny: number, nd: number] {
 
 		if (depth >= layout_width && depth >= layout_height)
@@ -197,30 +198,30 @@ export class SearchState {
 		const dx = mx - px;
 		const dy = my - py;
 
-		// console.log('p: ', px, py, dx, dy);
-
-		if (Math.abs(dx) === depth && Math.abs(dy) === depth) {
-			if (dx > 0 && dy > 0)
-				px += 1;
-			else if (dx > 0 && dy < 0)
-				py -= 1;
-			else if (dx < 0 && dy > 0)
-				py += 1;
-			else
-				px -= 1;
-		} else if (Math.abs(dx) < depth && Math.abs(dy) === depth) {
-			px += (dy <= 0 ? (-1) : 1);
-		} else if (Math.abs(dy) < depth && Math.abs(dx) === depth) {
-			py += (Math.sign(dx) * (-1));
-		} else {
-			return this.nextPos([sx, sy], mid, depth, layout_width, layout_height);
+		if (!check) {
+			if (Math.abs(dx) === depth && Math.abs(dy) === depth) {
+				if (dx > 0 && dy > 0)
+					px += 1;
+				else if (dx > 0 && dy < 0)
+					py -= 1;
+				else if (dx < 0 && dy > 0)
+					py += 1;
+				else
+					px -= 1;
+			} else if (Math.abs(dx) < depth && Math.abs(dy) === depth) {
+				px += (dy <= 0 ? (-1) : 1);
+			} else if (Math.abs(dy) < depth && Math.abs(dx) === depth) {
+				py += (Math.sign(dx) * (-1));
+			} else {
+				return this.nextPos([sx, sy], mid, depth, layout_width, layout_height, true);
+			}
 		}
 
 		if (px < 0 || py < 0 || px >= layout_width || py >= layout_height) {
 			return this.nextPos([px, py], mid, depth, layout_width, layout_height);
 		}
 
-		if (px === sx && py === sy) {
+		if (px === sx && py === sy && !check) {
 			// depth += 1
 			return this.nextPos([px - 1, py - 1], mid, depth + 1, layout_width, layout_height);
 		}
@@ -286,12 +287,11 @@ export class SearchState {
 			if (prev_key === input)
 				console.log('YEAH:', prev_key, last);
 
-			console.log(`LAST[${prev_key}][${char}]`, position, search_tree, last);
+			console.log(`LAST[${prev_key}][${char}]`, search_position, position, search_tree, last);
 
 			const is_node = !((last as any)['not_map']);
 
 			if (!is_node) {
-				console.log('rec1', prev_key, char);
 				const [i_name, i_depth, i_prev_key, i_last_pos] = this.register(
 					prev_key,
 					last,
@@ -305,8 +305,6 @@ export class SearchState {
 			} else {
 				search_node = last as SearchTree;
 			}
-
-			console.log('ok');
 
 			search_tree[prev_key] = search_node;
 
@@ -325,9 +323,6 @@ export class SearchState {
 			search_position = i_last_pos;
 			search_depth = i_depth;
 			// todo extract ?
-
-
-			console.log('has: ', search_node);
 
 			// @ts-ignore
 			return [
@@ -354,7 +349,7 @@ export class SearchState {
 		this.search_depth = depth;
 		this.search_orig = prev ?? undefined;
 
-		console.log('out:', this.search_tree);
+		console.log('out:', this.search_tree, this.search_position);
 
 		return name;
 	}
