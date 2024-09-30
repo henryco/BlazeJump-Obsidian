@@ -178,10 +178,14 @@ export class SearchState {
 
 		if (py >= this.layout_height && px >= 0) {
 			py = this.layout_height - 1;
+			console.log('pre1');
+			return [px, py, depth];
 		}
 
 		if (py < 0 && px >= 0) {
 			py = 0;
+			console.log('pre2');
+			return [px, py, depth];
 		}
 
 		const dx = mx - px;
