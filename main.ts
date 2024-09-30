@@ -101,8 +101,8 @@ export class SearchState {
 	layout_depth: number;
 
 	search_tree: SearchTree;
-
 	search_depth: number;
+	search_orig?: string;
 	search_position?: [number, number];
 
 	constructor(keyboard_layout: string, keyboard_allowed: string, distance: number) {
@@ -234,16 +234,16 @@ export class SearchState {
 		position: SearchPosition | SearchTree,
 		search_tree: SearchTree,
 		search_depth: number,
-		search_position?: [number, number],
+		orig?: string | null,
+		search_position?: [number, number]
 
 	): [
 		name: string,
 		depth: number,
+		previous_key?: string | null,
 		last_position?: [number, number],
 	] {
 		const [x, y] = this.coord(input);
-
-		const orig = this.from(...(search_position ?? [x, y]));
 
 		let char: string | null = null;
 		let loop = 0;
@@ -268,36 +268,72 @@ export class SearchState {
 			if (loop++ >= 100) {
 				char = this.from(x, y);
 				if (char === null)
-					return ['#', search_depth, search_position]
+					return ['#', search_depth, orig, search_position]
 			}
 
 			const prev = search_tree[char];
 			if (!prev) {
 				search_tree[char] = position;
 				(search_tree[char] as any)['not_map'] = true;
-				return [char, search_depth, search_position];
+				return [char, search_depth, char, search_position];
 			}
 
-			const [rx, ry] = this.coord(char);
-			search_position = [rx, ry];
-			search_depth = 0;
-
 			const prev_key = orig ?? char;
-			const last = search_tree[prev_key];
 
-			let search_node: SearchTree = !!((last as any)['not_map'])
-				? <SearchTree>({[prev_key]: last})
-				: <SearchTree> last;
+			let last = search_tree[prev_key];
+			let search_node: SearchTree = {};
 
+			if (prev_key === input)
+				console.log('YEAH:', prev_key, last);
+
+			console.log(`LAST[${prev_key}][${char}]`, position, search_tree, last);
+
+			const is_node = !((last as any)['not_map']);
+
+			if (!is_node) {
+				console.log('rec1', prev_key, char);
+				const [i_name, i_depth, i_prev_key, i_last_pos] = this.register(
+					prev_key,
+					last,
+					search_node,
+					0,
+					prev_key
+				);
+				last.value = `${prev_key}${i_name}`;
+				search_position = i_last_pos;
+				search_depth = i_depth;
+			} else {
+				search_node = last as SearchTree;
+			}
+
+			console.log('ok');
+
+			search_tree[prev_key] = search_node;
+
+			// todo extract ?
+			console.log('rec2', prev_key, char, position);
+			console.dir(search_tree);
+			const [i_name, i_depth, i_prev_key, i_last_pos] = this.register(
+				prev_key,
+				position,
+				search_node,
+				search_depth,
+				prev_key,
+				search_position
+			);
+			position.value = `${prev_key}${i_name}`;
+			search_position = i_last_pos;
+			search_depth = i_depth;
+			// todo extract ?
 
 
 			console.log('has: ', search_node);
-			// TODO
 
 			// @ts-ignore
 			return [
-				(!!prev ? '!' : '?') + prev_key + char,
+				position.value,
 				search_depth,
+				prev_key,
 				search_position
 			];
 		}
@@ -305,24 +341,27 @@ export class SearchState {
 
 	assign(input: string, position: SearchPosition | SearchTree): string {
 
-		const [name, depth, last] = this.register(
+		const [name, depth, prev, last] = this.register(
 			input,
 			position,
 			this.search_tree,
 			this.search_depth,
+			this.search_orig ?? this.from(...this.coord(input)),
 			this.search_position
 		);
 
-		this.search_depth = depth;
 		this.search_position = last;
+		this.search_depth = depth;
+		this.search_orig = prev ?? undefined;
 
-		console.log(this.search_tree);
+		console.log('out:', this.search_tree);
 
 		return name;
 	}
 
 	reset(): void {
 		this.search_position = undefined;
+		this.search_orig = undefined;
 		this.search_depth = 0;
 		this.search_tree = {};
 	}
