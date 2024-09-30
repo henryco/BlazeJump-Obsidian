@@ -178,13 +178,13 @@ export class SearchState {
 
 		if (py >= this.layout_height && px >= 0) {
 			py = this.layout_height - 1;
-			console.log('pre1');
+			console.log('pre1', px, py);
 			return [px, py, depth];
 		}
 
 		if (py < 0 && px >= 0) {
 			py = 0;
-			console.log('pre2');
+			console.log('pre2', px, py);
 			return [px, py, depth];
 		}
 
@@ -654,6 +654,7 @@ export default class BlazeJumpPlugin extends Plugin {
 				if (nv.length == 1) {
 					const n_val = this.search_state.assign(search_lower, search_position);
 					search_position.value = n_val;
+					console.log('result: ', n_val);
 					positions.push(search_position);
 				}
 			}
