@@ -80,7 +80,9 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	status_color_end: 'Blue',
 	status_color_any: 'Green',
 	status_color_line: 'Magenta',
-	status_color_terminator: 'DimGray'
+	status_color_terminator: 'DimGray',
+
+	search_color_bg_start: 'yellow'
 }
 
 const inter_plugin_state: any = {
@@ -225,11 +227,13 @@ export class SearchState {
 
 	assign(input: string, position: SearchPosition): string {
 		const [x, y] = this.coord(input);
-		// console.log('assign: ' + input);
+
+		const orig = this.from(...(this.search_position ?? [x, y]));
+
 		let char: string | null = null;
 		let loop = 0;
+
 		while (true) {
-			// console.log('spin');
 			const [last_x, last_y] = this.search_position ?? [x, y];
 			const [n_x, n_y, depth] = this.nextPos([last_x, last_y], [x, y], this.search_depth);
 
@@ -254,9 +258,15 @@ export class SearchState {
 				return char;
 			}
 
+			const [rx, ry] = this.coord(char);
+			this.search_position = [rx, ry];
+			this.search_depth = 0;
+
+
 			// TODO
 
-			return '%';
+			// @ts-ignore
+			return (!!prev ? '!' : '?') + orig + char;
 		}
 	}
 
