@@ -285,10 +285,18 @@ export class SearchState {
 
 			const prev_key = orig ?? char;
 
-
-
 			let last = search_tree[prev_key];
 			let search_node: SearchTree = {};
+
+			console.log('>', char, prev_key, last, search_depth);
+			if (!last) {
+				return this.register(
+					prev_key,
+					position,
+					search_tree,
+					-1
+				);
+			}
 
 			const is_node = !((last as any)['not_map']);
 
