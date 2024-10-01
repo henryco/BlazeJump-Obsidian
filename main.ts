@@ -334,8 +334,6 @@ export class SearchState {
 
 			char = this.from(n_x, n_y);
 
-			console.log('>>>', n_x, n_y, depth, this.from(...(search_position ?? [x, y])), char);
-
 			search_position = [n_x, n_y];
 			search_depth = depth;
 
@@ -359,7 +357,6 @@ export class SearchState {
 			let last = search_tree[prev_key];
 			let search_node: SearchTree = {};
 
-			console.log('>', char, prev_key, last, search_depth);
 			if (!last) {
 				return this.register(
 					prev_key,
@@ -372,7 +369,6 @@ export class SearchState {
 			const is_node = !((last as any)['not_map']);
 
 			if (prev_key === input && !is_node) {
-				console.log('spin', max_spin);
 				continue;
 			}
 
@@ -403,7 +399,6 @@ export class SearchState {
 			);
 
 			if (i_depth < 0) {
-				console.log('C:', char);
 				return this.register(
 					char,
 					position,
