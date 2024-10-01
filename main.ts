@@ -76,7 +76,7 @@ interface SearchTree {
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	default_action: "start",
 	keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
-	keyboard_allowed: "0123456789abcdefghijklmnopqrstuvwxyz",
+	keyboard_allowed: "123456789abcdefghijklmnopqrstuvwxyz",
 	keyboard_depth: -1,
 
 	status_color_bg: 'transparent',
@@ -269,7 +269,7 @@ export class SearchState {
 			char = this.from(n_x, n_y);
 
 			if (loop++ >= max_spin) {
-				return ['#', search_depth, orig, search_position];
+				return ['#', -1, orig, search_position];
 			}
 
 			if (char === null) {
@@ -285,6 +285,8 @@ export class SearchState {
 
 			const prev_key = orig ?? char;
 
+
+
 			let last = search_tree[prev_key];
 			let search_node: SearchTree = {};
 
@@ -294,8 +296,6 @@ export class SearchState {
 				console.log('spin', max_spin);
 				continue;
 			}
-
-			console.log(`LAST[${prev_key}][${char}]`, search_position, position, search_tree, last);
 
 			if (!is_node) {
 				const [i_name, i_depth, _, i_last_pos] = this.register(
@@ -314,9 +314,6 @@ export class SearchState {
 
 			search_tree[prev_key] = search_node;
 
-			// todo extract ?
-			console.log('rec2', prev_key, char, position);
-			console.dir(search_tree);
 			const [i_name, i_depth, i_prev_key, i_last_pos] = this.register(
 				prev_key,
 				position,
@@ -326,24 +323,19 @@ export class SearchState {
 				search_position
 			);
 
-			console.log('t:', prev_key, i_name);
-
-			// if (i_depth < 0) {
-			// 	const n_prev_key = i_name;
-			//
-			// 	const [] = this.register(
-			// 		n_prev_key,
-			// 		position,
-			// 		search_node,
-			// 		0,
-			//
-			// 	)
-			// }
+			if (i_depth < 0) {
+				console.log('C:', char);
+				return this.register(
+					char,
+					position,
+					search_node,
+					-1
+				);
+			}
 
 			position.value = `${prev_key}${i_name}`;
 			search_position = i_last_pos;
 			search_depth = i_depth;
-			// todo extract ?
 
 			return [
 				position.value,
@@ -368,8 +360,6 @@ export class SearchState {
 		this.search_position = last;
 		this.search_depth = depth;
 		this.search_orig = prev ?? undefined;
-
-		console.log('out:', this.search_tree, this.search_position);
 
 		return name;
 	}
