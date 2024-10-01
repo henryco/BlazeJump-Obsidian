@@ -155,9 +155,13 @@ export class SearchState {
 		let rx = x;
 		let ry = y;
 
-		if (r <= 0 || (x === mid[0] && y === mid[1])) {
+		if (r <= 0) {
 			// very beginning
-			return [mid[0] - 1, mid[0] - 1, 1];
+			return [mid[0], mid[1], 1];
+		}
+
+		if (r <= 1 && x === mid[0] && y === mid[1]) {
+			return [mid[0] - 1, mid[1] - 1, 1];
 		}
 
 		if (x === x0 && y <= y1 && y > y0) {
@@ -202,22 +206,25 @@ export class SearchState {
 		const [mx, my] = mid;
 		const [x, y] = pos;
 
-		if (x >= 0 && y >= 0 && x < w && y < h)
+		if (x >= 0 && y >= 0 && x < w && y < h) {
 			return [...pos, r];
+		}
 
-		if ((mx - r) < 0 && (mx + r) > w && (my - r) < 0 && (my + r) > h)
+		if ((mx - r) < 0 && (mx + r) > w && (my - r) < 0 && (my + r) > h) {
 			return [...mid, -1]; // circle too big
+		}
 
-		if (n > 100)
+		if (n > 100) {
+			console.warn('overflow', [...mid, -1]);
 			return [...mid, -1]; // prevent stack overflow
-
+		}
 		let nx = x;
 		let ny = y;
 		let nr = r;
 
 		if (x < 0) {
 			// not a starting point
-			if (x !== mx - r && y !== my - r) {
+			if (!(x === mx - r && y === my - r)) {
 				nr = r + 1;
 				nx = mx - nr;
 				ny = my - nr;
