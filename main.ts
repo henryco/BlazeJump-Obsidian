@@ -283,97 +283,6 @@ export class SearchState {
 		return [...pos, r];
 	}
 
-	static nextPos(pos: [number, number],
-				   mid: [number, number],
-				   depth: number,
-				   layout_width: number,
-				   layout_height: number,
-				   check: boolean = false,
-	): [nx: number, ny: number, nd: number] {
-
-		if (depth >= layout_width && depth >= layout_height)
-			return [...mid, -1];
-
-		const [x, y] = pos;
-		const [mx, my] = mid;
-
-		if (depth <= 0)
-			return [mx, my, 1];
-
-		// spiral movement
-
-		const sx = mx - depth;
-		const sy = my - depth;
-
-		let px = x;
-		let py = y;
-
-		if (py < 0) {
-			px = mx + depth;
-		}
-
-		if (px >= layout_width) {
-			py = my + depth;
-		}
-
-		if (py >= layout_height) {
-			px = sx;
-		}
-
-		if (px < 0) {
-			py = sy;
-		}
-
-		// full circle
-		if (px === sx && py === sy && (px !== x || py !== y)) {
-			// depth += 1
-			return this.nextPos([px - 1, py - 1], mid, depth + 1, layout_width, layout_height);
-		}
-
-		if (py >= layout_height && px >= 0) {
-			py = layout_height - 1;
-			return [px, py, depth];
-		}
-
-		if (py < 0 && px >= 0) {
-			py = 0;
-			return [px, py, depth];
-		}
-
-		const dx = mx - px;
-		const dy = my - py;
-
-		if (!check) {
-			if (Math.abs(dx) === depth && Math.abs(dy) === depth) {
-				if (dx > 0 && dy > 0)
-					px += 1;
-				else if (dx > 0 && dy < 0)
-					py -= 1;
-				else if (dx < 0 && dy > 0)
-					py += 1;
-				else
-					px -= 1;
-			} else if (Math.abs(dx) < depth && Math.abs(dy) === depth) {
-				px += (dy <= 0 ? (-1) : 1);
-			} else if (Math.abs(dy) < depth && Math.abs(dx) === depth) {
-				py += (Math.sign(dx) * (-1));
-			} else {
-				return this.nextPos([sx, sy], mid, depth, layout_width, layout_height, true);
-			}
-		}
-
-		if (px < 0 || py < 0 || px >= layout_width || py >= layout_height) {
-			return this.nextPos([px, py], mid, depth, layout_width, layout_height);
-		}
-
-		if (px === sx && py === sy && !check) {
-			// depth += 1
-			return this.nextPos([px - 1, py - 1], mid, depth + 1, layout_width, layout_height);
-		}
-
-		return [px, py, depth];
-	}
-
 	register(
 
 		input: string,
@@ -401,17 +310,27 @@ export class SearchState {
 		let loop = 0;
 
 		while (true) {
-			const [n_x, n_y, depth] = SearchState.nextPos(
-				(search_position ?? [x, y]),    // last_x, last_y
-				[x, y],                         //  mid_x,  mid_y
-				search_depth,
+
+			const [u_x, u_y, u_depth] = SearchState.predict_xy_spiral(
+				(search_position ?? [x, y]),
+				[x, y],
+				search_depth
+			);
+
+			const [n_x, n_y, depth] = SearchState.validate_xy_spiral(
+				[u_x, u_y],
+				[x, y],
+				u_depth,
 				this.layout_width,
-				this.layout_height);
+				this.layout_height
+			);
+
+			char = this.from(n_x, n_y);
+
+			console.log('>>>', n_x, n_y, depth, this.from(...(search_position ?? [x, y])), char);
 
 			search_position = [n_x, n_y];
 			search_depth = depth;
-
-			char = this.from(n_x, n_y);
 
 			if (loop++ >= max_spin) {
 				return ['#', -1, orig, search_position];
