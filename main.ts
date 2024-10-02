@@ -405,6 +405,8 @@ export class SearchState {
 			t_update_context(search_tree, context);
 
 			if (loop++ >= max_spin) {
+				console.error('Too much spinning');
+
 				context.depth = -1;
 				return ['#', t_update_context(search_tree, context), true];
 			}
@@ -418,7 +420,7 @@ export class SearchState {
 				search_tree[char] = position;
 				context.position = [n_x, n_y];
 				context.depth = depth;
-				context.char = input;
+				context.char = char;
 
 				console.log('>>', char, '|', t_id(search_tree), t_pid(search_tree) ?? '');
 				return [char, t_update_context(search_tree, context), false];
@@ -432,7 +434,7 @@ export class SearchState {
 			let search_node: SearchTree = create_tree(prev_key, { depth: 0 }, {}, search_tree);
 
 			if (!last) {
-				console.log('wtf');
+				console.error('wtf');
 				return this.register(
 					prev_key,
 					position,
@@ -442,6 +444,7 @@ export class SearchState {
 
 			const is_node = t_is_tree(last);
 			if (prev_key === input && !is_node) {
+				console.warn('Not a node:', prev_key);
 				continue;
 			}
 
@@ -475,7 +478,7 @@ export class SearchState {
 			search_node = i_tree;
 
 			if (i_error) {
-				console.log('depth 0, wtf');
+				console.error('depth 0, wtf');
 
 				let node_context = t_context(search_node) ?? { depth: 0 };
 				node_context.depth = -1;
