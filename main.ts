@@ -13,7 +13,7 @@ import {RangeSetBuilder} from "@codemirror/state";
 
 type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator';
 
-enum STATUS { OK = 0, ERROR = 1, DUPLICATE = 2 }
+enum STATUS { OK = 0, ERROR = 1, DUPLICATE = 2, PROPAGATE = 3 }
 
 interface ExpandSelectPluginSettings {
 	default_action: MODE_TYPE;
@@ -104,7 +104,7 @@ const t_parent = (tree?: SearchTree): SearchTree | undefined => {
 	return !tree ? undefined : (tree as any)['__tree_parent'];
 }
 
-const t_context = (tree?: SearchTree): SearchContext | undefined => {
+const t_context = (tree?: SearchTree | SearchPosition): SearchContext | undefined => {
 	return !tree ? undefined : (tree as any)['__tree_context'];
 }
 
@@ -446,14 +446,32 @@ export class SearchState {
 
 			const parent = t_parent(search_tree);
 			if (!!parent) {
+
 				const parent_context = t_context(parent);
 				if (!parent_context || !parent_context.full) {
 					console.log('duplicate');
 					// parent made full circle, now children can grow their own children
-
-					// TODO: CHECK IN BREADTH FIRST
-
 					return [char, t_update_context(search_tree, context), STATUS.DUPLICATE];
+				}
+
+				const pra_parent = t_parent(parent);
+				if (!!pra_parent) {
+
+					const pra_parent_context = t_context(pra_parent);
+					if (!!pra_parent_context) {
+
+						const ring = pra_parent_context.ring;
+						for (let child_id of ring) {
+
+							const child_context = t_context(pra_parent[child_id]);
+							if (!child_context || !child_context.full) {
+								// TODO memorize for more efficiency
+								// TODO rotate
+								return [char, t_update_context(search_tree, context), STATUS.PROPAGATE];
+							}
+						}
+					}
+
 				}
 			}
 
@@ -476,7 +494,7 @@ export class SearchState {
 			if (prev_key === input && !is_node) {
 				// Full circle, allow children to grow
 				context.full = true;
-				console.log('full circle', input);
+				console.warn('full circle', input);
 				t_update_context(search_tree, context);
 			}
 
@@ -509,6 +527,11 @@ export class SearchState {
 			);
 
 			search_node = i_tree;
+
+			if (i_signal === STATUS.PROPAGATE) {
+				console.warn('PROPAGATE');
+				return [i_name, i_tree, STATUS.DUPLICATE];
+			}
 
 			if (i_signal === STATUS.DUPLICATE) {
 				console.log('duplicate on child');
