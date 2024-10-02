@@ -216,7 +216,7 @@ export class SearchState {
 
 		if (n > 100) {
 			console.warn('overflow', [...mid, -1]);
-			return [...mid, -1]; // prevent stack overflow
+			return [...mid, -1]; // prevent stack overflow, normally shouldn't happen
 		}
 		let nx = x;
 		let ny = y;
