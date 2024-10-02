@@ -438,8 +438,6 @@ export class SearchState {
 				return [char, t_update_context(search_tree, context), STATUS.OK];
 			}
 
-			const prev_key = last_of_ring(context.ring) ?? char;
-
 			// reset position
 			context.position = [x, y];
 			context.depth = 0;
@@ -453,9 +451,10 @@ export class SearchState {
 					return [char, t_update_context(search_tree, context), STATUS.DUPLICATE];
 			}
 
-			let last = search_tree[prev_key];
+			const prev_key = last_of_ring(context.ring) ?? char;
 			let search_node: SearchTree = create_tree(prev_key, { depth: 0, ring: [], full: false }, {}, search_tree);
 
+			let last = search_tree[prev_key];
 			if (!last) {
 				// this shouldn't happen
 				console.error('no last');
