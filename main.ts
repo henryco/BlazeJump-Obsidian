@@ -290,6 +290,37 @@ export class SearchState {
 		return [...pos, r];
 	}
 
+	static next_spiral(
+		pos: [number, number],
+		mid: [number, number],
+		radius: number,
+		w: number,
+		h: number,
+		max_depth: number = -1
+	): [x: number,
+		y: number,
+		d: number
+	] {
+		const [u_x, u_y, u_depth] = SearchState.predict_xy_spiral(
+			[...pos],
+			[...mid],
+			radius
+		);
+
+		const [n_x, n_y, depth] = SearchState.validate_xy_spiral(
+			[u_x, u_y],
+			[...mid],
+			u_depth,
+			w,
+			h
+		);
+
+		if (max_depth > 0 && depth > max_depth)
+			return [...mid, -1];
+
+		return [n_x, n_y, depth];
+	}
+
 	register(
 
 		input: string,
@@ -306,6 +337,8 @@ export class SearchState {
 		last_position?: [number, number],
 	] {
 
+		// TODO REWRITE ASSIGNMENT ALGORITHM
+
 		const max_spin = Math.min(
 			Math.pow(1 + (search_depth * 2), 2) + 1,
 			(this.layout_height + this.layout_width) * 2
@@ -318,18 +351,13 @@ export class SearchState {
 
 		while (true) {
 
-			const [u_x, u_y, u_depth] = SearchState.predict_xy_spiral(
+			const [n_x, n_y, depth] = SearchState.next_spiral(
 				(search_position ?? [x, y]),
 				[x, y],
-				search_depth
-			);
-
-			const [n_x, n_y, depth] = SearchState.validate_xy_spiral(
-				[u_x, u_y],
-				[x, y],
-				u_depth,
+				search_depth,
 				this.layout_width,
-				this.layout_height
+				this.layout_height,
+				this.layout_depth
 			);
 
 			char = this.from(n_x, n_y);
