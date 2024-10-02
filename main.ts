@@ -69,15 +69,60 @@ interface SearchPosition {
 	coord: Coord;
 }
 
+interface SearchContext {
+	position?: [x: number, y: number];
+	char?: string;
+	depth: number;
+}
+
 interface SearchTree {
 	[key: string]: SearchPosition | SearchTree;
 }
+
+const create_tree = (id: string, context?: SearchContext, tree?: SearchTree, parent?: SearchTree): SearchTree => {
+	let tt = tree ?? {};
+	(tt as any)['__tree_id'] = id;
+	(tt as any)['__tree_is_map'] = true;
+	(tt as any)['__tree_parent'] = parent;
+	(tt as any)['__tree_context'] = (context ?? <SearchContext> {
+		position: undefined,
+		char: undefined,
+		depth: 0,
+	});
+	return tt;
+}
+
+const t_id = (tree?: SearchTree): string | undefined => {
+	return !tree ? undefined : (tree as any)['__tree_id'];
+}
+
+const t_parent = (tree?: SearchTree): SearchTree | undefined => {
+	return !tree ? undefined : (tree as any)['__tree_parent'];
+}
+
+const t_context = (tree?: SearchTree): SearchContext | undefined => {
+	return !tree ? undefined : (tree as any)['__tree_context'];
+}
+
+const t_pid = (tree?: SearchTree): string | undefined => {
+	return t_id(t_parent(tree));
+}
+
+const t_is_tree = (obj?: any): boolean => {
+	return (obj ?? {})['__tree_is_map'] === true;
+}
+
+const t_update_context = (tree: SearchTree, context?: SearchContext): SearchTree => {
+	(tree as any)['__tree_context'] = (context ?? { depth: 0 });
+	return tree;
+}
+
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	default_action: "start",
 	keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
 	keyboard_allowed: "123456789abcdefghijklmnopqrstuvwxyz",
-	keyboard_depth: -1,
+	keyboard_depth: 1,
 
 	status_color_bg: 'transparent',
 
@@ -101,16 +146,11 @@ export class SearchState {
 	layout_depth: number;
 
 	search_tree: SearchTree;
-	search_depth: number;
-	search_orig?: string;
-	search_position?: [number, number];
 
 	constructor(keyboard_layout: string, keyboard_allowed: string, distance: number) {
 		this.initKeyboardLayout(keyboard_layout, keyboard_allowed);
-		this.search_position = undefined;
+		this.search_tree = create_tree('root');
 		this.layout_depth = distance;
-		this.search_tree = {};
-		this.search_depth = 0;
 	}
 
 	initKeyboardLayout(keyboard_layout: string, keyboard_allowed: string): void {
@@ -325,22 +365,19 @@ export class SearchState {
 
 		input: string,
 		position: SearchPosition | SearchTree,
-		search_tree: SearchTree,
-		search_depth: number,
-		orig?: string | null,
-		search_position?: [number, number]
+		search_tree: SearchTree
 
 	): [
 		name: string,
-		depth: number,
-		previous_key?: string | null,
-		last_position?: [number, number],
+		tree: SearchTree,
+		error: boolean
 	] {
+		console.log('??', input, '|', t_id(search_tree), t_pid(search_tree) ?? '');
 
-		// TODO REWRITE ASSIGNMENT ALGORITHM
+		let context: SearchContext = t_context(search_tree) ?? { depth: 0 };
 
 		const max_spin = Math.min(
-			Math.pow(1 + (search_depth * 2), 2) + 1,
+			Math.pow(1 + (context.depth * 2), 2) + 1,
 			(this.layout_height + this.layout_width) * 2
 		);
 
@@ -352,9 +389,9 @@ export class SearchState {
 		while (true) {
 
 			const [n_x, n_y, depth] = SearchState.next_spiral(
-				(search_position ?? [x, y]),
+				(context.position ?? [x, y]),
 				[x, y],
-				search_depth,
+				context.depth,
 				this.layout_width,
 				this.layout_height,
 				this.layout_depth
@@ -362,11 +399,14 @@ export class SearchState {
 
 			char = this.from(n_x, n_y);
 
-			search_position = [n_x, n_y];
-			search_depth = depth;
+			context.position = [n_x, n_y];
+			context.depth = depth;
+
+			t_update_context(search_tree, context);
 
 			if (loop++ >= max_spin) {
-				return ['#', -1, orig, search_position];
+				context.depth = -1;
+				return ['#', t_update_context(search_tree, context), true];
 			}
 
 			if (char === null) {
@@ -376,101 +416,104 @@ export class SearchState {
 			const prev = search_tree[char];
 			if (!prev) {
 				search_tree[char] = position;
-				(search_tree[char] as any)['not_map'] = true;
-				return [char, search_depth, char, search_position];
+				context.position = [n_x, n_y];
+				context.depth = depth;
+				context.char = input;
+
+				console.log('>>', char, '|', t_id(search_tree), t_pid(search_tree) ?? '');
+				return [char, t_update_context(search_tree, context), false];
 			}
 
-			const prev_key = orig ?? char;
+			const prev_key = context.char ?? char;
+
+			console.log('exist:', char, 'prev:', prev_key);
 
 			let last = search_tree[prev_key];
-			let search_node: SearchTree = {};
+			let search_node: SearchTree = create_tree(prev_key, { depth: 0 }, {}, search_tree);
 
 			if (!last) {
+				console.log('wtf');
 				return this.register(
 					prev_key,
 					position,
-					search_tree,
-					-1
+					search_tree
 				);
 			}
 
-			const is_node = !((last as any)['not_map']);
-
+			const is_node = t_is_tree(last);
 			if (prev_key === input && !is_node) {
 				continue;
 			}
 
 			if (!is_node) {
-				const [i_name, i_depth, _, i_last_pos] = this.register(
+				// converting node-element to node-tree
+				const [i_name, i_tree] = this.register(
 					prev_key,
 					last,
-					search_node,
-					0,
-					prev_key
+					search_node
 				);
+
+				console.log('++', `${prev_key}${i_name}`);
+
 				last.value = `${prev_key}${i_name}`;
-				search_position = i_last_pos;
-				search_depth = i_depth;
+				search_node = i_tree;
 			} else {
+				console.log('enter:', prev_key, '>', char);
+
 				search_node = last as SearchTree;
 			}
 
 			search_tree[prev_key] = search_node;
 
-			const [i_name, i_depth, i_prev_key, i_last_pos] = this.register(
+			// adding new element to node-tree
+			const [i_name, i_tree, i_error] = this.register(
 				prev_key,
 				position,
-				search_node,
-				search_depth,
-				prev_key,
-				search_position
+				search_node
 			);
 
-			if (i_depth < 0) {
+			search_node = i_tree;
+
+			if (i_error) {
+				console.log('depth 0, wtf');
+
+				let node_context = t_context(search_node) ?? { depth: 0 };
+				node_context.depth = -1;
+
 				return this.register(
 					char,
 					position,
-					search_node,
-					-1
+					t_update_context(search_node, node_context)
 				);
 			}
 
+			// returning added child
 			position.value = `${prev_key}${i_name}`;
-			search_position = i_last_pos;
-			search_depth = i_depth;
+			search_tree[prev_key] = search_node;
 
-			return [
-				position.value,
-				search_depth,
-				prev_key,
-				search_position
-			];
+			console.log('::', position.value, '|', t_id(search_tree), t_pid(search_tree) ?? '');
+
+			return [position.value, search_tree, false];
 		}
 	}
 
 	assign(input: string, position: SearchPosition | SearchTree): string {
 
-		const [name, depth, prev, last] = this.register(
+		const [name, tree, error] = this.register(
 			input,
 			position,
-			this.search_tree,
-			this.search_depth,
-			this.search_orig ?? this.from(...this.coord(input)),
-			this.search_position
+			this.search_tree
 		);
 
-		this.search_position = last;
-		this.search_depth = depth;
-		this.search_orig = prev ?? undefined;
+		this.search_tree = tree;
 
+		console.log('  ', name);
+		console.log(' ');
 		return name;
 	}
 
 	reset(): void {
-		this.search_position = undefined;
-		this.search_orig = undefined;
-		this.search_depth = 0;
-		this.search_tree = {};
+		this.search_tree = create_tree('root');
 	}
 }
 
