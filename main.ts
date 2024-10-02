@@ -75,6 +75,7 @@ interface SearchContext {
 	position?: [x: number, y: number];
 	depth: number;
 	ring: string[];
+	full: boolean;
 }
 
 interface SearchTree {
@@ -90,6 +91,7 @@ const create_tree = (id: string, context?: SearchContext, tree?: SearchTree, par
 		position: undefined,
 		depth: 0,
 		ring: [],
+		full: false
 	});
 	return tt;
 }
@@ -373,17 +375,20 @@ export class SearchState {
 		search_tree: SearchTree,
 		n: number = 0,
 		limit: number = 100
+
 	): [
 		name: string,
 		tree: SearchTree,
 		signal: STATUS
 	] {
-		if (n >= limit)
-			throw "OVERFLOW";
+		let context: SearchContext = t_context(search_tree) ?? { depth: 0, ring: [], full: false};
 
-		console.log('??', input, '|', t_id(search_tree), t_pid(search_tree) ?? '');
-
-		let context: SearchContext = t_context(search_tree) ?? { depth: 0, ring: [] };
+		if (n >= limit) {
+			// this shouldn't happen
+			console.error('Overflow');
+			context.depth = -1;
+			return ['#', t_update_context(search_tree, context), STATUS.ERROR];
+		}
 
 		const max_spin = Math.min(
 			Math.pow(1 + (context.depth * 2), 2) + 1,
@@ -396,7 +401,6 @@ export class SearchState {
 		let loop = 0;
 
 		while (true) {
-
 			const [n_x, n_y, depth] = SearchState.next_spiral(
 				(context.position ?? [x, y]),
 				[x, y],
@@ -410,28 +414,27 @@ export class SearchState {
 
 			context.position = [n_x, n_y];
 			context.depth = depth;
-
 			t_update_context(search_tree, context);
 
 			if (loop++ >= max_spin) {
+				// this shouldn't happen
 				console.error('Too much spinning');
-
 				context.depth = -1;
 				return ['#', t_update_context(search_tree, context), STATUS.ERROR];
 			}
 
 			if (char === null) {
+				// ignored character (excluded from layout)
 				continue;
 			}
 
 			const prev = search_tree[char];
 			if (!prev) {
+				// no duplicates so adding new element to current node
 				search_tree[char] = position;
 				context.position = [n_x, n_y];
 				context.ring.push(char);
 				context.depth = depth;
-
-				console.log('>>', char, '|', t_id(search_tree), t_pid(search_tree) ?? '');
 				return [char, t_update_context(search_tree, context), STATUS.OK];
 			}
 
@@ -442,18 +445,20 @@ export class SearchState {
 			context.depth = 0;
 			t_update_context(search_tree, context);
 
-			// if parent exists return with signal
-			if (!!t_parent(search_tree)) { // TODO EXTRA CONDITION?
-				return [char, t_update_context(search_tree, context), STATUS.DUPLICATE];
+			const parent = t_parent(search_tree);
+			if (!!parent) {
+				const parent_context = t_context(parent);
+				if (!parent_context || !parent_context.full)
+					// parent made full circle, now children can grow their own children
+					return [char, t_update_context(search_tree, context), STATUS.DUPLICATE];
 			}
 
-			console.log('exist:', char, 'prev:', prev_key);
-
 			let last = search_tree[prev_key];
-			let search_node: SearchTree = create_tree(prev_key, { depth: 0, ring: [] }, {}, search_tree);
+			let search_node: SearchTree = create_tree(prev_key, { depth: 0, ring: [], full: false }, {}, search_tree);
 
 			if (!last) {
-				console.error('wtf no last');
+				// this shouldn't happen
+				console.error('no last');
 				return this.register(
 					prev_key,
 					position,
@@ -464,9 +469,9 @@ export class SearchState {
 
 			const is_node = t_is_tree(last);
 			if (prev_key === input && !is_node) {
-				console.warn('Not a node:', prev_key);
-				// PREPARE TO FULL CIRCLE
-
+				// Full circle, allow children to grow
+				context.full = true;
+				t_update_context(search_tree, context);
 			}
 
 			if (!is_node) {
@@ -477,14 +482,10 @@ export class SearchState {
 					search_node,
 					n + 1
 				);
-
-				console.log('++', `${prev_key}${i_name}`);
-
 				last.value = `${prev_key}${i_name}`;
 				search_node = i_tree;
 			} else {
-				console.log('enter:', prev_key, '>', char);
-
+				// use existing node
 				search_node = last as SearchTree;
 			}
 
@@ -501,10 +502,12 @@ export class SearchState {
 			search_node = i_tree;
 
 			if (i_signal === STATUS.DUPLICATE) {
+				// child node is full (on first level)
 				const last = context.ring.pop() ?? char;
 				context.ring = [last, ...context.ring];
 				context.position = [x, y];
 				context.depth = 0;
+				// restart with next child
 				return this.register(
 					input,
 					position,
@@ -514,11 +517,10 @@ export class SearchState {
 			}
 
 			if (i_signal === STATUS.ERROR) {
-				console.error('child error wtf');
-
-				let node_context = t_context(search_node) ?? { depth: 0, ring: [] };
+				// this shouldn't happen
+				console.error('child error');
+				let node_context = t_context(search_node) ?? { depth: 0, ring: [], full: false };
 				node_context.depth = -1;
-
 				return this.register(
 					char,
 					position,
@@ -530,25 +532,13 @@ export class SearchState {
 			// returning added child
 			position.value = `${prev_key}${i_name}`;
 			search_tree[prev_key] = search_node;
-
-			console.log('::', position.value, '|', t_id(search_tree), t_pid(search_tree) ?? '');
-
 			return [position.value, search_tree, STATUS.OK];
 		}
 	}
 
 	assign(input: string, position: SearchPosition | SearchTree): string {
-
-		const [name, tree, error] = this.register(
-			input,
-			position,
-			this.search_tree
-		);
-
+		const [name, tree] = this.register(input, position, this.search_tree);
 		this.search_tree = tree;
-
-		console.log('  ', name);
-		console.log(' ');
 		return name;
 	}
 
