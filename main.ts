@@ -910,6 +910,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		const positions = [];
 
 		let index = search_area.indexOf(search_lower);
+		const t0 = new Date().getTime();
 		while (index > -1) {
 			const end = editor.offsetToPos(index + this.range_from + search.length);
 			const start = editor.offsetToPos(index + this.range_from);
@@ -953,6 +954,10 @@ export default class BlazeJumpPlugin extends Plugin {
 			index = search_area.indexOf(search_lower, index + 1);
 		}
 
+		const t1 = new Date().getTime();
+
+		console.log(`indexing: ${t1 - t0}ms`);
+		console.log(`found: ${positions.length}`);
 		return positions;
 	}
 
