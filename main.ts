@@ -465,7 +465,8 @@ export class SearchState {
 			const is_node = t_is_tree(last);
 			if (prev_key === input && !is_node) {
 				console.warn('Not a node:', prev_key);
-				continue;
+				// PREPARE TO FULL CIRCLE
+
 			}
 
 			if (!is_node) {
