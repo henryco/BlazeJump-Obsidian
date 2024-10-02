@@ -996,6 +996,8 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		console.log(`indexing: ${t1 - t0}ms`);
 		console.log(`found: ${positions.length}`);
+		console.log(positions.map(x => x.value).reduce((p, c) => ({...p, [c]: (p[c] ?? 0) + 1}), {} as any));
+
 		return positions;
 	}
 
