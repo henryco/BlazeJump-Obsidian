@@ -13,6 +13,8 @@ import {RangeSetBuilder} from "@codemirror/state";
 
 type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator';
 
+enum STATUS { OK = 0, ERROR = 1, DUPLICATE = 2 }
+
 interface ExpandSelectPluginSettings {
 	default_action: MODE_TYPE;
 	keyboard_layout: string;
@@ -71,8 +73,8 @@ interface SearchPosition {
 
 interface SearchContext {
 	position?: [x: number, y: number];
-	char?: string;
 	depth: number;
+	ring: string[];
 }
 
 interface SearchTree {
@@ -86,8 +88,8 @@ const create_tree = (id: string, context?: SearchContext, tree?: SearchTree, par
 	(tt as any)['__tree_parent'] = parent;
 	(tt as any)['__tree_context'] = (context ?? <SearchContext> {
 		position: undefined,
-		char: undefined,
 		depth: 0,
+		ring: [],
 	});
 	return tt;
 }
@@ -117,6 +119,9 @@ const t_update_context = (tree: SearchTree, context?: SearchContext): SearchTree
 	return tree;
 }
 
+const last_of_ring = (arr: string[]): string | undefined => {
+	return arr.length <= 0 ? undefined : arr[arr.length - 1];
+}
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	default_action: "start",
@@ -365,16 +370,20 @@ export class SearchState {
 
 		input: string,
 		position: SearchPosition | SearchTree,
-		search_tree: SearchTree
-
+		search_tree: SearchTree,
+		n: number = 0,
+		limit: number = 100
 	): [
 		name: string,
 		tree: SearchTree,
-		error: boolean
+		signal: STATUS
 	] {
+		if (n >= limit)
+			throw "OVERFLOW";
+
 		console.log('??', input, '|', t_id(search_tree), t_pid(search_tree) ?? '');
 
-		let context: SearchContext = t_context(search_tree) ?? { depth: 0 };
+		let context: SearchContext = t_context(search_tree) ?? { depth: 0, ring: [] };
 
 		const max_spin = Math.min(
 			Math.pow(1 + (context.depth * 2), 2) + 1,
@@ -408,7 +417,7 @@ export class SearchState {
 				console.error('Too much spinning');
 
 				context.depth = -1;
-				return ['#', t_update_context(search_tree, context), true];
+				return ['#', t_update_context(search_tree, context), STATUS.ERROR];
 			}
 
 			if (char === null) {
@@ -419,26 +428,37 @@ export class SearchState {
 			if (!prev) {
 				search_tree[char] = position;
 				context.position = [n_x, n_y];
+				context.ring.push(char);
 				context.depth = depth;
-				context.char = char;
 
 				console.log('>>', char, '|', t_id(search_tree), t_pid(search_tree) ?? '');
-				return [char, t_update_context(search_tree, context), false];
+				return [char, t_update_context(search_tree, context), STATUS.OK];
 			}
 
-			const prev_key = context.char ?? char;
+			const prev_key = last_of_ring(context.ring) ?? char;
+
+			// reset position
+			context.position = [x, y];
+			context.depth = 0;
+			t_update_context(search_tree, context);
+
+			// if parent exists return with signal
+			if (!!t_parent(search_tree)) { // TODO EXTRA CONDITION?
+				return [char, t_update_context(search_tree, context), STATUS.DUPLICATE];
+			}
 
 			console.log('exist:', char, 'prev:', prev_key);
 
 			let last = search_tree[prev_key];
-			let search_node: SearchTree = create_tree(prev_key, { depth: 0 }, {}, search_tree);
+			let search_node: SearchTree = create_tree(prev_key, { depth: 0, ring: [] }, {}, search_tree);
 
 			if (!last) {
-				console.error('wtf');
+				console.error('wtf no last');
 				return this.register(
 					prev_key,
 					position,
-					search_tree
+					search_tree,
+					n + 1
 				);
 			}
 
@@ -453,7 +473,8 @@ export class SearchState {
 				const [i_name, i_tree] = this.register(
 					prev_key,
 					last,
-					search_node
+					search_node,
+					n + 1
 				);
 
 				console.log('++', `${prev_key}${i_name}`);
@@ -469,24 +490,39 @@ export class SearchState {
 			search_tree[prev_key] = search_node;
 
 			// adding new element to node-tree
-			const [i_name, i_tree, i_error] = this.register(
+			const [i_name, i_tree, i_signal] = this.register(
 				prev_key,
 				position,
-				search_node
+				search_node,
+				n + 1
 			);
 
 			search_node = i_tree;
 
-			if (i_error) {
-				console.error('depth 0, wtf');
+			if (i_signal === STATUS.DUPLICATE) {
+				const last = context.ring.pop() ?? char;
+				context.ring = [last, ...context.ring];
+				context.position = [x, y];
+				context.depth = 0;
+				return this.register(
+					input,
+					position,
+					t_update_context(search_tree, context),
+					n + 1
+				);
+			}
 
-				let node_context = t_context(search_node) ?? { depth: 0 };
+			if (i_signal === STATUS.ERROR) {
+				console.error('child error wtf');
+
+				let node_context = t_context(search_node) ?? { depth: 0, ring: [] };
 				node_context.depth = -1;
 
 				return this.register(
 					char,
 					position,
-					t_update_context(search_node, node_context)
+					t_update_context(search_node, node_context),
+					n + 1
 				);
 			}
 
@@ -496,7 +532,7 @@ export class SearchState {
 
 			console.log('::', position.value, '|', t_id(search_tree), t_pid(search_tree) ?? '');
 
-			return [position.value, search_tree, false];
+			return [position.value, search_tree, STATUS.OK];
 		}
 	}
 
