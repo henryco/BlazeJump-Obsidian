@@ -472,20 +472,21 @@ export class SearchState {
 		limit: number = 100
 
     ): BlazeNode {
-        console.log('>>', input, [node.id, node.children?.length], [n, limit]);
-
-		if (n >= limit) {
+        if (n >= limit) {
 			console.error("node overflow");
             node.context.depth = -1;
             throw "Stack overflow";
         }
 
         if (node.context.full) {
+            console.log('++', input, [node.id, node.parent?.id, node.children?.length], [n, limit]);
             if (!node.children || node.children.length <= 0)
                 throw "Impossible state, full node MUST contain children";
             let left = node.children[0];
             return this.add_node(left.id, position, left, n + 1, limit);
         }
+
+        console.log('>>', input, [node.id, node.parent?.id, node.children?.length], [n, limit]);
 
         const [char, i_pos, i_depth] = this.next_key(input, node.context.depth, node.context.position);
         node.context.position = i_pos;
