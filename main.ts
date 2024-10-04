@@ -171,7 +171,7 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	default_action: "start",
 	keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
 	keyboard_allowed: "123456789abcdefghijklmnopqrstuvwxyz",
-	keyboard_depth: 1,
+	keyboard_depth: 2,
 
 	status_color_bg: 'transparent',
 
