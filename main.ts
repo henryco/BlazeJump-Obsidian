@@ -13,8 +13,6 @@ import {RangeSetBuilder} from "@codemirror/state";
 
 type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator';
 
-enum STATUS { OK = 0, ERROR = 1, DUPLICATE = 2, PROPAGATE = 3 }
-
 interface ExpandSelectPluginSettings {
 	default_action: MODE_TYPE;
 	keyboard_layout: string;
@@ -71,58 +69,99 @@ interface SearchPosition {
 	coord: Coord;
 }
 
-interface SearchContext {
+interface NodeContext {
 	position?: [x: number, y: number];
+	counter: number;
 	depth: number;
-	ring: string[];
 	full: boolean;
 }
 
-interface SearchTree {
-	[key: string]: SearchPosition | SearchTree;
+interface BlazeNode {
+	id: string;
+	context: NodeContext;
+	parent: BlazeNode | null;
+	children?: BlazeNode[];
+	value?: SearchPosition;
 }
 
-const create_tree = (id: string, context?: SearchContext, tree?: SearchTree, parent?: SearchTree): SearchTree => {
-	let tt = tree ?? {};
-	(tt as any)['__tree_id'] = id;
-	(tt as any)['__tree_is_map'] = true;
-	(tt as any)['__tree_parent'] = parent;
-	(tt as any)['__tree_context'] = (context ?? <SearchContext> {
+const create_node = (
+	id: string,
+	parent?: BlazeNode,
+	context?: NodeContext,
+	value?: SearchPosition,
+	children?: BlazeNode[],
+): BlazeNode => ({
+	id: id,
+	value: value,
+	children: children,
+	parent: parent ?? null,
+	context: (context ?? <NodeContext>{
 		position: undefined,
-		depth: 0,
-		ring: [],
-		full: false
-	});
-	return tt;
+		full: false,
+		counter: 0,
+		depth: 0
+	})
+});
+
+const find_node = (node: BlazeNode, name: string): BlazeNode | undefined => {
+	if (!node.children || node.children.length <= 0)
+		return undefined;
+	const children: BlazeNode[] = node.children;
+	for (let child of children) {
+		if (child.id === name) {
+			return child;
+		}
+	}
+	return undefined;
 }
 
-const t_id = (tree?: SearchTree): string | undefined => {
-	return !tree ? undefined : (tree as any)['__tree_id'];
+const swap_children = (node: BlazeNode): BlazeNode => {
+    const last_node = node.children?.pop();
+    if (!last_node)
+        throw "Impossible! Last node not exists!";
+    node.children?.unshift(last_node);
+    return node;
 }
 
-const t_parent = (tree?: SearchTree): SearchTree | undefined => {
-	return !tree ? undefined : (tree as any)['__tree_parent'];
+const rotate_node = (node: BlazeNode, n: number = 0, limit: number = 100): BlazeNode => {
+    if (n > limit)
+        throw "Overflow";
+
+    if (!node.children)
+        return node;
+
+    swap_children(node);
+
+    node.context.counter -= 1;
+    if (node.context.counter > 0)
+        return node;
+
+    node.context.counter = node.children.length;
+    node.context.full = true;
+
+    return !node.parent ? node : rotate_node(node.parent, n + 1);
 }
 
-const t_context = (tree?: SearchTree | SearchPosition): SearchContext | undefined => {
-	return !tree ? undefined : (tree as any)['__tree_context'];
-}
+const collect_nodes = (
+    node: BlazeNode,
+    arr: [string, SearchPosition][] = [],
+    parent_id: string = ""
+): [string, SearchPosition][] => {
 
-const t_pid = (tree?: SearchTree): string | undefined => {
-	return t_id(t_parent(tree));
-}
+    const id = `${parent_id}${node.parent === null ? '' : node.id}`;
+    const children = node.children;
+    if (!children) {
+        if (node.value)
+            arr.push([id, node.value]);
+        return arr;
+    }
 
-const t_is_tree = (obj?: any): boolean => {
-	return (obj ?? {})['__tree_is_map'] === true;
-}
+    let array = [...arr];
+    for (let child of children) {
+        array = [...arr, ...collect_nodes(child, array, id)];
+    }
 
-const t_update_context = (tree: SearchTree, context?: SearchContext): SearchTree => {
-	(tree as any)['__tree_context'] = (context ?? { depth: 0 });
-	return tree;
-}
-
-const last_of_ring = (arr: string[]): string | undefined => {
-	return arr.length <= 0 ? undefined : arr[arr.length - 1];
+    return array;
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
@@ -151,12 +190,11 @@ export class SearchState {
 	layout_width: number;
 	layout_height: number;
 	layout_depth: number;
-
-	search_tree: SearchTree;
+	search_node: BlazeNode;
 
 	constructor(keyboard_layout: string, keyboard_allowed: string, distance: number) {
 		this.initKeyboardLayout(keyboard_layout, keyboard_allowed);
-		this.search_tree = create_tree('root');
+		this.search_node = create_node("#");
 		this.layout_depth = distance;
 	}
 
@@ -368,30 +406,28 @@ export class SearchState {
 		return [n_x, n_y, depth];
 	}
 
-	register(
-
+	add_node(
 		input: string,
-		position: SearchPosition | SearchTree,
-		search_tree: SearchTree,
+		position: SearchPosition,
+		node: BlazeNode,
 		n: number = 0,
 		limit: number = 100
-
-	): [
-		name: string,
-		tree: SearchTree,
-		signal: STATUS
-	] {
-		let context: SearchContext = t_context(search_tree) ?? { depth: 0, ring: [], full: false};
-
+	): BlazeNode {
 		if (n >= limit) {
-			// this shouldn't happen
-			console.error('Overflow');
-			context.depth = -1;
-			return ['#', t_update_context(search_tree, context), STATUS.ERROR];
-		}
+			console.error("node overflow");
+            node.context.depth = -1;
+            throw "Stack overflow";
+        }
+
+        if (node.context.full) {
+            if (!node.children || node.children.length <= 0)
+                throw "Impossible state, full node MUST contain children";
+            let left = node.children[0];
+            return this.add_node(left.id, position, left, n + 1, limit);
+        }
 
 		const max_spin = Math.min(
-			Math.pow(1 + (context.depth * 2), 2) + 1,
+			Math.pow(1 + (Math.max(0, node.context.depth) * 2), 2) + 1,
 			(this.layout_height + this.layout_width) * 2
 		);
 
@@ -401,186 +437,84 @@ export class SearchState {
 		let loop = 0;
 
 		while (true) {
-			const [n_x, n_y, depth] = SearchState.next_spiral(
-				(context.position ?? [x, y]),
+			if (loop > max_spin) {
+				console.error("max spin");
+				node.context.depth = -1;
+				return node;
+			}
+
+			const [i_x, i_y, i_depth] = SearchState.next_spiral(
+				(node.context.position ?? [x, y]),
 				[x, y],
-				context.depth,
+				node.context.depth,
 				this.layout_width,
 				this.layout_height,
 				this.layout_depth
 			);
 
-			char = this.from(n_x, n_y);
+			char = this.from(i_x, i_y);
 
-			context.position = [n_x, n_y];
-			context.depth = depth;
-			t_update_context(search_tree, context);
-
-			if (loop++ >= max_spin) {
-				// this shouldn't happen
-				console.error('Too much spinning');
-				context.depth = -1;
-				return ['#', t_update_context(search_tree, context), STATUS.ERROR];
-			}
+			node.context.position = [i_x, i_y];
+			node.context.depth = i_depth;
 
 			if (char === null) {
-				// ignored character (excluded from layout)
 				continue;
 			}
 
-			const prev = search_tree[char];
-			if (!prev) {
-				// no duplicates so adding new element to current node
-				search_tree[char] = position;
-				context.position = [n_x, n_y];
-				context.ring.push(char);
-				context.depth = depth;
-
-				return [char, t_update_context(search_tree, context), STATUS.OK];
-			}
-
-			// reset position
-			context.position = [x, y];
-			context.depth = 0;
-			t_update_context(search_tree, context);
-
-			const parent = t_parent(search_tree);
-			if (!!parent) {
-
-				const parent_context = t_context(parent);
-				if (!parent_context || !parent_context.full) {
-
-					// parent made full circle, now children can grow their own children
-					return [char, t_update_context(search_tree, context), STATUS.DUPLICATE];
-				}
-
-				const pra_parent = t_parent(parent);
-				if (!!pra_parent) {
-
-					const pra_parent_context = t_context(pra_parent);
-					if (!!pra_parent_context) {
-
-						const ring = pra_parent_context.ring;
-						for (let child_id of ring) {
-
-							const child_context = t_context(pra_parent[child_id]);
-							if (!child_context || !child_context.full) {
-								// TODO memorize for more efficiency
-								// TODO rotate
-								return [char, t_update_context(search_tree, context), STATUS.PROPAGATE];
-							}
-						}
-					}
-
-				}
-			}
-
-			const prev_key = last_of_ring(context.ring) ?? char;
-			let search_node: SearchTree = create_tree(prev_key, { depth: 0, ring: [], full: false }, {}, search_tree);
-
-			let last = search_tree[prev_key];
-			if (!last) {
-				// this shouldn't happen
-				console.error('no last');
-				return this.register(
-					prev_key,
-					position,
-					search_tree,
-					n + 1
-				);
-			}
-
-			const is_node = t_is_tree(last);
-			if (prev_key === input && !is_node) {
-
-				// Full circle, allow children to grow
-				context.full = true;
-				t_update_context(search_tree, context);
-			}
-
-			if (!is_node) {
-
-				// converting node-element to node-tree
-				const [i_name, i_tree] = this.register(
-					prev_key,
-					last,
-					search_node,
-					n + 1
-				);
-
-				last.value = `${prev_key}${i_name}`;
-				search_node = i_tree;
-			} else {
-
-				// use existing node
-				search_node = last as SearchTree;
-			}
-
-			search_tree[prev_key] = search_node;
-
-			// adding new element to node-tree
-			const [i_name, i_tree, i_signal] = this.register(
-				prev_key,
-				position,
-				search_node,
-				n + 1
-			);
-
-			search_node = i_tree;
-
-			if (i_signal === STATUS.PROPAGATE) {
-
-				// ensure all parent children is full
-				return [i_name, i_tree, STATUS.DUPLICATE];
-			}
-
-			if (i_signal === STATUS.DUPLICATE) {
-
-				// child node is full (on first level)
-				const last = context.ring.pop() ?? char;
-				context.ring = [last, ...context.ring];
-				context.position = [x, y];
-				context.depth = 0;
-
-				// restart with next child
-				return this.register(
-					input,
-					position,
-					t_update_context(search_tree, context),
-					n + 1
-				);
-			}
-
-			if (i_signal === STATUS.ERROR) {
-
-				// this shouldn't happen
-				console.error('child error');
-				let node_context = t_context(search_node) ?? { depth: 0, ring: [], full: false };
-				node_context.depth = -1;
-				return this.register(
-					char,
-					position,
-					t_update_context(search_node, node_context),
-					n + 1
-				);
-			}
-
-			// returning added child
-			position.value = `${prev_key}${i_name}`;
-			search_tree[prev_key] = search_node;
-
-			return [position.value, search_tree, STATUS.OK];
+			break;
 		}
+
+		if (!!node.value) {
+			// Existing singular value in node
+			let prev_node = create_node(node.id, node, undefined, {...node.value});
+			node.children = [...(node.children ?? []), prev_node];
+			node.value = undefined;
+		}
+
+		if (!find_node(node, char)) {
+			// There is no children which also means that there were no singular values previously
+			if (!node.children && !!node.parent) {
+				node.value = position;
+				return node;
+			}
+
+            if (!node.parent && !node.children) {
+                node.value = undefined;
+                node.children = [];
+            }
+
+			let prev_node = create_node(char, node, undefined, {...position});
+			node.children?.unshift(prev_node);
+			node.value = undefined;
+
+			return node;
+		}
+
+        if (!node.context.full) {
+            rotate_node(node);
+            return this.add_node(input, position, node, n + 1, limit);
+        }
+
+        if (!node.children || node.children.length <= 0)
+            throw "Impossible state, full node MUST contain children";
+        let left = node.children[0];
+        return this.add_node(left.id, position, left, n + 1, limit);
 	}
 
-	assign(input: string, position: SearchPosition | SearchTree): string {
-		const [name, tree] = this.register(input, position, this.search_tree);
-		this.search_tree = tree;
-		return name;
+	assign(input: string, position: SearchPosition): void {
+        this.add_node(input, position, this.search_node);
 	}
+
+    result_positions(): SearchPosition[] {
+        const results = collect_nodes(this.search_node);
+        return results.map(x => {
+            x[1].value = x[0];
+            return x[1];
+        })
+    }
 
 	reset(): void {
-		this.search_tree = create_tree('root');
+		this.search_node = create_node("#");
 	}
 }
 
@@ -945,7 +879,6 @@ export default class BlazeJumpPlugin extends Plugin {
 		const search_lower = search.toLowerCase();
 		const visible_text = editor.getValue().toLowerCase();
 		const search_area = visible_text.substring(this.range_from, this.range_to);
-		const positions = [];
 
 		let index = search_area.indexOf(search_lower);
 		const t0 = new Date().getTime();
@@ -963,36 +896,30 @@ export default class BlazeJumpPlugin extends Plugin {
 			};
 
 			if (this.mode === 'any') {
-				const n_val = this.search_state.assign(search_lower, search_position);
-				search_position.value = n_val;
-				positions.push(search_position);
+				this.search_state.assign(search_lower, search_position);
 			}
 
 			else if (this.mode === 'start') {
 				const pre = editor.offsetToPos((index > 0 ? index - 1 : index) + this.range_from);
 				const nv = editor.getRange(pre, end).trim();
-				if (nv.length == 1) {
-					const n_val = this.search_state.assign(search_lower, search_position);
-					search_position.value = n_val;
-					positions.push(search_position);
-				}
+				if (nv.length == 1)
+					this.search_state.assign(search_lower, search_position);
 			}
 
 			else if (this.mode === 'end') {
 				// TODO FIXME
 				const post = editor.offsetToPos(Math.min(search_area.length - 1, index + 1) + this.range_from);
 				const nv = editor.getRange(start, post).trim();
-				if (nv.length == 1) {
-					const n_val = this.search_state.assign(search_lower, search_position);
-					search_position.value = n_val;
-					positions.push(search_position);
-				}
+				if (nv.length == 1)
+					this.search_state.assign(search_lower, search_position);
 			}
 
 			index = search_area.indexOf(search_lower, index + 1);
 		}
 
 		const t1 = new Date().getTime();
+
+        const positions = this.search_state.result_positions();
 
 		console.log(`indexing: ${t1 - t0}ms`);
 		console.log(`found: ${positions.length}`);
