@@ -484,8 +484,6 @@ export class SearchState {
             if (!node.children || node.children.length <= 0)
                 throw "Impossible state, full node MUST contain children";
             let left = node.children[0];
-
-            console.log('recur');
             return this.add_node(left.id, position, left, n + 1, limit);
         }
 
