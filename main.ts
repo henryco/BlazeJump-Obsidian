@@ -130,13 +130,7 @@ const rotate_node = (node: BlazeNode, n: number = 0, limit: number = 100): Blaze
     if (!node.children)
         return node;
 
-    const was = [...node.children].map(x => x.id).reduce((a, b) => a + b, '');
-
     swap_children(node);
-
-    const now = [...node.children].map(x => x.id).reduce((a, b) => a + b, '');
-
-    console.log('swap', was, ' -> ', now);
 
     node.context.counter -= 1;
     if (node.context.counter > 0)
@@ -151,8 +145,12 @@ const rotate_node = (node: BlazeNode, n: number = 0, limit: number = 100): Blaze
 const collect_nodes = (
     node: BlazeNode,
     arr: [string, SearchPosition][] = [],
-    parent_id: string = ""
+    parent_id: string = "",
+    n: number = 0,
+    limit: number = 1000
 ): [string, SearchPosition][] => {
+    if (n > limit)
+        throw "Overflow";
 
     const id = `${parent_id}${node.parent === null ? '' : node.id}`;
     const children = node.children;
@@ -162,12 +160,11 @@ const collect_nodes = (
         return arr;
     }
 
-    let array = [...arr];
     for (let child of children) {
-        array = [...arr, ...collect_nodes(child, array, id)];
+        arr = collect_nodes(child, arr, id, n + 1, limit);
     }
 
-    return array;
+    return arr;
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
@@ -474,26 +471,20 @@ export class SearchState {
 
     ): BlazeNode {
         if (n >= limit) {
-			console.error("node overflow");
             node.context.depth = -1;
             throw "Stack overflow";
         }
 
         if (node.context.full) {
-            console.log('++', input, [node.id, node.parent?.id, node.children?.length], [n, limit]);
             if (!node.children || node.children.length <= 0)
                 throw "Impossible state, full node MUST contain children";
             let left = node.children[0];
             return this.add_node(left.id, position, left, root, n + 1, limit);
         }
 
-        console.log('>>', input, [node.id, node.parent?.id, node.children?.length], [n, limit]);
-
         const [char, i_pos, i_depth] = this.next_key(input, node.context.depth, node.context.position);
         node.context.position = i_pos;
         node.context.depth = i_depth;
-
-        console.log('::', char);
 
 		if (!!node.value) {
 			// Existing singular value in node
@@ -506,11 +497,9 @@ export class SearchState {
                 full: false
             }
 
-			let prev_node = create_node(node.id, node, n_context, {...node.value});
+			let prev_node = create_node(node.id, node, n_context, node.value);
 			node.children = [...(node.children ?? []), prev_node];
 			node.value = undefined;
-
-            console.log('!!');
 		}
 
 		if (!find_node(node, char)) {
@@ -533,39 +522,38 @@ export class SearchState {
                 full: false
             }
 
-			let prev_node = create_node(char, node, n_context, {...position});
+			let prev_node = create_node(char, node, n_context, position);
 			node.children?.push(prev_node);
 			node.value = undefined;
 
-            console.log('<<', prev_node.id);
 			return node;
 		}
 
         if (!node.context.full) {
             rotate_node(node);
-            console.log('$$', node.id, root.id);
             return this.add_node(input, position, root, root, n + 1, limit);
         }
 
         if (!node.children || node.children.length <= 0)
             throw "Impossible state, full node MUST contain children";
         let left = node.children[0];
-        console.log('??', left.id);
         return this.add_node(left.id, position, left, root, n + 1, limit);
 	}
 
 	assign(input: string, position: SearchPosition): void {
         this.add_node(input, position, this.search_node, this.search_node);
-        console.log(' ');
 	}
 
     result_positions(): SearchPosition[] {
-        return [];
-        // const results = collect_nodes(this.search_node);
-        // return results.map(x => {
-        //     x[1].value = x[0];
-        //     return x[1];
-        // });
+        const results = collect_nodes(this.search_node);
+        return results.map(x => {
+            x[1].value = x[0];
+            return x[1];
+        });
+    }
+
+    process_positions(): void {
+        collect_nodes(this.search_node).forEach(([id, position]) => position.value = id);
     }
 
 	reset(): void {
@@ -935,6 +923,8 @@ export default class BlazeJumpPlugin extends Plugin {
 		const visible_text = editor.getValue().toLowerCase();
 		const search_area = visible_text.substring(this.range_from, this.range_to);
 
+        let positions: SearchPosition[] = [];
+
 		let index = search_area.indexOf(search_lower);
 		const t0 = new Date().getTime();
 		while (index > -1) {
@@ -952,33 +942,37 @@ export default class BlazeJumpPlugin extends Plugin {
 
 			if (this.mode === 'any') {
 				this.search_state.assign(search_lower, search_position);
+                positions.push(search_position);
 			}
 
 			else if (this.mode === 'start') {
 				const pre = editor.offsetToPos((index > 0 ? index - 1 : index) + this.range_from);
 				const nv = editor.getRange(pre, end).trim();
-				if (nv.length == 1)
-					this.search_state.assign(search_lower, search_position);
+				if (nv.length == 1) {
+                    this.search_state.assign(search_lower, search_position);
+                    positions.push(search_position);
+                }
 			}
 
 			else if (this.mode === 'end') {
 				// TODO FIXME
 				const post = editor.offsetToPos(Math.min(search_area.length - 1, index + 1) + this.range_from);
 				const nv = editor.getRange(start, post).trim();
-				if (nv.length == 1)
-					this.search_state.assign(search_lower, search_position);
+				if (nv.length == 1) {
+                    this.search_state.assign(search_lower, search_position);
+                    positions.push(search_position);
+                }
 			}
 
 			index = search_area.indexOf(search_lower, index + 1);
 		}
 
-		const t1 = new Date().getTime();
+        this.search_state.process_positions();
 
-        const positions = this.search_state.result_positions();
+		const t1 = new Date().getTime();
 
 		console.log(`indexing: ${t1 - t0}ms`);
 		console.log(`found: ${positions.length}`);
-		console.log(positions.map(x => x.value).reduce((p, c) => ({...p, [c]: (p[c] ?? 0) + 1}), {} as any));
 
 		return positions;
 	}
