@@ -130,7 +130,13 @@ const rotate_node = (node: BlazeNode, n: number = 0, limit: number = 100): Blaze
     if (!node.children)
         return node;
 
+    const was = [...node.children].map(x => x.id).reduce((a, b) => a + b, '');
+
     swap_children(node);
+
+    const now = [...node.children].map(x => x.id).reduce((a, b) => a + b, '');
+
+    console.log('swap', was, ' -> ', now);
 
     node.context.counter -= 1;
     if (node.context.counter > 0)
@@ -406,13 +412,68 @@ export class SearchState {
 		return [n_x, n_y, depth];
 	}
 
+    next_key(
+
+        input: string,
+        depth?: number,
+        pos?: [number, number]
+
+    ): [char: string, pos: [number, number], depth: number] {
+
+        const [x, y] = this.coord(input);
+
+        let k_pos: [number, number] | undefined = pos ? [...pos] : undefined;
+        let k_depth: number = depth ?? 0;
+
+        const max_spin = Math.min(
+            Math.pow(1 + (Math.max(0, k_depth) * 2), 2) + 1,
+            (this.layout_height + this.layout_width) * 2
+        );
+
+        let char: string | null = null;
+        let loop = 0;
+
+        while (true) {
+            if (loop > max_spin) {
+                console.error("max spin");
+                throw "Max spin";
+            }
+
+            const [i_x, i_y, i_depth] = SearchState.next_spiral(
+                (k_pos ?? [x, y]),
+                [x, y],
+                k_depth,
+                this.layout_width,
+                this.layout_height,
+                this.layout_depth
+            );
+
+            char = this.from(i_x, i_y);
+
+            k_pos = [i_x, i_y];
+            k_depth = i_depth;
+
+            if (char === null) {
+                continue;
+            }
+
+            break;
+        }
+
+        return [char, k_pos, k_depth];
+    }
+
 	add_node(
+
 		input: string,
 		position: SearchPosition,
 		node: BlazeNode,
 		n: number = 0,
 		limit: number = 100
-	): BlazeNode {
+
+    ): BlazeNode {
+        console.log('>>', input, [node.id, node.children?.length], [n, limit]);
+
 		if (n >= limit) {
 			console.error("node overflow");
             node.context.depth = -1;
@@ -423,52 +484,33 @@ export class SearchState {
             if (!node.children || node.children.length <= 0)
                 throw "Impossible state, full node MUST contain children";
             let left = node.children[0];
+
+            console.log('recur');
             return this.add_node(left.id, position, left, n + 1, limit);
         }
 
-		const max_spin = Math.min(
-			Math.pow(1 + (Math.max(0, node.context.depth) * 2), 2) + 1,
-			(this.layout_height + this.layout_width) * 2
-		);
+        const [char, i_pos, i_depth] = this.next_key(input, node.context.depth, node.context.position);
+        node.context.position = i_pos;
+        node.context.depth = i_depth;
 
-		const [x, y] = this.coord(input);
-
-		let char: string | null = null;
-		let loop = 0;
-
-		while (true) {
-			if (loop > max_spin) {
-				console.error("max spin");
-				node.context.depth = -1;
-				return node;
-			}
-
-			const [i_x, i_y, i_depth] = SearchState.next_spiral(
-				(node.context.position ?? [x, y]),
-				[x, y],
-				node.context.depth,
-				this.layout_width,
-				this.layout_height,
-				this.layout_depth
-			);
-
-			char = this.from(i_x, i_y);
-
-			node.context.position = [i_x, i_y];
-			node.context.depth = i_depth;
-
-			if (char === null) {
-				continue;
-			}
-
-			break;
-		}
+        console.log('::', char);
 
 		if (!!node.value) {
 			// Existing singular value in node
-			let prev_node = create_node(node.id, node, undefined, {...node.value});
+
+            const [_, n_pos, n_depth] = this.next_key(node.id);
+            let n_context = <NodeContext> {
+                position: n_pos,
+                depth: n_depth,
+                counter: 0,
+                full: false
+            }
+
+			let prev_node = create_node(node.id, node, n_context, {...node.value});
 			node.children = [...(node.children ?? []), prev_node];
 			node.value = undefined;
+
+            console.log('!!');
 		}
 
 		if (!find_node(node, char)) {
@@ -483,10 +525,19 @@ export class SearchState {
                 node.children = [];
             }
 
-			let prev_node = create_node(char, node, undefined, {...position});
-			node.children?.unshift(prev_node);
+            const [_, n_pos, n_depth] = this.next_key(char);
+            let n_context = <NodeContext> {
+                position: n_pos,
+                depth: n_depth,
+                counter: 0,
+                full: false
+            }
+
+			let prev_node = create_node(char, node, n_context, {...position});
+			node.children?.push(prev_node);
 			node.value = undefined;
 
+            console.log('<<', prev_node.id);
 			return node;
 		}
 
@@ -503,6 +554,7 @@ export class SearchState {
 
 	assign(input: string, position: SearchPosition): void {
         this.add_node(input, position, this.search_node);
+        console.log(' ');
 	}
 
     result_positions(): SearchPosition[] {
