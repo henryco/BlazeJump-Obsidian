@@ -468,6 +468,7 @@ export class SearchState {
 		input: string,
 		position: SearchPosition,
 		node: BlazeNode,
+		root: BlazeNode,
 		n: number = 0,
 		limit: number = 100
 
@@ -483,7 +484,7 @@ export class SearchState {
             if (!node.children || node.children.length <= 0)
                 throw "Impossible state, full node MUST contain children";
             let left = node.children[0];
-            return this.add_node(left.id, position, left, n + 1, limit);
+            return this.add_node(left.id, position, left, root, n + 1, limit);
         }
 
         console.log('>>', input, [node.id, node.parent?.id, node.children?.length], [n, limit]);
@@ -542,26 +543,29 @@ export class SearchState {
 
         if (!node.context.full) {
             rotate_node(node);
-            return this.add_node(input, position, node, n + 1, limit);
+            console.log('$$', node.id, root.id);
+            return this.add_node(input, position, root, root, n + 1, limit);
         }
 
         if (!node.children || node.children.length <= 0)
             throw "Impossible state, full node MUST contain children";
         let left = node.children[0];
-        return this.add_node(left.id, position, left, n + 1, limit);
+        console.log('??', left.id);
+        return this.add_node(left.id, position, left, root, n + 1, limit);
 	}
 
 	assign(input: string, position: SearchPosition): void {
-        this.add_node(input, position, this.search_node);
+        this.add_node(input, position, this.search_node, this.search_node);
         console.log(' ');
 	}
 
     result_positions(): SearchPosition[] {
-        const results = collect_nodes(this.search_node);
-        return results.map(x => {
-            x[1].value = x[0];
-            return x[1];
-        })
+        return [];
+        // const results = collect_nodes(this.search_node);
+        // return results.map(x => {
+        //     x[1].value = x[0];
+        //     return x[1];
+        // });
     }
 
 	reset(): void {
