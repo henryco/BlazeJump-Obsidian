@@ -56,6 +56,7 @@ interface SearchStyle {
 	bg: string;
 	text: string;
 	border: string;
+    offset: number;
 	fix?: number;
 	idx: number;
 }
@@ -590,12 +591,15 @@ export class BlazeFoundAreaWidget extends WidgetType {
 	}
 
 	toDOM(_: EditorView): HTMLElement {
+        const prefix = Array(this.style.offset).fill(' ').reduce((p, c) => p + c, '');
+
 		const el = document.createElement("mark");
-		el.innerText = this.replace_text.toLowerCase();
+		el.innerText = prefix + this.replace_text.toLowerCase().substring(this.style.offset);
+
 		el.style.backgroundColor = `${this.style.bg}`;
 		el.style.color = `${this.style.text}`;
 		el.style.border = `thin dashed ${this.style.border}`;
-		el.style.zIndex = `${8000 + this.style.idx}`;
+		el.style.zIndex = `${5000 + this.style.idx}`;
 		el.style.position = 'absolute';
 		el.style.fontWeight = 'bold';
 		el.style.paddingLeft = '2px';
@@ -605,6 +609,8 @@ export class BlazeFoundAreaWidget extends WidgetType {
 		if (this.style.fix !== undefined) {
 			el.style.marginLeft = `${this.style.fix}px`;
 		}
+
+        el.style.fontFamily = 'monospace';
 		// el.style.whiteSpace = 'no-wrap';
 		// el.style.marginLeft = '-10px';
 		return el;
@@ -686,6 +692,7 @@ export default class BlazeJumpPlugin extends Plugin {
 	callback_provided_input: any;
 	callback_start_search: any;
 	active: boolean = false;
+    offset: number = 0;
 
 	range_from: number;
 	range_to: number;
@@ -707,6 +714,7 @@ export default class BlazeJumpPlugin extends Plugin {
 			bg: settings[`search_color_bg_${this.mode ?? this.settings.default_action}`] ?? 'white',
 			text: settings[`search_color_text_${this.mode ?? this.settings.default_action}`] ?? st,
 			border: settings[`search_color_border_${this.mode ?? this.settings.default_action}`] ?? st,
+            offset: this.offset,
 			idx: idx
 		}
 	}
@@ -820,8 +828,9 @@ export default class BlazeJumpPlugin extends Plugin {
         if (full) {
             this.statusClear();
             this.search_state.reset();
-            this.active = false;
             this.mode = undefined;
+            this.active = false;
+            this.offset = 0;
         }
 
 		if (this.callback_start_search)
@@ -876,8 +885,10 @@ export default class BlazeJumpPlugin extends Plugin {
                     return;
                 }
 
+                this.offset += 1;
                 this.search_state.narrow(char);
-                let new_positions = this.search_state.process_positions()
+
+                const new_positions = this.search_state.process_positions()
                     .map(x => x[1])
                     .sort((a, b) => a.index_s - b.index_s);
 
