@@ -569,7 +569,6 @@ export class SearchState {
     }
 
     process_positions(): [string, SearchPosition][] {
-        console.log('>>', this.search_node);
         return collect_nodes(this.search_node);
     }
 
