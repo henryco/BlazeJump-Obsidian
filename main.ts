@@ -546,8 +546,29 @@ export class SearchState {
         this.add_node(input, position, this.search_node, this.search_node);
 	}
 
-    process_positions(): void {
-        collect_nodes(this.search_node);
+    narrow(input: string): void {
+        let node = this.search_node;
+
+        if (node.id === input) {
+            this.search_node = node;
+            return;
+        }
+
+        if (!node.children || node.children.length <= 0) {
+            return;
+        }
+
+        for (let child of node.children) {
+            if (child.id === input) {
+                this.search_node = child;
+                return;
+            }
+        }
+    }
+
+    process_positions(): [string, SearchPosition][] {
+        console.log('>>', this.search_node);
+        return collect_nodes(this.search_node);
     }
 
 	reset(): void {
@@ -793,10 +814,14 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.mode = <MODE_TYPE> mode;
 	}
 
-	resetAction(_?: Editor) {
-		this.active = false;
-		this.statusClear();
-		this.search_state.reset();
+	resetAction(_?: Editor, full: boolean = true) {
+
+        if (full) {
+            this.statusClear();
+            this.search_state.reset();
+            this.active = false;
+            this.mode = undefined;
+        }
 
 		if (this.callback_start_search)
 			window.removeEventListener("keydown", this.callback_start_search);
@@ -805,7 +830,6 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		this.callback_provided_input = null;
 		this.callback_start_search = null;
-		this.mode = undefined;
 
 		inter_plugin_state.state['positions'] = undefined;
 	}
@@ -834,15 +858,38 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.statusSet("BlazeMode: ");
 		const callback_on_provided = (event: any) => {
 			try {
-                // const char = event.key;
+                const char = event.key;
 
                 event.preventDefault();
                 event.stopPropagation();
                 window.removeEventListener("keydown", callback_on_provided);
 
-                // TODO NARROW
+                this.search_state.narrow(char);
+                let new_positions = this.search_state.process_positions()
+                    .map(x => x[1])
+                    .sort((a, b) => a.index_s - b.index_s);
 
-                this.resetAction(editor);
+                this.resetAction(editor, new_positions.length <= 1);
+
+                if (new_positions.length > 1) {
+                    inter_plugin_state.state['positions'] = [...new_positions];
+                    this.statusSet("BlazeMode: " + `${char}`);
+                    window.addEventListener('keydown', callback_on_provided, { once: true });
+                    // TODO
+                }
+
+                else if (new_positions.length === 1) {
+                    const position = new_positions[0];
+                    editor.setCursor(position.start);
+                    console.log('Jumped');
+                    // TODO
+                }
+
+                else {
+                    console.warn("Nothing found...");
+                    // TODO
+                }
+
                 if (inter_plugin_state.state['plugin_draw_callback'])
                     inter_plugin_state.state['plugin_draw_callback']();
 
