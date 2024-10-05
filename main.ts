@@ -155,8 +155,10 @@ const collect_nodes = (
     const id = `${parent_id}${node.parent === null ? '' : node.id}`;
     const children = node.children;
     if (!children) {
-        if (node.value)
+        if (node.value) {
+            node.value.value = id;
             arr.push([id, node.value]);
+        }
         return arr;
     }
 
@@ -544,16 +546,8 @@ export class SearchState {
         this.add_node(input, position, this.search_node, this.search_node);
 	}
 
-    result_positions(): SearchPosition[] {
-        const results = collect_nodes(this.search_node);
-        return results.map(x => {
-            x[1].value = x[0];
-            return x[1];
-        });
-    }
-
     process_positions(): void {
-        collect_nodes(this.search_node).forEach(([id, position]) => position.value = id);
+        collect_nodes(this.search_node);
     }
 
 	reset(): void {
