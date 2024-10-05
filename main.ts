@@ -549,7 +549,7 @@ export class SearchState {
     narrow(input: string): void {
         let node = this.search_node;
 
-        if (node.id === input) {
+        if (node.id === input && (!node.children || node.children.length <= 0)) {
             this.search_node = node;
             return;
         }
@@ -564,6 +564,8 @@ export class SearchState {
                 return;
             }
         }
+
+        this.reset();
     }
 
     process_positions(): [string, SearchPosition][] {
@@ -858,11 +860,22 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.statusSet("BlazeMode: ");
 		const callback_on_provided = (event: any) => {
 			try {
-                const char = event.key;
-
+                window.removeEventListener("keydown", callback_on_provided);
                 event.preventDefault();
                 event.stopPropagation();
-                window.removeEventListener("keydown", callback_on_provided);
+                const char = event.key;
+
+                if (event.keyCode === 27 ||
+                    event.which === 27 ||
+                    `${event.key}`.toLowerCase() === 'escape' ||
+                    `${event.code}`.toLowerCase() === 'escape')
+                {
+                    this.resetAction(editor);
+                    if (inter_plugin_state.state['plugin_draw_callback'])
+                        inter_plugin_state.state['plugin_draw_callback']();
+                    (editor as any)['cm'].dispatch();
+                    return;
+                }
 
                 this.search_state.narrow(char);
                 let new_positions = this.search_state.process_positions()
