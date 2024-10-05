@@ -834,25 +834,24 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.statusSet("BlazeMode: ");
 		const callback_on_provided = (event: any) => {
 			try {
-				// const char = event.key;
+                // const char = event.key;
 
-				event.preventDefault();
-				event.stopPropagation();
-				window.removeEventListener("keydown", callback_on_provided);
+                event.preventDefault();
+                event.stopPropagation();
+                window.removeEventListener("keydown", callback_on_provided);
 
-				// TODO
+                // TODO NARROW
 
-				this.resetAction(editor);
-				if (inter_plugin_state.state['plugin_draw_callback'])
-					inter_plugin_state.state['plugin_draw_callback']();
-				// @ts-ignore
-				editor['cm'].dispatch();
+                this.resetAction(editor);
+                if (inter_plugin_state.state['plugin_draw_callback'])
+                    inter_plugin_state.state['plugin_draw_callback']();
 
-			} catch (e) {
+                (editor as any)['cm'].dispatch();
+
+            } catch (e) {
 				console.error(e);
 				this.resetAction(editor);
-				// @ts-ignore
-				editor['cm'].dispatch();
+                (editor as any)['cm'].dispatch();
 				throw e;
 			}
 		}
@@ -871,8 +870,7 @@ export default class BlazeJumpPlugin extends Plugin {
 						if (inter_plugin_state.state['plugin_draw_callback'])
 							inter_plugin_state.state['plugin_draw_callback']();
 						// forcing re-render
-						// @ts-ignore
-						editor['cm'].dispatch();
+                        (editor as any)['cm'].dispatch();
 						return;
 					}
 
@@ -893,13 +891,11 @@ export default class BlazeJumpPlugin extends Plugin {
 					inter_plugin_state.state['plugin_draw_callback']();
 
 				// forcing re-render
-				// @ts-ignore
-				editor['cm'].dispatch();
+				(editor as any)['cm'].dispatch();
 			} catch (e) {
 				console.error(e);
 				this.resetAction(editor);
-				// @ts-ignore
-				editor['cm'].dispatch();
+                (editor as any)['cm'].dispatch();
 				throw e;
 			}
 		};
