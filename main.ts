@@ -1,16 +1,6 @@
+import {Decoration, DecorationSet, EditorView, PluginSpec, PluginValue, ViewPlugin, ViewUpdate, WidgetType} from "@codemirror/view";
 import {App, Editor, EditorPosition, Plugin, PluginSettingTab, Setting} from 'obsidian';
-import {
-	Decoration,
-	DecorationSet,
-	EditorView,
-	PluginSpec,
-	PluginValue,
-	ViewPlugin,
-	ViewUpdate,
-	WidgetType
-} from "@codemirror/view";
 import {RangeSetBuilder} from "@codemirror/state";
-
 import {NamedValue, SearchState} from "./search_state";
 
 type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator';
@@ -47,31 +37,6 @@ interface ExpandSelectPluginSettings {
 	search_color_border_terminator?: string;
 }
 
-interface Coord {
-	bottom: number;
-	left: number;
-	right: number;
-	top: number;
-}
-
-interface SearchStyle {
-	bg: string;
-	text: string;
-	border: string;
-    offset: number;
-	fix?: number;
-	idx: number;
-}
-
-interface SearchPosition extends NamedValue {
-	start: EditorPosition;
-	end: EditorPosition;
-	index_s: number;
-	index_e: number;
-	value: string;
-	coord: Coord;
-}
-
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	default_action: "start",
 	keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
@@ -89,7 +54,39 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	search_color_bg_start: 'yellow'
 }
 
-const inter_plugin_state: any = {
+interface Coord {
+    bottom: number;
+    left: number;
+    right: number;
+    top: number;
+}
+
+interface SearchStyle {
+    bg: string;
+    text: string;
+    border: string;
+    offset: number;
+    fix?: number;
+    idx: number;
+}
+
+interface SearchPosition extends NamedValue {
+    start: EditorPosition;
+    end: EditorPosition;
+    index_s: number;
+    index_e: number;
+    value: string;
+    coord: Coord;
+}
+
+interface InterState {
+    plugin_draw_callback?: () => void;
+    editor_callback?: (view: EditorView) => void;
+    style_provider?: (i: number) => SearchStyle;
+    positions?: SearchPosition[];
+}
+
+const inter_plugin_state: { state: InterState } = {
 	state: {}
 }
 
@@ -134,13 +131,13 @@ class BlazeViewPlugin implements PluginValue {
 	decorations: DecorationSet = Decoration.none;
 
 	constructor() {
-		inter_plugin_state.state['plugin_draw_callback'] =
+		inter_plugin_state.state.plugin_draw_callback =
 			() => this.build_decorations();
 	}
 
 	update(update: ViewUpdate) {
-		if (inter_plugin_state.state['editor_callback'])
-			inter_plugin_state.state['editor_callback'](update.view);
+		if (inter_plugin_state.state.editor_callback)
+			inter_plugin_state.state.editor_callback(update.view);
 	}
 
 	destroy() {
@@ -148,8 +145,9 @@ class BlazeViewPlugin implements PluginValue {
 	}
 
 	build_decorations() {
-		const positions: SearchPosition[] = inter_plugin_state.state['positions'];
-		if (!positions) {
+
+        const positions = inter_plugin_state.state.positions;
+		if (!positions || positions.length <= 0) {
 			this.decorations = Decoration.none;
 			return;
 		}
@@ -166,7 +164,7 @@ class BlazeViewPlugin implements PluginValue {
 						position.name,
 						position,
 						<SearchStyle> {
-							...(<SearchStyle> (inter_plugin_state.state['style_provider'](i++))),
+							...(inter_plugin_state.state.style_provider?.(i++)),
 							fix: (fix > 0) ? -10 : undefined
 						}),
 					inclusive: false
@@ -183,8 +181,8 @@ const plugin_spec: PluginSpec<BlazeViewPlugin> = {
 	decorations: v => v.decorations,
 	eventObservers: {
 		keydown: (_, view: EditorView) => {
-			if (inter_plugin_state.state['editor_callback'])
-				inter_plugin_state.state['editor_callback'](view);
+			if (inter_plugin_state.state.editor_callback)
+				inter_plugin_state.state.editor_callback(view);
 		}
 	}
 }
@@ -241,9 +239,8 @@ export default class BlazeJumpPlugin extends Plugin {
 			this.settings.keyboard_depth
 		);
 
-		inter_plugin_state.state['style_provider'] = (idx: number = 0) => this.resolveSearchColor(idx);
-
-		inter_plugin_state.state['editor_callback'] = (view: EditorView) => {
+		inter_plugin_state.state.style_provider = (idx: number = 0) => this.resolveSearchColor(idx);
+		inter_plugin_state.state.editor_callback = (view: EditorView) => {
 			if (view.visibleRanges.length <= 0)
 				return;
 			const range = view.visibleRanges[0];
@@ -354,7 +351,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.callback_provided_input = null;
 		this.callback_start_search = null;
 
-		inter_plugin_state.state['positions'] = undefined;
+		inter_plugin_state.state.positions = undefined;
 	}
 
 	blazeAction(editor: Editor, _: any) {
@@ -392,8 +389,8 @@ export default class BlazeJumpPlugin extends Plugin {
                     `${event.code}`.toLowerCase() === 'escape')
                 {
                     this.resetAction(editor);
-                    if (inter_plugin_state.state['plugin_draw_callback'])
-                        inter_plugin_state.state['plugin_draw_callback']();
+                    if (inter_plugin_state.state.plugin_draw_callback)
+                        inter_plugin_state.state.plugin_draw_callback();
                     (editor as any)['cm'].dispatch();
                     return;
                 }
@@ -408,7 +405,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 this.resetAction(editor, new_positions.length <= 1);
 
                 if (new_positions.length > 1) {
-                    inter_plugin_state.state['positions'] = [...new_positions];
+                    inter_plugin_state.state.positions = [...new_positions];
                     this.statusSet("BlazeMode: " + `${char}`);
                     window.addEventListener('keydown', callback_on_provided, { once: true });
                     // TODO
@@ -426,8 +423,8 @@ export default class BlazeJumpPlugin extends Plugin {
                     // TODO
                 }
 
-                if (inter_plugin_state.state['plugin_draw_callback'])
-                    inter_plugin_state.state['plugin_draw_callback']();
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
 
                 (editor as any)['cm'].dispatch();
 
@@ -450,8 +447,8 @@ export default class BlazeJumpPlugin extends Plugin {
 					const positions = this.performSearch(editor, char);
 					if (!positions || positions.length <= 0) {
 						this.resetAction(editor);
-						if (inter_plugin_state.state['plugin_draw_callback'])
-							inter_plugin_state.state['plugin_draw_callback']();
+						if (inter_plugin_state.state.plugin_draw_callback)
+							inter_plugin_state.state.plugin_draw_callback();
 						// forcing re-render
                         (editor as any)['cm'].dispatch();
 						return;
@@ -459,7 +456,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
 					this.active = true;
 
-					inter_plugin_state.state['positions'] = [...positions];
+					inter_plugin_state.state.positions = [...positions];
 
 					this.statusSet("BlazeMode: " + `${char}`);
 					window.addEventListener('keydown', callback_on_provided, { once: true });
@@ -470,8 +467,8 @@ export default class BlazeJumpPlugin extends Plugin {
 					this.resetAction(editor);
 				}
 
-				if (inter_plugin_state.state['plugin_draw_callback'])
-					inter_plugin_state.state['plugin_draw_callback']();
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
 
 				// forcing re-render
 				(editor as any)['cm'].dispatch();
