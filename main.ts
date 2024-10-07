@@ -604,15 +604,13 @@ export class BlazeFoundAreaWidget extends WidgetType {
 		el.style.fontWeight = 'bold';
 		el.style.paddingLeft = '2px';
 		el.style.paddingRight = '2px';
-
+        el.style.fontFamily = 'monospace';
 		el.style.marginTop = '-1px';
+
 		if (this.style.fix !== undefined) {
 			el.style.marginLeft = `${this.style.fix}px`;
 		}
 
-        el.style.fontFamily = 'monospace';
-		// el.style.whiteSpace = 'no-wrap';
-		// el.style.marginLeft = '-10px';
 		return el;
 	}
 }
