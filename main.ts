@@ -343,8 +343,8 @@ export default class BlazeJumpPlugin extends Plugin {
                 style.textContent = `
                 
                     .markdown-source-view {
-                        background-color: #2E2E2E !important; /* Dark background */
-                        color: #CCCCCC !important; /* Light text */
+                        background-color: #2E2E2E !important;
+                        color: #CCCCCC !important;
                     }
                     
                 `;
