@@ -333,10 +333,34 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.mode = <MODE_TYPE> mode;
 	}
 
+    toggleDim(active: boolean) {
+        const existingStyle = document.getElementById('dim-editor-style');
+        if (active) {
+
+            if (!existingStyle) {
+                const style = document.createElement('style');
+                style.id = 'dim-editor-style';
+                style.textContent = `
+                
+                    .markdown-source-view {
+                        background-color: #2E2E2E !important; /* Dark background */
+                        color: #CCCCCC !important; /* Light text */
+                    }
+                    
+                `;
+                document.head.appendChild(style);
+            }
+
+        } else if (existingStyle) {
+            existingStyle.remove();
+        }
+    }
+
 	resetAction(_?: Editor, full: boolean = true) {
 
         if (full) {
             this.statusClear();
+            this.toggleDim(false);
             this.search_state.reset();
             this.mode = undefined;
             this.active = false;
@@ -375,7 +399,8 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	searchAction(editor: Editor) {
-		this.statusSet("BlazeMode: ");
+        this.toggleDim(true);
+        this.statusSet("BlazeMode: ");
 		const callback_on_provided = (event: any) => {
 			try {
                 window.removeEventListener("keydown", callback_on_provided);
