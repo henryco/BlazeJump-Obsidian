@@ -103,7 +103,7 @@ const collect_nodes = <T extends NamedValue> (
     return arr;
 }
 
-export class SearchState {
+export class SearchTree {
     layout_characters: (string | null)[];
     layout_width: number;
     layout_height: number;
@@ -241,7 +241,7 @@ export class SearchState {
                 nx = mx + nr;
             }
 
-            return SearchState.validate_xy_spiral(
+            return SearchTree.validate_xy_spiral(
                 [nx, ny], [mx, my], nr, w, h, n + 1
             );
         }
@@ -257,7 +257,7 @@ export class SearchState {
                 ny = my + nr;
             }
 
-            return SearchState.validate_xy_spiral(
+            return SearchTree.validate_xy_spiral(
                 [nx, ny], [mx, my], nr, w, h, n + 1
             );
         }
@@ -273,7 +273,7 @@ export class SearchState {
                 nx = mx - nr;
             }
 
-            return SearchState.validate_xy_spiral(
+            return SearchTree.validate_xy_spiral(
                 [nx, ny], [mx, my], nr, w, h, n + 1
             );
         }
@@ -285,7 +285,7 @@ export class SearchState {
                 ny = h - 1;
             }
 
-            return SearchState.validate_xy_spiral(
+            return SearchTree.validate_xy_spiral(
                 [nx, ny], [mx, my], nr, w, h, n + 1
             );
         }
@@ -304,13 +304,13 @@ export class SearchState {
         y: number,
         d: number
     ] {
-        const [u_x, u_y, u_depth] = SearchState.predict_xy_spiral(
+        const [u_x, u_y, u_depth] = SearchTree.predict_xy_spiral(
             [...pos],
             [...mid],
             radius
         );
 
-        const [n_x, n_y, depth] = SearchState.validate_xy_spiral(
+        const [n_x, n_y, depth] = SearchTree.validate_xy_spiral(
             [u_x, u_y],
             [...mid],
             u_depth,
@@ -351,7 +351,7 @@ export class SearchState {
                 throw "Max spin";
             }
 
-            const [i_x, i_y, i_depth] = SearchState.next_spiral(
+            const [i_x, i_y, i_depth] = SearchTree.next_spiral(
                 (k_pos ?? [x, y]),
                 [x, y],
                 k_depth,

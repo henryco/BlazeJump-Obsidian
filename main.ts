@@ -1,7 +1,7 @@
 import {SearchPosition, SearchStyle, state as inter_plugin_state} from "./src/commons";
 import {App, Editor, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import {EditorView} from "@codemirror/view";
-import {SearchState} from "./src/search_state";
+import {SearchTree} from "./src/search_tree";
 import {blaze_jump_view_plugin} from "./src/view"
 
 type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator';
@@ -58,7 +58,7 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 export default class BlazeJumpPlugin extends Plugin {
 	settings: ExpandSelectPluginSettings;
 
-	search_state: SearchState;
+	search_tree: SearchTree;
 	mode?: MODE_TYPE = undefined;
 
 	statusBar?: HTMLElement;
@@ -96,7 +96,7 @@ export default class BlazeJumpPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		this.search_state = new SearchState(
+		this.search_tree = new SearchTree(
 			this.settings.keyboard_layout,
 			this.settings.keyboard_allowed,
 			this.settings.keyboard_depth
@@ -228,7 +228,7 @@ export default class BlazeJumpPlugin extends Plugin {
             this.statusClear();
             this.toggleDim(false);
             this.toggleSpellcheck(true);
-            this.search_state.reset();
+            this.search_tree.reset();
             this.mode = undefined;
             this.active = false;
             this.offset = 0;
@@ -291,9 +291,9 @@ export default class BlazeJumpPlugin extends Plugin {
                 }
 
                 this.offset += 1;
-                this.search_state.narrow(char);
+                this.search_tree.narrow(char);
 
-                const new_positions = this.search_state.process_positions()
+                const new_positions = this.search_tree.process_positions()
                     .map(x => x[1] as SearchPosition)
                     .sort((a, b) => a.index_s - b.index_s);
 
@@ -405,7 +405,7 @@ export default class BlazeJumpPlugin extends Plugin {
 			};
 
 			if (this.mode === 'any') {
-				this.search_state.assign(search_lower, search_position);
+				this.search_tree.assign(search_lower, search_position);
                 positions.push(search_position);
 			}
 
@@ -413,7 +413,7 @@ export default class BlazeJumpPlugin extends Plugin {
 				const pre = editor.offsetToPos((index > 0 ? index - 1 : index) + this.range_from);
 				const nv = editor.getRange(pre, end).trim();
 				if (nv.length == 1) {
-                    this.search_state.assign(search_lower, search_position);
+                    this.search_tree.assign(search_lower, search_position);
                     positions.push(search_position);
                 }
 			}
@@ -423,7 +423,7 @@ export default class BlazeJumpPlugin extends Plugin {
 				const post = editor.offsetToPos(Math.min(search_area.length - 1, index + 1) + this.range_from);
 				const nv = editor.getRange(start, post).trim();
 				if (nv.length == 1) {
-                    this.search_state.assign(search_lower, search_position);
+                    this.search_tree.assign(search_lower, search_position);
                     positions.push(search_position);
                 }
 			}
@@ -431,7 +431,7 @@ export default class BlazeJumpPlugin extends Plugin {
 			index = search_area.indexOf(search_lower, index + 1);
 		}
 
-        this.search_state.process_positions();
+        this.search_tree.process_positions();
 
 		const t1 = new Date().getTime();
 

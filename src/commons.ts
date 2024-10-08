@@ -1,4 +1,4 @@
-import {NamedValue} from "./search_state";
+import {NamedValue} from "./search_tree";
 import {EditorPosition} from "obsidian";
 import {EditorView} from "@codemirror/view";
 
