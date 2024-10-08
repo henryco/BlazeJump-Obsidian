@@ -65,6 +65,8 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	callback_provided_input: any;
 	callback_start_search: any;
+    spellcheck?: string;
+
 	active: boolean = false;
     offset: number = 0;
 
@@ -209,6 +211,10 @@ export default class BlazeJumpPlugin extends Plugin {
                       
                     }
                     
+                    .cm-content {
+                      color: silver;
+                    }
+                    
                 `;
                 document.head.appendChild(style);
             }
@@ -219,7 +225,27 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     toggleSpellcheck(active: boolean) {
-        // TODO
+        const content = document.getElementsByClassName("cm-content");
+        if (!content) return;
+
+        for (let i = 0; i < content.length; i++) {
+            const el = content[i];
+            const spellcheck = el.getAttribute("spellcheck");
+            if (!spellcheck || spellcheck.trim() === "")
+                continue;
+
+            if (!active) {
+                this.spellcheck = spellcheck;
+                el.setAttribute("spellcheck", "false");
+                return;
+            }
+
+            if (this.spellcheck) {
+                el.setAttribute("spellcheck", this.spellcheck);
+            }
+
+            return;
+        }
     }
 
 	resetAction(_?: Editor, full: boolean = true) {
@@ -266,9 +292,6 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	searchAction(editor: Editor) {
-
-        this.toggleDim(true);
-        this.toggleSpellcheck(false);
         this.statusSet("BlazeMode: ");
 
 		const callback_on_provided = (event: any) => {
@@ -331,7 +354,10 @@ export default class BlazeJumpPlugin extends Plugin {
 		}
 
 		const callback_on_start = (event: any) => {
-			try {
+            try {
+                this.toggleSpellcheck(false);
+                this.toggleDim(true);
+
 				const char = event.key;
 				if (char.length <= 2 && char.trim().length > 0) {
 					event.preventDefault();
