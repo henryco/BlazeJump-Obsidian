@@ -1,5 +1,5 @@
 import {Decoration, DecorationSet, EditorView, PluginSpec, PluginValue, ViewPlugin, ViewUpdate, WidgetType} from "@codemirror/view";
-import {App, Editor, EditorPosition, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {App, Editor, EditorPosition, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import {RangeSetBuilder} from "@codemirror/state";
 import {NamedValue, SearchState} from "./search_state";
 
@@ -118,6 +118,10 @@ export class BlazeFoundAreaWidget extends WidgetType {
 		el.style.paddingRight = '2px';
         el.style.fontFamily = 'monospace';
 		el.style.marginTop = '-1px';
+        el.style.overflowWrap = 'normal';
+        el.style.wordBreak = 'keep-all';
+        el.style.whiteSpace = 'pre';
+        el.style.cursor = 'default';
 
 		if (this.style.fix !== undefined) {
 			el.style.marginLeft = `${this.style.fix}px`;
@@ -343,8 +347,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 style.textContent = `
                 
                     .markdown-source-view {
-                        background-color: #2E2E2E !important;
-                        color: #CCCCCC !important;
+                      
                     }
                     
                 `;
@@ -356,11 +359,16 @@ export default class BlazeJumpPlugin extends Plugin {
         }
     }
 
+    toggleSpellcheck(active: boolean) {
+        // TODO
+    }
+
 	resetAction(_?: Editor, full: boolean = true) {
 
         if (full) {
             this.statusClear();
             this.toggleDim(false);
+            this.toggleSpellcheck(true);
             this.search_state.reset();
             this.mode = undefined;
             this.active = false;
@@ -399,8 +407,11 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	searchAction(editor: Editor) {
+
         this.toggleDim(true);
+        this.toggleSpellcheck(false);
         this.statusSet("BlazeMode: ");
+
 		const callback_on_provided = (event: any) => {
 			try {
                 window.removeEventListener("keydown", callback_on_provided);
@@ -444,8 +455,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 }
 
                 else {
-                    console.warn("Nothing found...");
-                    // TODO
+                    new Notice("Nothing found"); // TODO FIXME?
                 }
 
                 if (inter_plugin_state.state.plugin_draw_callback)
