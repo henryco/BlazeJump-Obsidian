@@ -8,6 +8,7 @@ type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator';
 
 interface ExpandSelectPluginSettings {
 	default_action: MODE_TYPE;
+
 	keyboard_layout: string;
 	keyboard_allowed: string;
 	keyboard_depth: number;
@@ -36,6 +37,9 @@ interface ExpandSelectPluginSettings {
 	search_color_border_any?: string;
 	search_color_border_line?: string;
 	search_color_border_terminator?: string;
+
+    search_dim_enabled?: boolean;
+    search_dim_style?: string;
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
@@ -52,7 +56,10 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	status_color_line: 'Magenta',
 	status_color_terminator: 'DimGray',
 
-	search_color_bg_start: 'yellow'
+	search_color_bg_start: 'yellow',
+
+    search_dim_enabled: false,
+    search_dim_style: 'color: silver;',
 }
 
 export default class BlazeJumpPlugin extends Plugin {
@@ -201,24 +208,19 @@ export default class BlazeJumpPlugin extends Plugin {
     toggleDim(active: boolean) {
         const existingStyle = document.getElementById('dim-editor-style');
         if (active) {
-
             if (!existingStyle) {
                 const style = document.createElement('style');
                 style.id = 'dim-editor-style';
                 style.textContent = `
-                
                     .markdown-source-view {
                       
                     }
-                    
                     .cm-content {
-                      color: silver;
+                      ${this.settings.search_dim_enabled ? (this.settings.search_dim_style ?? '') : ''}
                     }
-                    
                 `;
                 document.head.appendChild(style);
             }
-
         } else if (existingStyle) {
             existingStyle.remove();
         }
