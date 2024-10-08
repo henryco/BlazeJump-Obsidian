@@ -2,7 +2,6 @@ import {Decoration, DecorationSet, EditorView, PluginSpec, PluginValue, ViewPlug
 import {SearchPosition, SearchStyle, state as inter_plugin_state} from "./commons";
 import {RangeSetBuilder} from "@codemirror/state";
 
-
 export class BlazeFoundAreaWidget extends WidgetType {
     search_position: SearchPosition;
     style: SearchStyle;
