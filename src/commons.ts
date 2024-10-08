@@ -25,6 +25,7 @@ export interface SearchPosition extends NamedValue {
     index_e: number;
     value: string;
     coord: Coord;
+    origin: Coord;
 }
 
 export interface InterState {

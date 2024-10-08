@@ -17,6 +17,9 @@ export class BlazeFoundAreaWidget extends WidgetType {
     toDOM(_: EditorView): HTMLElement {
         const prefix = Array(this.style.offset).fill(' ').reduce((p, c) => p + c, '');
 
+        const offset_x = this.search_position.coord.left - this.search_position.origin.left;
+        const offset_y = this.search_position.coord.top - this.search_position.origin.top;
+
         const el = document.createElement("mark");
         el.innerText = prefix + this.replace_text.toLowerCase().substring(this.style.offset);
 
@@ -35,9 +38,8 @@ export class BlazeFoundAreaWidget extends WidgetType {
         el.style.whiteSpace = 'pre';
         el.style.cursor = 'default';
 
-        if (this.style.fix !== undefined) {
-            el.style.marginLeft = `${this.style.fix}px`;
-        }
+        el.style.left = `${offset_x}px`;
+        el.style.top = `${offset_y}px`;
 
         return el;
     }
@@ -61,7 +63,6 @@ class BlazeViewPlugin implements PluginValue {
     }
 
     build_decorations() {
-
         const positions = inter_plugin_state.state.positions;
         if (!positions || positions.length <= 0) {
             this.decorations = Decoration.none;
@@ -71,17 +72,15 @@ class BlazeViewPlugin implements PluginValue {
         let i = 0;
         const builder = new RangeSetBuilder<Decoration>();
         for (let position of positions) {
-            const fix = position.start.ch > 0 ? 0 : 1;
             builder.add(
-                position.index_s + fix,
-                position.index_s + fix,
+                position.index_s + 1,
+                position.index_s + 1,
                 Decoration.replace({
                     widget: new BlazeFoundAreaWidget(
                         position.name,
                         position,
                         <SearchStyle> {
                             ...(inter_plugin_state.state.style_provider?.(i++)),
-                            fix: (fix > 0) ? -10 : undefined
                         }),
                     inclusive: false
                 })

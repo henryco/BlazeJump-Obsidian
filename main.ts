@@ -421,13 +421,17 @@ export default class BlazeJumpPlugin extends Plugin {
 			const end = editor.offsetToPos(index + this.range_from + search.length);
 			const start = editor.offsetToPos(index + this.range_from);
 
+            const zero = view.coordsAtPos(index + this.range_from - start.ch);
+            const coord = view.coordsAtPos(index + this.range_from);
+
 			let search_position = <SearchPosition> {
-				start: start,
-				end: end,
-				index_s: index + this.range_from,
-				index_e: index + this.range_from + search.length,
+				index_e: index + this.range_from - start.ch + search.length,
+				index_s: index + this.range_from - start.ch,
 				value: editor.getRange(start, end),
-				coord: view.coordsAtPos(index + this.range_from)
+                origin: zero,
+				coord: coord,
+				start: start,
+				end: end
 			};
 
 			if (this.mode === 'any') {
