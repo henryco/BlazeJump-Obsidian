@@ -1,7 +1,3 @@
-export interface NamedValue {
-    name: string;
-}
-
 export interface NodeContext {
     position?: [x: number, y: number];
     counter: number;
@@ -15,15 +11,17 @@ export interface BlazeNode<T> {
     parent: BlazeNode<T> | null;
     children?: BlazeNode<T>[];
     value?: T;
+
+    full_id: () => string;
 }
 
-export const create_node = <T>(
+export const create_node = <T> (
     id: string,
     parent?: BlazeNode<T>,
     context?: NodeContext,
     value?: T,
     children?: BlazeNode<T>[],
-): BlazeNode<T> => ({
+): BlazeNode<T> => (<BlazeNode<T>> {
     id: id,
     value: value,
     children: children,
@@ -33,7 +31,20 @@ export const create_node = <T>(
         full: false,
         counter: 0,
         depth: 0
-    })
+    }),
+    full_id: function (): string {
+        const rec_id = (this as any)['rec_id'];
+        if (rec_id) {
+            return rec_id;
+        }
+        if (!this.parent) {
+            (this as any)['rec_id'] = this.id;
+            return this.id;
+        }
+        const new_id = `${this.parent.full_id()}${this.id}`;
+        (this as any)['rec_id'] = new_id;
+        return new_id;
+    }
 });
 
 export const find_node = <T> (node: BlazeNode<T>, name: string): BlazeNode<T> | undefined => {
@@ -75,29 +86,25 @@ export const rotate_node = <T> (node: BlazeNode<T>, n: number = 0, limit: number
     return !node.parent ? node : rotate_node(node.parent, n + 1);
 }
 
-const collect_nodes = <T extends NamedValue> (
+const collect_nodes = <T> (
     node: BlazeNode<T>,
-    arr: [string, T][] = [],
-    parent_id: string = "",
+    arr: BlazeNode<T>[] = [],
     n: number = 0,
     limit: number = 1000
-): [string, T][] => {
+): BlazeNode<T>[] => {
     if (n > limit)
         throw "Overflow";
 
-    const id = `${parent_id}${node.parent === null ? '' : node.id}`;
     const children = node.children;
     if (!children) {
         if (node.value) {
-            node.value.name = id;
-            node.value.toString = (): string => id;
-            arr.push([id, node.value]);
+            arr.push(node);
         }
         return arr;
     }
 
     for (let child of children) {
-        arr = collect_nodes(child, arr, id, n + 1, limit);
+        arr = collect_nodes(child, arr, n + 1, limit);
     }
 
     return arr;
@@ -108,7 +115,7 @@ export class SearchTree {
     layout_width: number;
     layout_height: number;
     layout_depth: number;
-    search_node: BlazeNode<NamedValue>;
+    search_node: BlazeNode<any>;
 
     constructor(keyboard_layout: string, keyboard_allowed: string, distance: number) {
         this.initKeyboardLayout(keyboard_layout, keyboard_allowed);
@@ -378,13 +385,13 @@ export class SearchTree {
     add_node(
 
         input: string,
-        position: NamedValue,
-        node: BlazeNode<NamedValue>,
-        root: BlazeNode<NamedValue>,
+        position: any,
+        node: BlazeNode<any>,
+        root: BlazeNode<any>,
         n: number = 0,
         limit: number = 100
 
-    ): BlazeNode<NamedValue> {
+    ): BlazeNode<any> {
         if (n >= limit) {
             node.context.depth = -1;
             throw "Stack overflow";
@@ -455,33 +462,35 @@ export class SearchTree {
         return this.add_node(left.id, position, left, root, n + 1, limit);
     }
 
-    assign(input: string, position: NamedValue): void {
+    assign(input: string, position: any): void {
         this.add_node(input, position, this.search_node, this.search_node);
     }
 
-    narrow(input: string): void {
+    narrow(input: string): BlazeNode<any> {
         let node = this.search_node;
 
         if (node.id === input && (!node.children || node.children.length <= 0)) {
             this.search_node = node;
-            return;
+            return this.search_node;
         }
 
         if (!node.children || node.children.length <= 0) {
-            return;
+            this.reset();
+            return this.search_node;
         }
 
         for (let child of node.children) {
             if (child.id === input) {
                 this.search_node = child;
-                return;
+                return this.search_node;
             }
         }
 
         this.reset();
+        return this.search_node;
     }
 
-    process_positions(): [string, NamedValue][] {
+    freeze_nodes(): BlazeNode<any>[] {
         return collect_nodes(this.search_node);
     }
 

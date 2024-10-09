@@ -1,4 +1,3 @@
-import {NamedValue} from "./search_tree";
 import {EditorPosition} from "obsidian";
 import {EditorView} from "@codemirror/view";
 
@@ -18,7 +17,7 @@ export interface SearchStyle {
     idx: number;
 }
 
-export interface SearchPosition extends NamedValue {
+export interface SearchPosition {
     start: EditorPosition;
     end: EditorPosition;
     index_s: number;
@@ -26,6 +25,7 @@ export interface SearchPosition extends NamedValue {
     value: string;
     coord: Coord;
     origin: Coord;
+    name: string;
 }
 
 export interface InterState {

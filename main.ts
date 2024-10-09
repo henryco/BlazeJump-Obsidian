@@ -323,8 +323,13 @@ export default class BlazeJumpPlugin extends Plugin {
                 this.offset += 1;
                 this.search_tree.narrow(char);
 
-                const new_positions = this.search_tree.process_positions()
-                    .map(x => x[1] as SearchPosition)
+                // TODO EFFICIENCY
+                const new_positions = this.search_tree.freeze_nodes()
+                    .map(x => {
+                        let value = x.value as SearchPosition;
+                        value.name = x.full_id().substring(1);
+                        return value;
+                    })
                     .sort((a, b) => a.index_s - b.index_s);
 
                 this.resetAction(editor, new_positions.length <= 1);
@@ -416,8 +421,6 @@ export default class BlazeJumpPlugin extends Plugin {
 		const visible_text = editor.getValue().toLowerCase();
 		const search_area = visible_text.substring(this.range_from, this.range_to);
 
-        let positions: SearchPosition[] = [];
-
 		let index = search_area.indexOf(search_lower);
 		const t0 = new Date().getTime();
 		while (index > -1) {
@@ -439,7 +442,6 @@ export default class BlazeJumpPlugin extends Plugin {
 
 			if (this.mode === 'any') {
 				this.search_tree.assign(search_lower, search_position);
-                positions.push(search_position);
 			}
 
 			else if (this.mode === 'start') {
@@ -447,7 +449,6 @@ export default class BlazeJumpPlugin extends Plugin {
 				const nv = editor.getRange(pre, end).trim();
 				if (nv.length == 1) {
                     this.search_tree.assign(search_lower, search_position);
-                    positions.push(search_position);
                 }
 			}
 
@@ -457,14 +458,19 @@ export default class BlazeJumpPlugin extends Plugin {
 				const nv = editor.getRange(start, post).trim();
 				if (nv.length == 1) {
                     this.search_tree.assign(search_lower, search_position);
-                    positions.push(search_position);
                 }
 			}
 
 			index = search_area.indexOf(search_lower, index + 1);
 		}
 
-        this.search_tree.process_positions();
+        let positions = this.search_tree.freeze_nodes()
+            .map(x => {
+                let value = x.value as SearchPosition;
+                value.name = x.full_id().substring(1);
+                return value;
+            })
+            .sort((a, b) => a.index_s - b.index_s);
 
 		const t1 = new Date().getTime();
 
