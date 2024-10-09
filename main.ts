@@ -49,6 +49,8 @@ interface ExpandSelectPluginSettings {
 
     search_start_pulse?: boolean;
     search_start_pulse_duration?: number;
+
+    nothing_text?: string;
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
@@ -77,7 +79,9 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
     search_jump_pulse_duration: 0.15,
 
     search_start_pulse: true,
-    search_start_pulse_duration: 0.15
+    search_start_pulse_duration: 0.15,
+
+    nothing_text: '🚫'
 }
 
 export default class BlazeJumpPlugin extends Plugin {
@@ -411,8 +415,8 @@ export default class BlazeJumpPlugin extends Plugin {
                     this.jumpTo(editor, new_positions[0]);
                 }
 
-                else {
-                    new Notice("Nothing found"); // TODO FIXME? i18n
+                else if (this.settings.nothing_text && this.settings.nothing_text.trim() !== '') {
+                    new Notice(this.settings.nothing_text);
                 }
 
                 if (inter_plugin_state.state.plugin_draw_callback)
