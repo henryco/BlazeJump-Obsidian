@@ -250,8 +250,13 @@ export default class BlazeJumpPlugin extends Plugin {
         }
     }
 
-	resetAction(_?: Editor, full: boolean = true) {
+    jumpTo(editor: Editor, position: SearchPosition) {
+        editor.setCursor(position.start);
+        console.log('Jumped');
+        // TODO
+    }
 
+	resetAction(_?: Editor, full: boolean = true) {
         if (full) {
             this.statusClear();
             this.toggleDim(false);
@@ -332,10 +337,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 }
 
                 else if (new_positions.length === 1) {
-                    const position = new_positions[0];
-                    editor.setCursor(position.start);
-                    console.log('Jumped');
-                    // TODO
+                    this.jumpTo(editor, new_positions[0]);
                 }
 
                 else {
