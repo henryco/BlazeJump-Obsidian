@@ -58,7 +58,7 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 
 	search_color_bg_start: 'yellow',
 
-    search_dim_enabled: false,
+    search_dim_enabled: true,
     search_dim_style: 'color: silver;',
 }
 
