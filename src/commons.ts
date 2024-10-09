@@ -17,6 +17,11 @@ export interface SearchStyle {
     idx: number;
 }
 
+export interface PulseStyle {
+    duration: number;
+    bg: string;
+}
+
 export interface SearchPosition {
     start: EditorPosition;
     end: EditorPosition;
@@ -32,7 +37,9 @@ export interface InterState {
     plugin_draw_callback?: () => void;
     editor_callback?: (view: EditorView) => void;
     style_provider?: (i: number) => SearchStyle;
+    pulse_provider?: () => PulseStyle;
     positions?: SearchPosition[];
+    pointer?: SearchPosition;
 }
 
 class InterPluginState {
@@ -47,10 +54,6 @@ class InterPluginState {
         if (!InterPluginState.instance)
             InterPluginState.instance = new InterPluginState();
         return InterPluginState.instance;
-    }
-
-    public getState(): InterState {
-        return this.state;
     }
 }
 

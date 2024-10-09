@@ -1,22 +1,83 @@
 import {Decoration, DecorationSet, EditorView, PluginSpec, PluginValue, ViewPlugin, ViewUpdate, WidgetType} from "@codemirror/view";
-import {SearchPosition, SearchStyle, state as inter_plugin_state} from "./commons";
+import {PulseStyle, SearchPosition, SearchStyle, state as inter_plugin_state} from "./commons";
 import {RangeSetBuilder} from "@codemirror/state";
 
-export class BlazeFoundAreaWidget extends WidgetType {
-    search_position: SearchPosition;
-    style: SearchStyle;
-    replace_text: string;
+export class BlazePointerPulseWidget extends WidgetType {
+    private static readonly style_id: string = 'pulse-widget-style';
 
-    constructor(replace_text: string, search_position: SearchPosition, style: SearchStyle) {
+    private position: SearchPosition;
+    private style: PulseStyle;
+
+    constructor(position: SearchPosition, style: PulseStyle) {
         super();
-        this.search_position = search_position;
-        this.replace_text = replace_text;
+        this.position = position;
         this.style = style;
     }
 
     toDOM(_: EditorView): HTMLElement {
+        const offset_x = this.position.coord.left - this.position.origin.left;
+        const offset_y = this.position.coord.top - this.position.origin.top;
+
+        const existingStyle = document.getElementById(BlazePointerPulseWidget.style_id);
+
+        if (!existingStyle) {
+            const style = document.createElement('style');
+            style.id = BlazePointerPulseWidget.style_id;
+            style.textContent = `                  
+                    .blaze-widget-pulse {
+                      animation: pulse-pointer ${this.style.duration ?? 0.15}s 1 forwards;
+                      background-color: ${this.style.bg ?? 'red'};
+                    }
+                    @keyframes pulse-pointer {
+                        0% { opacity: 0; }
+                        50% { opacity: 1; }
+                        100% { opacity: 0; visibility: hidden; }
+                    }
+                `;
+            document.head.appendChild(style);
+        }
+
+        const el = document.createElement("span");
+        el.addClass('blaze-widget-pulse');
+        el.innerText = " ";
+        el.style.position = 'absolute';
+        el.style.left = `${offset_x}px`;
+        el.style.top = `${offset_y}px`;
+        el.style.zIndex = '-1';
+        el.style.fontFamily = 'monospace';
+        el.style.fontWeight = 'bold';
+        el.style.marginTop = '-1px';
+        el.style.overflowWrap = 'normal';
+        el.style.wordBreak = 'keep-all';
+        el.style.whiteSpace = 'pre';
+        el.style.cursor = 'default';
+        return el;
+    }
+
+    destroy(dom: HTMLElement) {
+        const existingStyle = document.getElementById(BlazePointerPulseWidget.style_id);
+        if (existingStyle)
+            existingStyle.remove();
+        super.destroy(dom);
+    }
+
+}
+
+export class BlazeFoundAreaWidget extends WidgetType {
+    private search_position: SearchPosition;
+    private style: SearchStyle;
+    private text: string;
+
+    constructor(text: string, search_position: SearchPosition, style: SearchStyle) {
+        super();
+        this.search_position = search_position;
+        this.style = style;
+        this.text = text;
+    }
+
+    toDOM(_: EditorView): HTMLElement {
         const prefix = Array(this.style.offset).fill(' ').reduce((p, c) => p + c, '');
-        const text = prefix + this.replace_text.toLowerCase().substring(this.style.offset);
+        const text = prefix + this.text.toLowerCase().substring(this.style.offset);
 
         const offset_x = this.search_position.coord.left - this.search_position.origin.left;
         const offset_y = this.search_position.coord.top - this.search_position.origin.top;
@@ -28,6 +89,8 @@ export class BlazeFoundAreaWidget extends WidgetType {
         el.style.color = `${this.style.text}`;
         el.style.border = `thin dashed ${this.style.border}`;
         el.style.zIndex = `${5000 + this.style.idx}`;
+        el.style.left = `${offset_x}px`;
+        el.style.top = `${offset_y}px`;
         el.style.position = 'absolute';
         el.style.fontWeight = 'bold';
         el.style.paddingLeft = '2px';
@@ -38,9 +101,6 @@ export class BlazeFoundAreaWidget extends WidgetType {
         el.style.wordBreak = 'keep-all';
         el.style.whiteSpace = 'pre';
         el.style.cursor = 'default';
-
-        el.style.left = `${offset_x}px`;
-        el.style.top = `${offset_y}px`;
 
         return el;
     }
@@ -65,27 +125,47 @@ class BlazeViewPlugin implements PluginValue {
 
     build_decorations() {
         const positions = inter_plugin_state.state.positions;
-        if (!positions || positions.length <= 0) {
+        const pointer = inter_plugin_state.state.pointer;
+
+        if (!pointer && !(positions && positions.length > 0)) {
             this.decorations = Decoration.none;
             return;
         }
 
-        let i = 0;
         const builder = new RangeSetBuilder<Decoration>();
-        for (let position of positions) {
+
+        if (positions && positions.length > 0) {
+            let i = 0;
+            for (let position of positions) {
+                builder.add(
+                    position.index_s + 1,
+                    position.index_s + 1,
+                    Decoration.replace({
+                        widget: new BlazeFoundAreaWidget(
+                            position.name,
+                            position,
+                            <SearchStyle> {
+                                ...(inter_plugin_state.state.style_provider?.(i++)),
+                            }),
+                        inclusive: false
+                    })
+                );
+            }
+        }
+
+        else if (pointer) {
             builder.add(
-                position.index_s + 1,
-                position.index_s + 1,
+                pointer.index_s + 1,
+                pointer.index_s + 1,
                 Decoration.replace({
-                    widget: new BlazeFoundAreaWidget(
-                        position.name,
-                        position,
-                        <SearchStyle> {
-                            ...(inter_plugin_state.state.style_provider?.(i++)),
+                    widget: new BlazePointerPulseWidget(
+                        pointer,
+                        <PulseStyle> {
+                            ...(inter_plugin_state.state.pulse_provider?.()),
                         }),
                     inclusive: false
                 })
-            );
+            )
         }
 
         this.decorations = builder.finish();

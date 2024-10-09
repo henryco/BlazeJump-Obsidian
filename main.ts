@@ -1,4 +1,4 @@
-import {SearchPosition, SearchStyle, state as inter_plugin_state} from "./src/commons";
+import {PulseStyle, SearchPosition, SearchStyle, state as inter_plugin_state} from "./src/commons";
 import {App, Editor, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import {EditorView} from "@codemirror/view";
 import {SearchTree} from "./src/search_tree";
@@ -41,6 +41,9 @@ interface ExpandSelectPluginSettings {
     search_dim_enabled?: boolean;
     search_dim_style?: string;
 
+    search_jump_pulse_color?: string;
+    search_jump_pulse_duration?: number;
+    search_jump_pulse?: boolean;
     search_start_pulse?: boolean;
     search_spellcheck_disable?: boolean;
 }
@@ -65,7 +68,11 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
     search_dim_style: 'color: silver;',
 
     search_start_pulse: true,
-    search_spellcheck_disable: true
+    search_jump_pulse: true,
+    search_spellcheck_disable: true,
+
+    search_jump_pulse_color: 'red',
+    search_jump_pulse_duration: 0.15
 }
 
 export default class BlazeJumpPlugin extends Plugin {
@@ -108,6 +115,13 @@ export default class BlazeJumpPlugin extends Plugin {
 		}
 	}
 
+    resolvePulseStyle(): PulseStyle {
+        return {
+            duration: this.settings.search_jump_pulse_duration ?? 0.15,
+            bg: this.settings.search_jump_pulse_color ?? 'red'
+        }
+    }
+
 	async onload() {
 		await this.loadSettings();
 
@@ -118,7 +132,9 @@ export default class BlazeJumpPlugin extends Plugin {
 		);
 
 		inter_plugin_state.state.style_provider = (idx: number = 0) => this.resolveSearchColor(idx);
-		inter_plugin_state.state.editor_callback = (view: EditorView) => {
+        inter_plugin_state.state.pulse_provider = () => this.resolvePulseStyle();
+
+        inter_plugin_state.state.editor_callback = (view: EditorView) => {
 			if (view.visibleRanges.length <= 0)
 				return;
 			const range = view.visibleRanges[0];
@@ -294,8 +310,16 @@ export default class BlazeJumpPlugin extends Plugin {
 
     jumpTo(editor: Editor, position: SearchPosition) {
         editor.setCursor(position.start);
-        console.log('Jumped');
-        // TODO pulse ?
+
+        if (!this.settings.search_jump_pulse)
+            return;
+
+        inter_plugin_state.state.pointer = position;
+        inter_plugin_state.state.positions = undefined;
+
+        if (inter_plugin_state.state.plugin_draw_callback)
+            inter_plugin_state.state.plugin_draw_callback();
+        (editor as any)['cm'].dispatch();
     }
 
 	resetAction(_?: Editor, full: boolean = true) {
@@ -319,6 +343,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.callback_start_search = null;
 
 		inter_plugin_state.state.positions = undefined;
+        inter_plugin_state.state.pointer = undefined;
 	}
 
 	blazeAction(editor: Editor, _: any) {
@@ -422,6 +447,7 @@ export default class BlazeJumpPlugin extends Plugin {
 					this.active = true;
 
 					inter_plugin_state.state.positions = [...positions];
+                    inter_plugin_state.state.pointer = undefined;
 
 					this.statusSet("BlazeMode: " + `${char}`);
 					window.addEventListener('keydown', callback_on_provided, { once: true });
