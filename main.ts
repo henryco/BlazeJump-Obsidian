@@ -330,10 +330,9 @@ export default class BlazeJumpPlugin extends Plugin {
                 this.resetAction(editor, new_positions.length <= 1);
 
                 if (new_positions.length > 1) {
-                    inter_plugin_state.state.positions = [...new_positions];
                     this.statusSet("BlazeMode: " + `${char}`);
+                    inter_plugin_state.state.positions = [...new_positions];
                     window.addEventListener('keydown', callback_on_provided, { once: true });
-                    // TODO
                 }
 
                 else if (new_positions.length === 1) {
