@@ -12,7 +12,7 @@ export interface BlazeNode<T> {
     children?: BlazeNode<T>[];
     value?: T;
 
-    full_id: () => string;
+    get full_id(): string;
 }
 
 export const create_node = <T> (
@@ -22,6 +22,7 @@ export const create_node = <T> (
     value?: T,
     children?: BlazeNode<T>[],
 ): BlazeNode<T> => (<BlazeNode<T>> {
+
     id: id,
     value: value,
     children: children,
@@ -32,7 +33,8 @@ export const create_node = <T> (
         counter: 0,
         depth: 0
     }),
-    full_id: function (): string {
+
+    get full_id(): string {
         const rec_id = (this as any)['rec_id'];
         if (rec_id) {
             return rec_id;
@@ -41,10 +43,11 @@ export const create_node = <T> (
             (this as any)['rec_id'] = this.id;
             return this.id;
         }
-        const new_id = `${this.parent.full_id()}${this.id}`;
+        const new_id = `${this.parent.full_id}${this.id}`;
         (this as any)['rec_id'] = new_id;
         return new_id;
     }
+
 });
 
 export const find_node = <T> (node: BlazeNode<T>, name: string): BlazeNode<T> | undefined => {

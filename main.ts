@@ -327,7 +327,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 const new_positions = this.search_tree.freeze_nodes()
                     .map(x => {
                         let value = x.value as SearchPosition;
-                        value.name = x.full_id().substring(1);
+                        value.name = x.full_id.substring(1);
                         return value;
                     })
                     .sort((a, b) => a.index_s - b.index_s);
@@ -467,7 +467,7 @@ export default class BlazeJumpPlugin extends Plugin {
         let positions = this.search_tree.freeze_nodes()
             .map(x => {
                 let value = x.value as SearchPosition;
-                value.name = x.full_id().substring(1);
+                value.name = x.full_id.substring(1);
                 return value;
             })
             .sort((a, b) => a.index_s - b.index_s);
