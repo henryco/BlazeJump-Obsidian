@@ -253,7 +253,7 @@ export default class BlazeJumpPlugin extends Plugin {
     jumpTo(editor: Editor, position: SearchPosition) {
         editor.setCursor(position.start);
         console.log('Jumped');
-        // TODO
+        // TODO pulse ?
     }
 
 	resetAction(_?: Editor, full: boolean = true) {
@@ -323,14 +323,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 this.offset += 1;
                 this.search_tree.narrow(char);
 
-                // TODO EFFICIENCY
-                const new_positions = this.search_tree.freeze_nodes()
-                    .map(x => {
-                        let value = x.value as SearchPosition;
-                        value.name = x.full_id.substring(1);
-                        return value;
-                    })
-                    .sort((a, b) => a.index_s - b.index_s);
+                const new_positions = this.freeze_positions();
 
                 this.resetAction(editor, new_positions.length <= 1);
 
@@ -345,7 +338,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 }
 
                 else {
-                    new Notice("Nothing found"); // TODO FIXME?
+                    new Notice("Nothing found"); // TODO FIXME? i18n
                 }
 
                 if (inter_plugin_state.state.plugin_draw_callback)
@@ -464,13 +457,7 @@ export default class BlazeJumpPlugin extends Plugin {
 			index = search_area.indexOf(search_lower, index + 1);
 		}
 
-        let positions = this.search_tree.freeze_nodes()
-            .map(x => {
-                let value = x.value as SearchPosition;
-                value.name = x.full_id.substring(1);
-                return value;
-            })
-            .sort((a, b) => a.index_s - b.index_s);
+        let positions = this.freeze_positions();
 
 		const t1 = new Date().getTime();
 
@@ -479,6 +466,13 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		return positions;
 	}
+
+    freeze_positions(): SearchPosition[] {
+        // TODO EFFICIENCY and data continuity
+        return this.search_tree.freeze_nodes()
+            .map(x => ({...x.value as SearchPosition, name: x.full_id.substring(1)}))
+            .sort((a, b) => a.index_s - b.index_s);
+    }
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
