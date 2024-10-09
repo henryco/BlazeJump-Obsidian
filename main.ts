@@ -40,6 +40,9 @@ interface ExpandSelectPluginSettings {
 
     search_dim_enabled?: boolean;
     search_dim_style?: string;
+
+    search_start_pulse?: boolean;
+    search_spellcheck_disable?: boolean;
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
@@ -60,6 +63,9 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 
     search_dim_enabled: true,
     search_dim_style: 'color: silver;',
+
+    search_start_pulse: true,
+    search_spellcheck_disable: true
 }
 
 export default class BlazeJumpPlugin extends Plugin {
@@ -206,17 +212,21 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
     toggleDim(active: boolean) {
-        const existingStyle = document.getElementById('dim-editor-style');
+        if (!this.settings.search_dim_enabled)
+            return;
+
+        const style_id = 'dim-editor-style';
+        const existingStyle = document.getElementById(style_id);
         if (active) {
             if (!existingStyle) {
                 const style = document.createElement('style');
-                style.id = 'dim-editor-style';
+                style.id = style_id;
                 style.textContent = `
                     .markdown-source-view {
                       
                     }
                     .cm-content {
-                      ${this.settings.search_dim_enabled ? (this.settings.search_dim_style ?? '') : ''}
+                      ${this.settings.search_dim_style ?? ''}
                     }
                 `;
                 document.head.appendChild(style);
@@ -227,6 +237,9 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     toggleSpellcheck(active: boolean) {
+        if (!this.settings.search_spellcheck_disable)
+            return;
+
         const content = document.getElementsByClassName("cm-content");
         if (!content) return;
 
@@ -250,6 +263,35 @@ export default class BlazeJumpPlugin extends Plugin {
         }
     }
 
+    pulseInit(active: boolean): void {
+        if (!this.settings.search_start_pulse)
+            return;
+
+        const style_id = 'pulse-once-init';
+        const existingStyle = document.getElementById(style_id);
+
+        if (!active && existingStyle) {
+            existingStyle.remove();
+            return
+        }
+
+        if (active && !existingStyle) {
+            const style = document.createElement('style');
+            style.id = style_id;
+            style.textContent = `                  
+                    .cm-content {
+                      animation: pulse 0.15s 1 forwards;
+                    }
+                    @keyframes pulse {
+                        0% { opacity: 1; }
+                        50% { opacity: 0.5; }
+                        100% { opacity: 1; }
+                    }
+                `;
+            document.head.appendChild(style);
+        }
+    }
+
     jumpTo(editor: Editor, position: SearchPosition) {
         editor.setCursor(position.start);
         console.log('Jumped');
@@ -260,6 +302,7 @@ export default class BlazeJumpPlugin extends Plugin {
         if (full) {
             this.statusClear();
             this.toggleDim(false);
+            this.pulseInit(false);
             this.toggleSpellcheck(true);
             this.search_tree.reset();
             this.mode = undefined;
@@ -300,6 +343,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	searchAction(editor: Editor) {
         this.statusSet("BlazeMode: ");
+        this.pulseInit(true);
 
 		const callback_on_provided = (event: any) => {
 			try {
