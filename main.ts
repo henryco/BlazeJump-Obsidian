@@ -41,11 +41,14 @@ interface ExpandSelectPluginSettings {
     search_dim_enabled?: boolean;
     search_dim_style?: string;
 
+    search_spellcheck_disable?: boolean;
+
+    search_jump_pulse?: boolean;
     search_jump_pulse_color?: string;
     search_jump_pulse_duration?: number;
-    search_jump_pulse?: boolean;
+
     search_start_pulse?: boolean;
-    search_spellcheck_disable?: boolean;
+    search_start_pulse_duration?: number;
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
@@ -67,12 +70,14 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
     search_dim_enabled: true,
     search_dim_style: 'color: silver;',
 
-    search_start_pulse: true,
-    search_jump_pulse: true,
     search_spellcheck_disable: true,
 
+    search_jump_pulse: true,
     search_jump_pulse_color: 'red',
-    search_jump_pulse_duration: 0.15
+    search_jump_pulse_duration: 0.15,
+
+    search_start_pulse: true,
+    search_start_pulse_duration: 0.15
 }
 
 export default class BlazeJumpPlugin extends Plugin {
@@ -296,7 +301,7 @@ export default class BlazeJumpPlugin extends Plugin {
             style.id = style_id;
             style.textContent = `                  
                     .cm-content {
-                      animation: pulse 0.15s 1 forwards;
+                      animation: pulse ${this.settings.search_start_pulse_duration ?? 0.15}s 1 forwards;
                     }
                     @keyframes pulse {
                         0% { opacity: 1; }
