@@ -5,12 +5,19 @@ export interface NodeContext {
     full: boolean;
 }
 
+export interface SearchContext {
+    index: number;
+    min: number;
+    max: number;
+}
+
 export interface BlazeNode<T> {
     id: string;
     context: NodeContext;
     parent: BlazeNode<T> | null;
     children?: BlazeNode<T>[];
     value?: T;
+    search?: SearchContext;
 
     get full_id(): string;
 }
@@ -114,19 +121,20 @@ const collect_nodes = <T> (
 }
 
 export class SearchTree {
-    layout_characters: (string | null)[];
-    layout_width: number;
-    layout_height: number;
-    layout_depth: number;
-    search_node: BlazeNode<any>;
+    private readonly layout_depth: number;
+    private layout_characters: (string | null)[];
+    private layout_width: number;
+    private layout_height: number;
 
-    constructor(keyboard_layout: string, keyboard_allowed: string, distance: number) {
+    private search_node: BlazeNode<any>;
+
+    public constructor(keyboard_layout: string, keyboard_allowed: string, distance: number) {
         this.initKeyboardLayout(keyboard_layout, keyboard_allowed);
         this.search_node = create_node("#");
         this.layout_depth = distance;
     }
 
-    initKeyboardLayout(keyboard_layout: string, keyboard_allowed: string): void {
+    private initKeyboardLayout(keyboard_layout: string, keyboard_allowed: string): void {
         const arr = keyboard_layout.toLowerCase().trim().split(/\s+|\n+/);
         const width = arr.reduce((p, c) => Math.max(p, c.length), 0);
         this.layout_characters = arr.reduce((p, c) => [...p, ...c, ...Array(width - c.length).fill(null)], [])
@@ -136,7 +144,7 @@ export class SearchTree {
         this.layout_width = width;
     }
 
-    coord(input: string): [x: number, y: number] {
+    private coord(input: string): [x: number, y: number] {
         let index = this.layout_characters.indexOf(input.toLowerCase());
         if (index <= -1)
             index = this.layout_characters.length / 2;
@@ -145,13 +153,13 @@ export class SearchTree {
         return [x, y];
     }
 
-    from(x: number, y: number): string | null {
+    private from(x: number, y: number): string | null {
         if (x < 0 || y < 0 || y >= this.layout_height || x >= this.layout_width)
             return null;
         return this.layout_characters[x + (this.layout_width * y)];
     }
 
-    static predict_xy_spiral(
+    private static predict_xy_spiral(
         pos: [number, number],
         mid: [number, number],
         r: number
@@ -205,7 +213,7 @@ export class SearchTree {
         return [rx, ry, r];
     }
 
-    static validate_xy_spiral(
+    private static validate_xy_spiral(
         pos: [number, number],
         mid: [number, number],
         r: number,
@@ -303,7 +311,7 @@ export class SearchTree {
         return [...pos, r];
     }
 
-    static next_spiral(
+    private static next_spiral(
         pos: [number, number],
         mid: [number, number],
         radius: number,
@@ -334,7 +342,7 @@ export class SearchTree {
         return [n_x, n_y, depth];
     }
 
-    next_key(
+    private next_key(
 
         input: string,
         depth?: number,
@@ -385,7 +393,7 @@ export class SearchTree {
         return [char, k_pos, k_depth];
     }
 
-    add_node(
+    private add_node(
 
         input: string,
         position: any,
@@ -465,11 +473,11 @@ export class SearchTree {
         return this.add_node(left.id, position, left, root, n + 1, limit);
     }
 
-    assign(input: string, position: any): void {
+    public assign(input: string, position: any): void {
         this.add_node(input, position, this.search_node, this.search_node);
     }
 
-    narrow(input: string): BlazeNode<any> {
+    public narrow(input: string): BlazeNode<any> {
         let node = this.search_node;
 
         if (node.id === input && (!node.children || node.children.length <= 0)) {
@@ -493,11 +501,15 @@ export class SearchTree {
         return this.search_node;
     }
 
-    freeze_nodes(): BlazeNode<any>[] {
+    public freeze_nodes(): BlazeNode<any>[] {
         return collect_nodes(this.search_node);
     }
 
-    reset(): void {
+    init_search_tree() {
+        // TODO
+    }
+
+    public reset(): void {
         this.search_node = create_node("#");
     }
 }
