@@ -408,6 +408,7 @@ export default class BlazeJumpPlugin extends Plugin {
         this.toggleDim(true);
 
         let positions = this.performLineSearch(editor);
+
         console.log(positions);
 
         if (!positions || positions.length <= 0) {
@@ -746,14 +747,14 @@ export default class BlazeJumpPlugin extends Plugin {
 
             else if (this.mode === 'terminator') {
                 const length = editor.getLine(i).length;
-                const stp = <EditorPosition> { line: i, ch: Math.max(0, length - 2) };
-                const edp = <EditorPosition> { line: i, ch: Math.max(0, length - 1) };
+                const stp = <EditorPosition> { line: i, ch: Math.max(0, length - 1) };
+                const edp = <EditorPosition> { line: i, ch: Math.max(0, length ) };
                 const zero = view.coordsAtPos(editor.posToOffset(start));
                 const pos = editor.posToOffset(stp);
                 const coord = view.coordsAtPos(pos);
                 this.search_tree.assign(search_char, <SearchPosition> {
-                    index_s: pos + 1,
-                    index_e: pos,
+                    index_e: pos + 1,
+                    index_s: pos,
                     origin: zero,
                     coord: coord,
                     start: stp,
