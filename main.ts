@@ -202,6 +202,18 @@ export default class BlazeJumpPlugin extends Plugin {
 			editorCallback: (editor) => this.resetAction(editor)
 		});
 
+        this.addCommand({
+            id: 'blaze-jump-line',
+            name: "BlazeJump jump to line",
+            editorCallback: (editor, ctx) => this.beginningAction(editor, ctx)
+        });
+
+        this.addCommand({
+            id: 'blaze-jump-terminator',
+            name: "BlazeJump jump to the end of a line",
+            editorCallback: (editor, ctx) => this.terminatorAction(editor, ctx)
+        });
+
 		this.addSettingTab(new BlazeJumpSettingTab(this.app, this));
 	}
 
@@ -388,26 +400,42 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
 	blazeAction(editor: Editor, _: any) {
-		this.toggleMode(editor);
+        this.resetAction(editor, false);
+        this.toggleMode(editor);
 		this.searchAction(editor);
 	}
 
 	startAction(editor: Editor, _: any) {
-		this.mode = 'start';
+        this.resetAction(editor);
+        this.mode = 'start';
 		this.searchAction(editor);
 	}
 
 	endAction(editor: Editor, _: any) {
-		this.mode = 'end';
+        this.resetAction(editor);
+        this.mode = 'end';
 		this.searchAction(editor);
 	}
 
 	anyAction(editor: Editor, _: any) {
-		this.mode = 'any';
+        this.resetAction(editor);
+        this.mode = 'any';
 		this.searchAction(editor);
 	}
 
-    lineAction(editor: Editor, _?: any) {
+    beginningAction(editor: Editor, _: any) {
+        this.resetAction(editor);
+        this.mode = 'line';
+        this.lineAction(editor);
+    }
+
+    terminatorAction(editor: Editor, _: any) {
+        this.resetAction(editor);
+        this.mode = 'terminator';
+        this.lineAction(editor);
+    }
+
+    lineAction(editor: Editor) {
         this.statusSet("BlazeMode: ");
         this.toggleSpellcheck(false);
         this.pulseInit(true);
