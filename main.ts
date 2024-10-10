@@ -56,6 +56,7 @@ interface ExpandSelectPluginSettings {
     terminator_exceptions?: string;
 
     convert_utf8_to_ascii?: boolean;
+    auto_jump_on_single?: boolean;
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
@@ -98,7 +99,8 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 
     search_not_found_text: '🚫',
 
-    convert_utf8_to_ascii: true
+    convert_utf8_to_ascii: true,
+    auto_jump_on_single: false
 }
 
 // noinspection DuplicatedCode
@@ -739,6 +741,12 @@ export default class BlazeJumpPlugin extends Plugin {
 						return;
 					}
 
+                    if (positions.length === 1 && (this.settings.auto_jump_on_single === true)) {
+                        this.resetAction(editor);
+                        this.jumpTo(editor, positions[0]);
+                        return;
+                    }
+
 					inter_plugin_state.state.positions = [...positions];
                     inter_plugin_state.state.pointer = undefined;
 
@@ -939,7 +947,7 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     normalize_text(str: string): string {
-        return (this.settings.convert_utf8_to_ascii ?? false)
+        return (this.settings.convert_utf8_to_ascii === true)
             ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             : str;
     }
