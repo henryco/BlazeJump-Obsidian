@@ -458,11 +458,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 `${event.code}`.toLowerCase() === 'arrowleft' ||
                 `${event.key}`.toLowerCase() === 'arrowleft')
             {
-                event.preventDefault();
-                event.stopPropagation();
-                window.removeEventListener("keydown", callback_on_provided);
                 this.toggleLineMode(true, editor);
                 this.lineAction(editor);
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
                 (editor as any)['cm'].dispatch();
                 return;
             }
@@ -472,11 +471,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 `${event.code}`.toLowerCase() === 'arrowright' ||
                 `${event.key}`.toLowerCase() === 'arrowright')
             {
-                event.preventDefault();
-                event.stopPropagation();
-                window.removeEventListener("keydown", callback_on_provided);
                 this.toggleLineMode(false, editor);
                 this.lineAction(editor);
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
                 (editor as any)['cm'].dispatch();
                 return;
             }
@@ -573,6 +571,30 @@ export default class BlazeJumpPlugin extends Plugin {
                     return;
                 }
 
+                if (event.which === 37 ||
+                    event.keyCode === 37 ||
+                    `${event.code}`.toLowerCase() === 'arrowleft' ||
+                    `${event.key}`.toLowerCase() === 'arrowleft')
+                {
+                    this.toggleLineMode(true, editor);
+                    this.lineAction(editor);
+                    if (inter_plugin_state.state.plugin_draw_callback)
+                        inter_plugin_state.state.plugin_draw_callback();
+                    return;
+                }
+
+                if (event.which === 39 ||
+                    event.keyCode === 39 ||
+                    `${event.code}`.toLowerCase() === 'arrowright' ||
+                    `${event.key}`.toLowerCase() === 'arrowright')
+                {
+                    this.toggleLineMode(false, editor);
+                    this.lineAction(editor);
+                    if (inter_plugin_state.state.plugin_draw_callback)
+                        inter_plugin_state.state.plugin_draw_callback();
+                    return;
+                }
+
                 const char = event.key;
 
                 this.offset += 1;
@@ -615,7 +637,9 @@ export default class BlazeJumpPlugin extends Plugin {
 		}
 
 		const callback_on_start = (event: any) => {
-            const char = event.key;
+            window.removeEventListener("keydown", callback_on_start);
+            event.preventDefault();
+            event.stopPropagation();
 
             if (event.keyCode === 27 ||
                 event.which === 27 ||
@@ -634,11 +658,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 `${event.code}`.toLowerCase() === 'arrowleft' ||
                 `${event.key}`.toLowerCase() === 'arrowleft')
             {
-                event.preventDefault();
-                event.stopPropagation();
-                window.removeEventListener("keydown", callback_on_start);
                 this.toggleLineMode(true, editor);
                 this.lineAction(editor);
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
                 (editor as any)['cm'].dispatch();
                 return;
             }
@@ -648,11 +671,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 `${event.code}`.toLowerCase() === 'arrowright' ||
                 `${event.key}`.toLowerCase() === 'arrowright')
             {
-                event.preventDefault();
-                event.stopPropagation();
-                window.removeEventListener("keydown", callback_on_start);
                 this.toggleLineMode(false, editor);
                 this.lineAction(editor);
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
                 (editor as any)['cm'].dispatch();
                 return;
             }
@@ -661,11 +683,9 @@ export default class BlazeJumpPlugin extends Plugin {
                 this.toggleSpellcheck(false);
                 this.toggleDim(true);
 
-				if (char.length <= 2 && char.trim().length > 0) {
-					event.preventDefault();
-					event.stopPropagation();
-					window.removeEventListener("keydown", callback_on_start);
+                const char = event.key;
 
+				if (char.length <= 2 && char.trim().length > 0) {
 					const positions = this.performSearch(editor, char);
 					if (!positions || positions.length <= 0) {
 						this.resetAction(editor);
@@ -680,9 +700,6 @@ export default class BlazeJumpPlugin extends Plugin {
 					this.statusSet("BlazeMode: " + `${char}`);
 					window.addEventListener('keydown', callback_on_provided, { once: true });
 				} else {
-					event.preventDefault();
-					event.stopPropagation();
-					window.removeEventListener("keydown", callback_on_start);
 					this.resetAction(editor);
 				}
 
