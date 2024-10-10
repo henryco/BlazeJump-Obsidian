@@ -1,5 +1,5 @@
 import {PulseStyle, SearchPosition, SearchStyle, state as inter_plugin_state} from "./src/commons";
-import {App, Editor, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
+import {App, Editor, EditorPosition, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
 import {EditorView} from "@codemirror/view";
 import {SearchTree} from "./src/search_tree";
 import {blaze_jump_view_plugin} from "./src/view"
@@ -407,7 +407,16 @@ export default class BlazeJumpPlugin extends Plugin {
         this.pulseInit(true);
         this.toggleDim(true);
 
-        // TODO SEARCH LINES
+        let positions = this.performLineSearch(editor);
+        console.log(positions);
+
+        if (!positions || positions.length <= 0) {
+            this.resetAction(editor);
+            if (inter_plugin_state.state.plugin_draw_callback)
+                inter_plugin_state.state.plugin_draw_callback();
+            (editor as any)['cm'].dispatch();
+            return;
+        }
 
         const callback_on_mouse_reset = (event: any) => {
             if (event) {
@@ -507,6 +516,13 @@ export default class BlazeJumpPlugin extends Plugin {
                 (editor as any)['cm'].dispatch();
             }
         };
+
+        inter_plugin_state.state.positions = [...positions];
+        inter_plugin_state.state.pointer = undefined;
+
+        if (inter_plugin_state.state.plugin_draw_callback)
+            inter_plugin_state.state.plugin_draw_callback();
+        (editor as any)['cm'].dispatch();
 
         this.callback_provided_input = callback_on_provided;
         this.callback_mouse_reset = callback_on_mouse_reset;
@@ -694,6 +710,60 @@ export default class BlazeJumpPlugin extends Plugin {
 		window.addEventListener("contextmenu", callback_on_mouse_reset, { once: true });
 		window.addEventListener("auxclick", callback_on_mouse_reset, { once: true });
 	}
+
+    performLineSearch(editor: Editor) {
+        const view = (<EditorView> (<any> editor)['cm']);
+
+        const from = editor.offsetToPos(this.range_from);
+        const to = editor.offsetToPos(this.range_to);
+
+        if (!from || !to) {
+            this.search_tree.reset();
+            return [];
+        }
+
+        const search_char = 'h'; // TODO
+
+        const line_f = from.line;
+        const line_t = to.line;
+
+        for (let i = line_f; i < line_t; i++) {
+            const start = <EditorPosition> { line: i, ch: 0 };
+
+            if (this.mode === 'line') {
+                const end = <EditorPosition> { line: i, ch: 1 };
+                const pos = editor.posToOffset(start);
+                const zero = view.coordsAtPos(pos);
+                this.search_tree.assign(search_char, <SearchPosition> {
+                    index_e: pos + 1,
+                    index_s: pos,
+                    origin: zero,
+                    coord: zero,
+                    start: start,
+                    end: end
+                });
+            }
+
+            else if (this.mode === 'terminator') {
+                const length = editor.getLine(i).length;
+                const stp = <EditorPosition> { line: i, ch: Math.max(0, length - 2) };
+                const edp = <EditorPosition> { line: i, ch: Math.max(0, length - 1) };
+                const zero = view.coordsAtPos(editor.posToOffset(start));
+                const pos = editor.posToOffset(stp);
+                const coord = view.coordsAtPos(pos);
+                this.search_tree.assign(search_char, <SearchPosition> {
+                    index_s: pos + 1,
+                    index_e: pos,
+                    origin: zero,
+                    coord: coord,
+                    start: stp,
+                    end: edp
+                });
+            }
+        }
+
+        return this.freeze_positions();
+    }
 
 	performSearch(editor: Editor, search: string) {
 		const term_exceptions = [...this.settings.terminator_exceptions ?? ''];
