@@ -496,6 +496,8 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.callback_provided_input = callback_on_provided;
 		this.callback_start_search = callback_on_start;
 		window.addEventListener("keydown", callback_on_start, { once: true });
+        // TODO CALLBACK ON MOUSE CLICK -> RESET
+        // TODO CALLBACK "<-" "->" CHANGE MODE
 	}
 
 
