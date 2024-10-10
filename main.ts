@@ -39,8 +39,8 @@ interface ExpandSelectPluginSettings {
 	search_color_border_line?: string;
 	search_color_border_terminator?: string;
 
-    search_dim_enabled?: boolean;
     search_dim_style?: string;
+    search_dim_enabled?: boolean;
 
     search_spellcheck_disable?: boolean;
 
@@ -51,9 +51,11 @@ interface ExpandSelectPluginSettings {
     search_start_pulse?: boolean;
     search_start_pulse_duration?: number;
 
+    search_not_found_text?: string;
+
     terminator_exceptions?: string;
 
-    nothing_text?: string;
+    convert_utf8_to_ascii?: boolean;
 }
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
@@ -94,7 +96,9 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 
     terminator_exceptions: `.,;:'"\``,
 
-    nothing_text: '🚫'
+    search_not_found_text: '🚫',
+
+    convert_utf8_to_ascii: true
 }
 
 // noinspection DuplicatedCode
@@ -536,8 +540,9 @@ export default class BlazeJumpPlugin extends Plugin {
                     this.jumpTo(editor, new_positions[0]);
                 }
 
-                else if (this.settings.nothing_text && this.settings.nothing_text.trim() !== '') {
-                    new Notice(this.settings.nothing_text);
+                else if (this.settings.search_not_found_text &&
+                    this.settings.search_not_found_text.trim() !== '') {
+                    new Notice(this.settings.search_not_found_text);
                 }
 
                 if (inter_plugin_state.state.plugin_draw_callback)
@@ -653,8 +658,9 @@ export default class BlazeJumpPlugin extends Plugin {
                     this.jumpTo(editor, new_positions[0]);
                 }
 
-                else if (this.settings.nothing_text && this.settings.nothing_text.trim() !== '') {
-                    new Notice(this.settings.nothing_text);
+                else if (this.settings.search_not_found_text &&
+                    this.settings.search_not_found_text.trim() !== '') {
+                    new Notice(this.settings.search_not_found_text);
                 }
 
                 if (inter_plugin_state.state.plugin_draw_callback)
@@ -866,8 +872,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		const term_exceptions = [...this.settings.terminator_exceptions ?? ''];
 
         const view = (<EditorView> (<any> editor)['cm']);
-
-		const search_lower = search.toLowerCase();
+        const search_lower = this.normalize_text(search.toLowerCase());
 		const visible_text = editor.getValue().toLowerCase();
 		const search_area = visible_text.substring(this.range_from, this.range_to);
 
@@ -931,6 +936,12 @@ export default class BlazeJumpPlugin extends Plugin {
         return this.search_tree.freeze_nodes()
             .map(x => ({...x.value as SearchPosition, name: x.full_id.substring(1)}))
             .sort((a, b) => a.index_s - b.index_s);
+    }
+
+    normalize_text(str: string): string {
+        return (this.settings.convert_utf8_to_ascii ?? false)
+            ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            : str;
     }
 
 	async loadSettings() {
