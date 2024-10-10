@@ -94,7 +94,7 @@ export class BlazeFoundAreaWidget extends WidgetType {
         el.style.position = 'absolute';
         el.style.fontWeight = 'bold';
         el.style.paddingLeft = '2px';
-        el.style.paddingRight = '2px';
+        el.style.paddingRight = '3px';
         el.style.fontFamily = 'monospace';
         el.style.marginTop = '-1px';
         el.style.overflowWrap = 'normal';

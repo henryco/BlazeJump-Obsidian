@@ -14,6 +14,7 @@ interface ExpandSelectPluginSettings {
 	keyboard_depth: number;
 
 	status_color_bg?: string;
+
 	status_color_start?: string;
 	status_color_end?: string;
 	status_color_any?: string;
@@ -55,7 +56,8 @@ interface ExpandSelectPluginSettings {
 
 const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	default_action: "start",
-	keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
+
+    keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
 	keyboard_allowed: "123456789abcdefghijklmnopqrstuvwxyz",
 	keyboard_depth: 2,
 
@@ -64,10 +66,17 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	status_color_start: 'Crimson',
 	status_color_end: 'Blue',
 	status_color_any: 'Green',
+
 	status_color_line: 'Magenta',
 	status_color_terminator: 'DimGray',
 
-	search_color_bg_start: 'yellow',
+    search_color_text_start: 'Crimson',
+    search_color_text_end: 'Blue',
+    search_color_text_any: 'Aqua',
+
+	search_color_bg_start: 'Yellow',
+	search_color_bg_end: 'Yellow',
+	search_color_bg_any: 'Purple',
 
     search_dim_enabled: true,
     search_dim_style: 'color: silver;',
@@ -519,16 +528,15 @@ export default class BlazeJumpPlugin extends Plugin {
 			else if (this.mode === 'start') {
 				const pre = editor.offsetToPos((index > 0 ? index - 1 : index) + this.range_from);
 				const nv = editor.getRange(pre, end).trim();
-				if (nv.length == 1) {
+				if (nv.length === 1) {
                     this.search_tree.assign(search_lower, search_position);
                 }
 			}
 
 			else if (this.mode === 'end') {
-				// TODO FIXME
-				const post = editor.offsetToPos(Math.min(search_area.length - 1, index + 1) + this.range_from);
-				const nv = editor.getRange(start, post).trim();
-				if (nv.length == 1) {
+				const two = editor.offsetToPos(index + search.length + 1 + this.range_from);
+				const nv = editor.getRange(start, two).trim();
+				if (nv.length === 1) {
                     this.search_tree.assign(search_lower, search_position);
                 }
 			}
@@ -577,5 +585,6 @@ class BlazeJumpSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("BlazeJump Settings")
 			.setHeading();
+        // TODO settings
 	}
 }
