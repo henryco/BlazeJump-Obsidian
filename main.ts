@@ -757,7 +757,7 @@ export default class BlazeJumpPlugin extends Plugin {
                     index_s: pos,
                     origin: zero,
                     coord: coord,
-                    start: stp,
+                    start: edp,
                     end: edp
                 });
             }
