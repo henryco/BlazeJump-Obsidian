@@ -97,6 +97,7 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
     nothing_text: '🚫'
 }
 
+// noinspection DuplicatedCode
 export default class BlazeJumpPlugin extends Plugin {
 	settings: ExpandSelectPluginSettings;
 
@@ -111,7 +112,6 @@ export default class BlazeJumpPlugin extends Plugin {
 
     spellcheck?: string;
 
-	active: boolean = false;
     offset: number = 0;
 
 	range_from: number;
@@ -359,7 +359,6 @@ export default class BlazeJumpPlugin extends Plugin {
             this.toggleSpellcheck(true);
             this.search_tree.reset();
             this.mode = undefined;
-            this.active = false;
             this.offset = 0;
 
             if (this.callback_mouse_reset) {
@@ -404,9 +403,119 @@ export default class BlazeJumpPlugin extends Plugin {
 
     lineAction(editor: Editor, _?: any) {
         this.statusSet("BlazeMode: ");
+        this.toggleSpellcheck(false);
         this.pulseInit(true);
+        this.toggleDim(true);
 
-        // TODO
+        // TODO SEARCH LINES
+
+        const callback_on_mouse_reset = (event: any) => {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            try {
+                this.resetAction(editor);
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
+            } finally {
+                (editor as any)['cm'].dispatch();
+            }
+        };
+
+        const callback_on_provided = (event: any) => {
+            window.removeEventListener("keydown", callback_on_provided);
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (event.keyCode === 27 ||
+                event.which === 27 ||
+                `${event.key}`.toLowerCase() === 'escape' ||
+                `${event.code}`.toLowerCase() === 'escape')
+            {
+                this.resetAction(editor);
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
+                (editor as any)['cm'].dispatch();
+                return;
+            }
+
+            if (event.which === 37 ||
+                event.keyCode === 37 ||
+                `${event.code}`.toLowerCase() === 'arrowleft' ||
+                `${event.key}`.toLowerCase() === 'arrowleft')
+            {
+                event.preventDefault();
+                event.stopPropagation();
+                window.removeEventListener("keydown", callback_on_provided);
+                this.toggleLineMode(true, editor);
+                this.lineAction(editor);
+                (editor as any)['cm'].dispatch();
+                return;
+            }
+
+            if (event.which === 39 ||
+                event.keyCode === 39 ||
+                `${event.code}`.toLowerCase() === 'arrowright' ||
+                `${event.key}`.toLowerCase() === 'arrowright')
+            {
+                event.preventDefault();
+                event.stopPropagation();
+                window.removeEventListener("keydown", callback_on_provided);
+                this.toggleLineMode(false, editor);
+                this.lineAction(editor);
+                (editor as any)['cm'].dispatch();
+                return;
+            }
+
+            try {
+                const char = event.key;
+                this.search_tree.narrow(char);
+                this.offset += 1;
+
+                const new_positions = this.freeze_positions();
+                this.resetAction(editor, new_positions.length <= 1);
+
+                if (new_positions.length > 1) {
+                    this.statusSet("BlazeMode: " + `${char}`);
+                    inter_plugin_state.state.positions = [...new_positions];
+                    window.addEventListener('keydown', callback_on_provided, { once: true });
+                }
+
+                else if (new_positions.length === 1) {
+                    this.jumpTo(editor, new_positions[0]);
+                }
+
+                else if (this.settings.nothing_text && this.settings.nothing_text.trim() !== '') {
+                    new Notice(this.settings.nothing_text);
+                }
+
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
+            }
+
+            catch (e) {
+                console.error(e);
+                this.resetAction(editor);
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
+                throw e;
+            }
+
+            finally {
+                // forcing re-render
+                (editor as any)['cm'].dispatch();
+            }
+        };
+
+        this.callback_provided_input = callback_on_provided;
+        this.callback_mouse_reset = callback_on_mouse_reset;
+
+        window.addEventListener("keydown", callback_on_provided, { once: true });
+
+        window.addEventListener("click", callback_on_mouse_reset, { once: true });
+        window.addEventListener("contextmenu", callback_on_mouse_reset, { once: true });
+        window.addEventListener("auxclick", callback_on_mouse_reset, { once: true });
     }
 
 	searchAction(editor: Editor) {
@@ -432,7 +541,6 @@ export default class BlazeJumpPlugin extends Plugin {
                 window.removeEventListener("keydown", callback_on_provided);
                 event.preventDefault();
                 event.stopPropagation();
-                const char = event.key;
 
                 if (event.keyCode === 27 ||
                     event.which === 27 ||
@@ -444,6 +552,8 @@ export default class BlazeJumpPlugin extends Plugin {
                         inter_plugin_state.state.plugin_draw_callback();
                     return;
                 }
+
+                const char = event.key;
 
                 this.offset += 1;
                 this.search_tree.narrow(char);
@@ -487,23 +597,43 @@ export default class BlazeJumpPlugin extends Plugin {
 		const callback_on_start = (event: any) => {
             const char = event.key;
 
-            if (event.which === 37 || event.keyCode === 37 ||
-                event.code === 'ArrowLeft' || event.key === 'ArrowLeft') {
+            if (event.keyCode === 27 ||
+                event.which === 27 ||
+                `${event.key}`.toLowerCase() === 'escape' ||
+                `${event.code}`.toLowerCase() === 'escape')
+            {
+                this.resetAction(editor);
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
+                (editor as any)['cm'].dispatch();
+                return;
+            }
+
+            if (event.which === 37 ||
+                event.keyCode === 37 ||
+                `${event.code}`.toLowerCase() === 'arrowleft' ||
+                `${event.key}`.toLowerCase() === 'arrowleft')
+            {
                 event.preventDefault();
                 event.stopPropagation();
                 window.removeEventListener("keydown", callback_on_start);
                 this.toggleLineMode(true, editor);
                 this.lineAction(editor);
+                (editor as any)['cm'].dispatch();
                 return;
             }
 
-            if (event.which === 39 || event.keyCode === 39 ||
-                event.code === 'ArrowRight' || event.key === 'ArrowRight') {
+            if (event.which === 39 ||
+                event.keyCode === 39 ||
+                `${event.code}`.toLowerCase() === 'arrowright' ||
+                `${event.key}`.toLowerCase() === 'arrowright')
+            {
                 event.preventDefault();
                 event.stopPropagation();
                 window.removeEventListener("keydown", callback_on_start);
                 this.toggleLineMode(false, editor);
                 this.lineAction(editor);
+                (editor as any)['cm'].dispatch();
                 return;
             }
 
@@ -523,8 +653,6 @@ export default class BlazeJumpPlugin extends Plugin {
 							inter_plugin_state.state.plugin_draw_callback();
 						return;
 					}
-
-					this.active = true;
 
 					inter_plugin_state.state.positions = [...positions];
                     inter_plugin_state.state.pointer = undefined;
