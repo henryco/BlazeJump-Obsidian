@@ -349,6 +349,12 @@ export default class BlazeJumpPlugin extends Plugin {
         if (inter_plugin_state.state.plugin_draw_callback)
             inter_plugin_state.state.plugin_draw_callback();
         (editor as any)['cm'].dispatch();
+
+        window.setTimeout(() => {
+            inter_plugin_state.state.pointer = undefined;
+            if (inter_plugin_state.state.plugin_draw_callback)
+                inter_plugin_state.state.plugin_draw_callback();
+        }, (this.settings.search_jump_pulse_duration ?? 0) * 1000);
     }
 
 	resetAction(_?: Editor, full: boolean = true) {
@@ -730,6 +736,11 @@ export default class BlazeJumpPlugin extends Plugin {
 
         for (let i = line_f; i < line_t; i++) {
             const start = <EditorPosition> { line: i, ch: 0 };
+            const length = editor.getLine(i).length;
+
+            // if (length <= 0) {
+            //     continue
+            // }
 
             if (this.mode === 'line') {
                 const end = <EditorPosition> { line: i, ch: 1 };
@@ -744,9 +755,8 @@ export default class BlazeJumpPlugin extends Plugin {
                     end: end
                 });
             }
-// TODO empty line
+
             else if (this.mode === 'terminator') {
-                const length = editor.getLine(i).length;
                 const stp = <EditorPosition> { line: i, ch: Math.max(0, length - 1) };
                 const edp = <EditorPosition> { line: i, ch: Math.max(0, length ) };
                 const zero = view.coordsAtPos(editor.posToOffset(start));

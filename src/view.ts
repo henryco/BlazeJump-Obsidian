@@ -165,7 +165,7 @@ class BlazeViewPlugin implements PluginValue {
                         }),
                     inclusive: false
                 })
-            )
+            );
         }
 
         this.decorations = builder.finish();
