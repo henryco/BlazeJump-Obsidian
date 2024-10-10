@@ -565,7 +565,6 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
     freeze_positions(): SearchPosition[] {
-        // TODO EFFICIENCY and data continuity
         return this.search_tree.freeze_nodes()
             .map(x => ({...x.value as SearchPosition, name: x.full_id.substring(1)}))
             .sort((a, b) => a.index_s - b.index_s);
