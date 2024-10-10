@@ -51,6 +51,8 @@ interface ExpandSelectPluginSettings {
     search_start_pulse?: boolean;
     search_start_pulse_duration?: number;
 
+    terminator_exceptions?: string;
+
     nothing_text?: string;
 }
 
@@ -89,6 +91,8 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 
     search_start_pulse: true,
     search_start_pulse_duration: 0.15,
+
+    terminator_exceptions: `.,;:'"\``,
 
     nothing_text: '🚫'
 }
@@ -496,7 +500,9 @@ export default class BlazeJumpPlugin extends Plugin {
 
 
 	performSearch(editor: Editor, search: string) {
-		const view = (<EditorView> (<any> editor)['cm']);
+		const term_exceptions = [...this.settings.terminator_exceptions ?? ''];
+
+        const view = (<EditorView> (<any> editor)['cm']);
 
 		const search_lower = search.toLowerCase();
 		const visible_text = editor.getValue().toLowerCase();
@@ -537,6 +543,8 @@ export default class BlazeJumpPlugin extends Plugin {
 				const two = editor.offsetToPos(index + search.length + 1 + this.range_from);
 				const nv = editor.getRange(start, two).trim();
 				if (nv.length === 1) {
+                    this.search_tree.assign(search_lower, search_position);
+                } else if (nv.length === 2 && term_exceptions.some(x => x === nv.substring(1))) {
                     this.search_tree.assign(search_lower, search_position);
                 }
 			}
