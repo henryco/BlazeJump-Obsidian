@@ -244,12 +244,17 @@ export default class BlazeJumpPlugin extends Plugin {
 			'end': 'any',
 			'any': 'start'
 		};
-		// @ts-ignore
-		const mode = this.mode ? mode_map[this.mode] : this.settings.default_action;
+
+		const mode = this.mode ? (mode_map as any)[this.mode] : this.settings.default_action;
 		this.resetAction();
 
 		this.mode = <MODE_TYPE> mode;
 	}
+
+    toggleLineMode(left: boolean, _?: Editor) {
+        this.resetAction(_);
+        this.mode = left ? 'line' : 'terminator';
+    }
 
     toggleDim(active: boolean) {
         if (!this.settings.search_dim_enabled)
@@ -397,6 +402,13 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.searchAction(editor);
 	}
 
+    lineAction(editor: Editor, _?: any) {
+        this.statusSet("BlazeMode: ");
+        this.pulseInit(true);
+
+        // TODO
+    }
+
 	searchAction(editor: Editor) {
         this.statusSet("BlazeMode: ");
         this.pulseInit(true);
@@ -473,14 +485,31 @@ export default class BlazeJumpPlugin extends Plugin {
 		}
 
 		const callback_on_start = (event: any) => {
+            const char = event.key;
+
+            if (event.which === 37 || event.keyCode === 37 ||
+                event.code === 'ArrowLeft' || event.key === 'ArrowLeft') {
+                event.preventDefault();
+                event.stopPropagation();
+                window.removeEventListener("keydown", callback_on_start);
+                this.toggleLineMode(true, editor);
+                this.lineAction(editor);
+                return;
+            }
+
+            if (event.which === 39 || event.keyCode === 39 ||
+                event.code === 'ArrowRight' || event.key === 'ArrowRight') {
+                event.preventDefault();
+                event.stopPropagation();
+                window.removeEventListener("keydown", callback_on_start);
+                this.toggleLineMode(false, editor);
+                this.lineAction(editor);
+                return;
+            }
+
             try {
                 this.toggleSpellcheck(false);
                 this.toggleDim(true);
-
-				const char = event.key;
-
-                // TODO CALLBACK "<-" "->" CHANGE MODE
-                console.log(char, event);
 
 				if (char.length <= 2 && char.trim().length > 0) {
 					event.preventDefault();
