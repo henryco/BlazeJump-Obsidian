@@ -441,8 +441,19 @@ export default class BlazeJumpPlugin extends Plugin {
         this.pulseInit(true);
         this.toggleDim(true);
 
-        let positions = this.performLineSearch(editor);
-        if (!positions || positions.length <= 0) {
+        let positions: SearchPosition[];
+
+        try {
+            positions = this.performLineSearch(editor);
+            if (!positions || positions.length <= 0) {
+                this.resetAction(editor);
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
+                (editor as any)['cm'].dispatch();
+                return;
+            }
+        } catch (e) {
+            console.error(e);
             this.resetAction(editor);
             if (inter_plugin_state.state.plugin_draw_callback)
                 inter_plugin_state.state.plugin_draw_callback();
