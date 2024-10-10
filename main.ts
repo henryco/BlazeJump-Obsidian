@@ -478,6 +478,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 this.toggleDim(true);
 
 				const char = event.key;
+
+                // TODO CALLBACK "<-" "->" CHANGE MODE
+                console.log(char, event);
+
 				if (char.length <= 2 && char.trim().length > 0) {
 					event.preventDefault();
 					event.stopPropagation();
@@ -532,7 +536,6 @@ export default class BlazeJumpPlugin extends Plugin {
 		window.addEventListener("click", callback_on_mouse_reset, { once: true });
 		window.addEventListener("contextmenu", callback_on_mouse_reset, { once: true });
 		window.addEventListener("auxclick", callback_on_mouse_reset, { once: true });
-        // TODO CALLBACK "<-" "->" CHANGE MODE
 	}
 
 	performSearch(editor: Editor, search: string) {
