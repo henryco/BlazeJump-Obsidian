@@ -107,6 +107,8 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	callback_provided_input: any;
 	callback_start_search: any;
+    callback_mouse_reset: any;
+
     spellcheck?: string;
 
 	active: boolean = false;
@@ -354,6 +356,13 @@ export default class BlazeJumpPlugin extends Plugin {
             this.mode = undefined;
             this.active = false;
             this.offset = 0;
+
+            if (this.callback_mouse_reset) {
+                window.removeEventListener("click", this.callback_mouse_reset);
+                window.removeEventListener("contextmenu", this.callback_mouse_reset);
+                window.removeEventListener("auxclick", this.callback_mouse_reset);
+            }
+            this.callback_mouse_reset = null;
         }
 
 		if (this.callback_start_search)
@@ -392,6 +401,20 @@ export default class BlazeJumpPlugin extends Plugin {
         this.statusSet("BlazeMode: ");
         this.pulseInit(true);
 
+        const callback_on_mouse_reset = (event: any) => {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            try {
+                this.resetAction(editor);
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
+            } finally {
+                (editor as any)['cm'].dispatch();
+            }
+        };
+
 		const callback_on_provided = (event: any) => {
 			try {
                 window.removeEventListener("keydown", callback_on_provided);
@@ -407,7 +430,6 @@ export default class BlazeJumpPlugin extends Plugin {
                     this.resetAction(editor);
                     if (inter_plugin_state.state.plugin_draw_callback)
                         inter_plugin_state.state.plugin_draw_callback();
-                    (editor as any)['cm'].dispatch();
                     return;
                 }
 
@@ -434,15 +456,20 @@ export default class BlazeJumpPlugin extends Plugin {
 
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
+            }
 
-                (editor as any)['cm'].dispatch();
-
-            } catch (e) {
+            catch (e) {
 				console.error(e);
 				this.resetAction(editor);
-                (editor as any)['cm'].dispatch();
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
 				throw e;
 			}
+
+            finally {
+                // forcing re-render
+                (editor as any)['cm'].dispatch();
+            }
 		}
 
 		const callback_on_start = (event: any) => {
@@ -461,8 +488,6 @@ export default class BlazeJumpPlugin extends Plugin {
 						this.resetAction(editor);
 						if (inter_plugin_state.state.plugin_draw_callback)
 							inter_plugin_state.state.plugin_draw_callback();
-						// forcing re-render
-                        (editor as any)['cm'].dispatch();
 						return;
 					}
 
@@ -482,24 +507,33 @@ export default class BlazeJumpPlugin extends Plugin {
 
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
+			}
 
-				// forcing re-render
-				(editor as any)['cm'].dispatch();
-			} catch (e) {
+            catch (e) {
 				console.error(e);
 				this.resetAction(editor);
-                (editor as any)['cm'].dispatch();
+                if (inter_plugin_state.state.plugin_draw_callback)
+                    inter_plugin_state.state.plugin_draw_callback();
 				throw e;
 			}
+
+            finally {
+                // forcing re-render
+                (editor as any)['cm'].dispatch();
+            }
 		};
 
 		this.callback_provided_input = callback_on_provided;
 		this.callback_start_search = callback_on_start;
+        this.callback_mouse_reset = callback_on_mouse_reset;
+
 		window.addEventListener("keydown", callback_on_start, { once: true });
-        // TODO CALLBACK ON MOUSE CLICK -> RESET
+
+		window.addEventListener("click", callback_on_mouse_reset, { once: true });
+		window.addEventListener("contextmenu", callback_on_mouse_reset, { once: true });
+		window.addEventListener("auxclick", callback_on_mouse_reset, { once: true });
         // TODO CALLBACK "<-" "->" CHANGE MODE
 	}
-
 
 	performSearch(editor: Editor, search: string) {
 		const term_exceptions = [...this.settings.terminator_exceptions ?? ''];
