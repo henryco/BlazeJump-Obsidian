@@ -1,6 +1,6 @@
 import {PulseStyle, SearchPosition, SearchStyle, state as inter_plugin_state} from "./src/commons";
 import {App, Editor, EditorPosition, Notice, Plugin, PluginSettingTab, Setting} from 'obsidian';
-import {EditorView} from "@codemirror/view";
+import {EditorView, Rect} from "@codemirror/view";
 import {SearchTree} from "./src/search_tree";
 import {blaze_jump_view_plugin} from "./src/view"
 
@@ -414,9 +414,6 @@ export default class BlazeJumpPlugin extends Plugin {
         this.toggleDim(true);
 
         let positions = this.performLineSearch(editor);
-
-        console.log(positions);
-
         if (!positions || positions.length <= 0) {
             this.resetAction(editor);
             if (inter_plugin_state.state.plugin_draw_callback)
@@ -734,13 +731,46 @@ export default class BlazeJumpPlugin extends Plugin {
         const line_f = from.line;
         const line_t = to.line;
 
+        let first: Rect | null = null;
+        let anchor: EditorPosition | null = null;
+
         for (let i = line_f; i < line_t; i++) {
             const start = <EditorPosition> { line: i, ch: 0 };
             const length = editor.getLine(i).length;
 
-            // if (length <= 0) {
-            //     continue
-            // }
+            if (length > 0) {
+                first = view.coordsAtPos(editor.posToOffset(start));
+                anchor = start;
+            }
+
+            else if (length <= 0) {
+                if (!first || !anchor) {
+                    for (let k = i + 1; k < line_t; k++) {
+                        const st = <EditorPosition> { line: k, ch: 0 };
+                        if (editor.getLine(k).length > 0) {
+                            first = view.coordsAtPos(editor.posToOffset(st));
+                            anchor = st;
+                            break;
+                        }
+                    }
+                }
+                if (!first || !anchor)
+                    continue;
+
+                const end = <EditorPosition> { line: i, ch: 1 };
+                const pos = editor.posToOffset(anchor);
+                const zero = view.coordsAtPos(editor.posToOffset(start));
+                this.search_tree.assign(search_char, <SearchPosition> {
+                    index_e: pos + 1,
+                    index_s: pos,
+                    origin: first,
+                    coord: zero,
+                    start: start,
+                    end: end
+                });
+
+                continue;
+            }
 
             if (this.mode === 'line') {
                 const end = <EditorPosition> { line: i, ch: 1 };
