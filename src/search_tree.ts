@@ -508,6 +508,21 @@ export class SearchTree {
         return collect_nodes(this.search_node);
     }
 
+    public midLayoutChar(): string {
+        const mid_x = Math.floor(this.layout_width / 2);
+        const mid_y = Math.floor(this.layout_height / 2);
+        let char = this.from(mid_x, mid_y);
+        if (char)
+            return char;
+        for (let j = 0; j < this.layout_characters.length; j++) {
+            char = this.layout_characters[j];
+            if (char)
+                return char;
+        }
+        console.warn('No allowed characters found');
+        return 'h';
+    }
+
     // private init_search_tree(
     //     node: BlazeNode<any>,
     //     index: number = 0,

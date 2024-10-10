@@ -771,7 +771,7 @@ export default class BlazeJumpPlugin extends Plugin {
             return [];
         }
 
-        const search_char = 'h'; // TODO keyboard layout
+        const search_char = this.search_tree.midLayoutChar();
 
         const line_f = from.line;
         const line_t = to.line;
