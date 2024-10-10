@@ -723,7 +723,7 @@ export default class BlazeJumpPlugin extends Plugin {
             return [];
         }
 
-        const search_char = 'h'; // TODO
+        const search_char = 'h'; // TODO keyboard layout
 
         const line_f = from.line;
         const line_t = to.line;
@@ -744,7 +744,7 @@ export default class BlazeJumpPlugin extends Plugin {
                     end: end
                 });
             }
-
+// TODO empty line
             else if (this.mode === 'terminator') {
                 const length = editor.getLine(i).length;
                 const stp = <EditorPosition> { line: i, ch: Math.max(0, length - 1) };
@@ -810,8 +810,10 @@ export default class BlazeJumpPlugin extends Plugin {
 				const two = editor.offsetToPos(index + search.length + 1 + this.range_from);
 				const nv = editor.getRange(start, two).trim();
 				if (nv.length === 1) {
+                    search_position.start.ch += 1;
                     this.search_tree.assign(search_lower, search_position);
                 } else if (nv.length === 2 && term_exceptions.some(x => x === nv.substring(1))) {
+                    search_position.start.ch += 1;
                     this.search_tree.assign(search_lower, search_position);
                 }
 			}
