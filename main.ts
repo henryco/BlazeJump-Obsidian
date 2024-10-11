@@ -1072,7 +1072,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         this.display();
                     }));
 
-        new Setting(containerEl).setName("Keyboard").setHeading();
+        this.ns('Keyboard').setHeading();
         this.ns("Keyboard Layout", 'keyboard_layout')
             .addTextArea(x =>
                 x.setValue((this.plugin.settings.keyboard_layout ?? '')
@@ -1104,27 +1104,25 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         }
                     }));
 
-        new Setting(containerEl).setName("Status Color").setHeading();
-        this.with_reset('status_color_bg',
-            new Setting(containerEl)
-                .setName(`Color status background`)
-                .addToggle(x =>
-                    x.setTooltip("Opaque")
-                        .setValue(this.is_opaque(`status_color_bg`))
-                        .onChange(async (value) => {
-                            await this.plugin.saveProperty(`status_color_bg`,
-                                this.make_transparent(`status_color_bg`, !value));
-                            this.hide();
-                            this.display();
-                        }))
-                .addColorPicker(x =>
-                    x.setValue((this.plugin.settings as any)[`status_color_bg`])
-                        .setDisabled(!this.is_opaque(`status_color_bg`))
-                        .onChange(async (value) => {
-                            await this.plugin.saveProperty(`status_color_bg`, value);
-                            this.hide();
-                            this.display();
-                        })));
+        this.ns('Status Color').setHeading();
+        this.ns('Color status background', 'status_color_bg')
+            .addToggle(x =>
+                x.setTooltip("Opaque")
+                    .setValue(this.is_opaque(`status_color_bg`))
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty(`status_color_bg`,
+                            this.make_transparent(`status_color_bg`, !value));
+                        this.hide();
+                        this.display();
+                    }))
+            .addColorPicker(x =>
+                x.setValue((this.plugin.settings as any)[`status_color_bg`])
+                    .setDisabled(!this.is_opaque(`status_color_bg`))
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty(`status_color_bg`, value);
+                        this.hide();
+                        this.display();
+                    }));
 
         for (let mode of all_modes) {
             this.with_reset(`color_status_${mode}`,
