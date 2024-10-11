@@ -1240,6 +1240,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
         this.ns("Pulse").setHeading();
 
         this.ns("Start pulse duration", ['search_start_pulse', 'search_start_pulse_duration'])
+            .setDesc("Value in milliseconds")
             .addToggle(x =>
                 x.setValue(this.plugin.settings.search_start_pulse === true)
                     .setTooltip("Enable")
@@ -1264,6 +1265,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     }));
 
         this.ns("Jump pulse duration", ['search_jump_pulse', 'search_jump_pulse_duration'])
+            .setDesc("Value in milliseconds")
             .addToggle(x =>
                 x.setValue(this.plugin.settings.search_jump_pulse === true)
                     .setTooltip("Enable")
@@ -1311,7 +1313,6 @@ class BlazeJumpSettingTab extends PluginSettingTab {
         //     search_dim_style?: string;
         //
         //     search_not_found_text?: string;
-        //     terminator_exceptions?: string;
 
 
         this.ns("Miscellaneous").setHeading();
@@ -1344,6 +1345,33 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         await this.plugin.saveProperty(`search_spellcheck_disable`, value);
                         this.hide();
                         this.display();
+                    }));
+        this.ns("Word endings", "terminator_exceptions")
+            .setDesc("Characters ignored when performing search on words endings")
+            .addText(x =>
+                x.setValue(this.plugin.settings.terminator_exceptions ?? '')
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty('terminator_exceptions', value);
+                        // TODO
+                    }));
+
+        this.ns("Nothing found message", 'search_not_found_text')
+            .setDesc("Generic message shown when nothing found")
+            .addToggle(x =>
+                x.setValue(this.plugin.settings.search_not_found_text !== undefined)
+                    .setTooltip("Enable")
+                    .onChange(async (value) => {
+                        if (value) await this.plugin.resetProperty('search_not_found_text');
+                        else await this.plugin.saveProperty('search_not_found_text', undefined);
+                        this.hide();
+                        this.display();
+                    }))
+            .addText(x =>
+                x.setValue(this.plugin.settings.search_not_found_text ?? '')
+                    .setDisabled(this.plugin.settings.search_not_found_text === undefined)
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty('search_not_found_text', value);
+                        // TODO
                     }));
 
         // TODO settings
