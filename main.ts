@@ -105,7 +105,6 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 
 // noinspection DuplicatedCode
 export default class BlazeJumpPlugin extends Plugin {
-	public default_settings: ExpandSelectPluginSettings;
 	public settings: ExpandSelectPluginSettings;
 
 	private search_tree: SearchTree;
@@ -954,22 +953,25 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     public async loadSettings() {
-        this.default_settings = {...this.settings};
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
     public async resetSettings() {
-        this.settings = {...this.default_settings};
+        this.settings = {...DEFAULT_SETTINGS};
         await this.saveData(this.settings);
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     }
 
     public async resetProperty(name: string) {
-        // TODO
+        console.info('resetProperty', name);
+        if (!name || name.trim().length <= 0)
+            return;
+        (this.settings as any)[name] = (DEFAULT_SETTINGS as any)[name];
+        await this.saveData(this.settings);
     }
 
     public async saveProperty(name: string, value?: any) {
-        console.debug("saveProperty:", name, value);
+        console.info("saveProperty:", name, value);
         if (!name || name.trim().length <= 0)
             return;
         (this.settings as any)[name] = value;
@@ -985,8 +987,36 @@ class BlazeJumpSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+    private with_reset(name: string, setting: Setting): Setting {
+        const basic = (DEFAULT_SETTINGS as any)[name];
+        const current = (this.plugin.settings as any)[name];
+        return `${basic}` != `${current}`
+            ? setting.addExtraButton(x =>
+                x.setIcon('rotate-ccw')
+                    .setTooltip("Reset defaults")
+                    .onClick(async () => {
+                        await this.plugin.resetProperty(name);
+                        this.hide();
+                        this.display();
+                    }))
+            : setting;
+    }
+
 	public display(): void {
-        const all_modes = ['start', 'end', 'any', 'line', 'terminator'];
+        const all_modes = [
+            'start',
+            'end',
+            'any',
+            'line',
+            'terminator'
+        ];
+        const map_modes = {
+            [all_modes[0]]: 'Word start',
+            [all_modes[1]]: 'Word end',
+            [all_modes[2]]: 'Any character',
+            [all_modes[3]]: 'Line start',
+            [all_modes[4]]: 'Line end',
+        };
 
 		const {containerEl} = this;
 		containerEl.empty();
@@ -1004,179 +1034,123 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     });
             });
 
-        new Setting(containerEl)
-            .setName("Default Mode")
-            .addDropdown(x => {
-                x.setValue(this.plugin.settings.default_action)
-                    .addOption('start', "Word start")
-                    .addOption('end', "Word end")
-                    .addOption('any', "Any character")
-                    .addOption('line', "Line start")
-                    .addOption('terminator', "Line end")
-                    .onChange(async (value) => {
-                        await this.plugin.saveProperty('default_action', value);
-                    });
-            })
-            .addExtraButton(x =>
-                x.setIcon('rotate-ccw')
-                    .setTooltip("Reset defaults")
-                    .onClick(async () => {
-                        await this.plugin.resetProperty('default_action');
-                        this.hide();
-                        this.display();
-                    }));
+        this.with_reset('default_action',
+            new Setting(containerEl)
+                .setName("Default Mode")
+                .addDropdown(x =>
+                    x.addOption('start', map_modes['start'])
+                        .addOption('end', map_modes['end'])
+                        .addOption('any', map_modes['any'])
+                        .addOption('line', map_modes['line'])
+                        .addOption('terminator', map_modes['terminator'])
+                        .setValue(this.plugin.settings.default_action)
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty('default_action', value);
+                            this.hide();
+                            this.display();
+                        })));
 
         new Setting(containerEl).setName("Keyboard").setHeading();
-        new Setting(containerEl)
-            .setName("Keyboard Layout")
-            .addTextArea(x => {
-                x.setValue((this.plugin.settings.keyboard_layout ?? '')
-                    .trim().replace(/\s+/g, '\n'))
-                    .onChange(async (value) => {
-                        await this.plugin.saveProperty('keyboard_layout', value);
-                    });
-            })
-            .addExtraButton(x =>
-                x.setIcon('rotate-ccw')
-                    .setTooltip("Reset defaults")
-                    .onClick(async () => {
-                        await this.plugin.resetProperty('keyboard_layout');
-                        this.hide();
-                        this.display();
-                    }));
-
-        new Setting(containerEl)
-            .setName("Allowed Characters")
-            .addText(x => {
-                x.setValue(this.plugin.settings.keyboard_allowed)
-                    .onChange(async (value) => {
-                        await this.plugin.saveProperty('keyboard_allowed', value);
-                    });
-            })
-            .addExtraButton(x =>
-                x.setIcon('rotate-ccw')
-                    .setTooltip("Reset defaults")
-                    .onClick(async () => {
-                        await this.plugin.resetProperty('keyboard_allowed');
-                        this.hide();
-                        this.display();
-                    }));
-
-        new Setting(containerEl)
-            .setName("Keyboard Depth")
-            .addText(x => {
-                x.setValue(`${this.plugin.settings.keyboard_depth}`)
-                    .onChange(async (value) => {
-                        try {
-                            await this.plugin.saveProperty('keyboard_depth', Number(value));
-                        } catch (e) {
-                            console.error(e);
-                        }
-                    });
-            })
-            .addExtraButton(x =>
-                x.setIcon('rotate-ccw')
-                    .setTooltip("Reset defaults")
-                    .onClick(async () => {
-                        await this.plugin.resetProperty('keyboard_depth');
-                        this.hide();
-                        this.display();
-                    }));
-
-        new Setting(containerEl).setName("Status color").setHeading();
-        new Setting(containerEl)
-            .setName(`Color status background`)
-            .addColorPicker(x =>
-                x.setValue((this.plugin.settings as any)[`status_color_bg`])
-                    .onChange(async (value) => {
-                        await this.plugin.saveProperty(`status_color_bg`, value);
-                    }))
-            .addExtraButton(x =>
-                x.setIcon('rotate-ccw')
-                    .setTooltip("Reset defaults")
-                    .onClick(async () => {
-                        await this.plugin.resetProperty('status_color_bg');
-                        this.hide();
-                        this.display();
-                    }));
-
-        for (let mode of all_modes) {
+        this.with_reset('keyboard_layout',
             new Setting(containerEl)
-                .setName(`Color status ${mode}`)
-                .addColorPicker(x => {
-                   x.setValue((this.plugin.settings as any)[`status_color_${mode}`])
-                       .onChange(async (value) => {
-                           await this.plugin.saveProperty(`color_status_${mode}`, value);
-                       });
-                })
-                .addExtraButton(x =>
-                    x.setIcon('rotate-ccw')
-                        .setTooltip("Reset defaults")
-                        .onClick(async () => {
-                            await this.plugin.resetProperty(`status_color_${mode}`);
+                .setName("Keyboard Layout")
+                .addTextArea(x =>
+                    x.setValue((this.plugin.settings.keyboard_layout ?? '')
+                        .trim().replace(/\s+/g, '\n'))
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty('keyboard_layout', value);
+                            // TODO
+                        })));
+
+        let allowed = this.with_reset('keyboard_allowed',
+            new Setting(containerEl)
+                .setName("Allowed Characters")
+                .addText(x =>
+                    x.setValue(this.plugin.settings.keyboard_allowed)
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty('keyboard_allowed', value);
+                            // TODO
+                        })));
+
+        this.with_reset('keyboard_depth',
+            new Setting(containerEl)
+                .setName("Keyboard Depth")
+                .addText(x =>
+                    x.setValue(`${this.plugin.settings.keyboard_depth}`)
+                        .onChange(async (value) => {
+                            try {
+                                await this.plugin.saveProperty('keyboard_depth', Number(value));
+                            } catch (e) {
+                                console.error(e);
+                            } finally {
+                                this.hide();
+                                this.display();
+                            }
+                        })));
+
+        new Setting(containerEl).setName("Status Color").setHeading();
+        this.with_reset('status_color_bg',
+            new Setting(containerEl)
+                .setName(`Color status background`)
+                .addColorPicker(x =>
+                    x.setValue((this.plugin.settings as any)[`status_color_bg`])
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty(`status_color_bg`, value);
                             this.hide();
                             this.display();
-                        }));
+                        })));
+
+        for (let mode of all_modes) {
+            this.with_reset(`color_status_${mode}`,
+                new Setting(containerEl)
+                    .setName(`Color status ${map_modes[mode]}`)
+                    .addColorPicker(x =>
+                        x.setValue((this.plugin.settings as any)[`status_color_${mode}`])
+                            .onChange(async (value) => {
+                                await this.plugin.saveProperty(`color_status_${mode}`, value);
+                                this.hide();
+                                this.display();
+                            })));
         }
 
-        new Setting(containerEl).setName("Search tag background").setHeading();
+        new Setting(containerEl).setName("Tag Background").setHeading();
         for (let mode of all_modes) {
-            new Setting(containerEl)
-                .setName(`Color search background ${mode}`)
-                .addColorPicker(x => {
-                    x.setValue((this.plugin.settings as any)[`search_color_bg_${mode}`])
-                        .onChange(async (value) => {
-                            await this.plugin.saveProperty(`search_color_bg_${mode}`, value);
-                        });
-                })
-                .addExtraButton(x =>
-                    x.setIcon('rotate-ccw')
-                        .setTooltip("Reset defaults")
-                        .onClick(async () => {
-                            await this.plugin.resetProperty(`search_color_bg_${mode}`);
-                            this.hide();
-                            this.display();
-                        }));
+            this.with_reset(`search_color_bg_${mode}`,
+                new Setting(containerEl)
+                    .setName(`${map_modes[mode]} background color`)
+                    .addColorPicker(x =>
+                        x.setValue((this.plugin.settings as any)[`search_color_bg_${mode}`])
+                            .onChange(async (value) => {
+                                await this.plugin.saveProperty(`search_color_bg_${mode}`, value);
+                                this.hide();
+                                this.display();
+                            })));
         }
 
-        new Setting(containerEl).setName("Search tag text").setHeading();
+        new Setting(containerEl).setName("Tag Foreground").setHeading();
         for (let mode of all_modes) {
-            new Setting(containerEl)
-                .setName(`Color search text ${mode}`)
-                .addColorPicker(x => {
-                    x.setValue((this.plugin.settings as any)[`search_color_text_${mode}`])
-                        .onChange(async (value) => {
-                            await this.plugin.saveProperty(`search_color_text_${mode}`, value);
-                        });
-                })
-                .addExtraButton(x =>
-                    x.setIcon('rotate-ccw')
-                        .setTooltip("Reset defaults")
-                        .onClick(async () => {
-                            await this.plugin.resetProperty(`search_color_text_${mode}`);
-                            this.hide();
-                            this.display();
-                        }));
+            this.with_reset(`search_color_text_${mode}`,
+                new Setting(containerEl)
+                    .setName(`${map_modes[mode]} foreground color`)
+                    .addColorPicker(x =>
+                        x.setValue((this.plugin.settings as any)[`search_color_text_${mode}`])
+                            .onChange(async (value) => {
+                                await this.plugin.saveProperty(`search_color_text_${mode}`, value);
+                                this.hide();
+                                this.display();
+                            })));
         }
 
-        new Setting(containerEl).setName("Search tag border").setHeading();
+        new Setting(containerEl).setName("Tag Border").setHeading();
         for (let mode of all_modes) {
-            new Setting(containerEl)
-                .setName(`Color search border ${mode}`)
-                .addColorPicker(x => {
-                    x.setValue((this.plugin.settings as any)[`search_color_border_${mode}`])
-                        .onChange(async (value) => {
-                            await this.plugin.saveProperty(`search_color_border_${mode}`, value);
-                        });
-                })
-                .addExtraButton(x =>
-                    x.setIcon('rotate-ccw')
-                        .setTooltip("Reset defaults")
-                        .onClick(async () => {
-                            await this.plugin.resetProperty(`search_color_border_${mode}`);
-                            this.hide();
-                            this.display();
-                        }));
+            this.with_reset(`search_color_border_${mode}`,
+                new Setting(containerEl)
+                    .setName(`${map_modes[mode]} border color`)
+                    .addColorPicker(x =>
+                        x.setValue((this.plugin.settings as any)[`search_color_border_${mode}`])
+                            .onChange(async (value) => {
+                                await this.plugin.saveProperty(`search_color_border_${mode}`, value);
+                            })));
         }
 
 
