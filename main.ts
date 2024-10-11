@@ -16,7 +16,7 @@ interface ExpandSelectPluginSettings {
 
     // set
     status_color_fallback: string;
-	status_color_bg?: string;
+	status_color_bg: string;
 
     // ASSIGNED AUTOMATICALLY
 	status_color_start?: string;
