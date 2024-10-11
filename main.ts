@@ -1006,19 +1006,22 @@ class BlazeJumpSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-    private with_reset(name: string, setting: Setting): Setting {
-        const basic = (this.plugin.default_settings as any)[name];
-        const current = (this.plugin.settings as any)[name];
-        return `${basic}` != `${current}`
-            ? setting.addExtraButton(x =>
-                x.setIcon('rotate-ccw')
-                    .setTooltip("Reset defaults")
-                    .onClick(async () => {
-                        await this.plugin.resetProperty(name);
-                        this.hide();
-                        this.display();
-                    }))
-            : setting;
+    private with_reset(names: string[], setting: Setting): Setting {
+        for (let name of names) {
+            const basic = (this.plugin.default_settings as any)[name];
+            const current = (this.plugin.settings as any)[name];
+            if (`${basic}` != `${current}`) {
+                return setting.addExtraButton(x =>
+                    x.setIcon('rotate-ccw')
+                        .setTooltip("Reset defaults")
+                        .onClick(async () => {
+                            await this.plugin.resetProperty(name);
+                            this.hide();
+                            this.display();
+                        }));
+            }
+        }
+        return setting;
     }
 
     private is_opaque(name: string): boolean {
@@ -1041,10 +1044,12 @@ class BlazeJumpSettingTab extends PluginSettingTab {
         return value;
     }
 
-    private ns(name: string, field?: string): Setting {
+    private ns(name: string, fields?: string[] | string): Setting {
         const {containerEl} = this;
         let setting = new Setting(containerEl).setName(name);
-        return field ? this.with_reset(field, setting) : setting;
+        return fields
+            ? this.with_reset(Array.isArray(fields) ? [...fields] : [fields], setting)
+            : setting;
     }
 
 	public display(): void {
@@ -1230,6 +1235,74 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         }));
         }
 
+        this.ns("Pulse").setHeading();
+
+        this.ns("Start pulse duration", ['search_start_pulse', 'search_start_pulse_duration'])
+            .addToggle(x =>
+                x.setValue(this.plugin.settings.search_start_pulse === true)
+                    .setTooltip("Enable")
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty(`search_start_pulse`, value);
+                        this.hide();
+                        this.display();
+                    }))
+            .addText(x =>
+                x.setValue(`${(this.plugin.settings.search_start_pulse_duration ?? 0) * 1000}`)
+                    .setDisabled(this.plugin.settings.search_start_pulse !== true)
+                    .setPlaceholder("Duration in ms")
+                    .onChange(async (value) => {
+                        try {
+                            await this.plugin.saveProperty('search_start_pulse_duration', Number(value) / 1000);
+                        } catch (e) {
+                            console.error(e);
+                        } finally {
+                            this.hide();
+                            this.display();
+                        }
+                    }));
+
+        this.ns("Jump pulse duration", ['search_jump_pulse', 'search_jump_pulse_duration'])
+            .addToggle(x =>
+                x.setValue(this.plugin.settings.search_jump_pulse === true)
+                    .setTooltip("Enable")
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty(`search_jump_pulse`, value);
+                        this.hide();
+                        this.display();
+                    }))
+            .addText(x =>
+                x.setValue(`${(this.plugin.settings.search_jump_pulse_duration ?? 0) * 1000}`)
+                    .setDisabled(this.plugin.settings.search_jump_pulse !== true)
+                    .setPlaceholder("Duration in ms")
+                    .onChange(async (value) => {
+                        try {
+                            await this.plugin.saveProperty('search_jump_pulse_duration', Number(value) / 1000);
+                        } catch (e) {
+                            console.error(e);
+                        } finally {
+                            this.hide();
+                            this.display();
+                        }
+                    }));
+
+        this.ns('Jump pulse color', 'search_jump_pulse_color')
+            .addToggle(x =>
+                x.setTooltip("Opaque")
+                    .setValue(this.is_opaque(`search_jump_pulse_color`))
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty(`search_jump_pulse_color`,
+                            this.make_transparent(`search_jump_pulse_color`, !value));
+                        this.hide();
+                        this.display();
+                    }))
+            .addColorPicker(x =>
+                x.setValue((this.plugin.settings as any)[`search_jump_pulse_color`])
+                    .setDisabled(!this.is_opaque(`search_jump_pulse_color`))
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty(`search_jump_pulse_color`, value);
+                        this.hide();
+                        this.display();
+                    }));
 
         // TODO settings
 	}
