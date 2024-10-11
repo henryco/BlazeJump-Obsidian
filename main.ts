@@ -989,6 +989,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
 			.setHeading()
             .addButton(x => {
                 x.setButtonText("Reset")
+                    .setWarning()
                     .onClick(async () => {
                         await this.plugin.resetSettings();
                         this.hide();
