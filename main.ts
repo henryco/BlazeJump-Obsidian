@@ -1125,98 +1125,90 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     }));
 
         for (let mode of all_modes) {
-            this.with_reset(`color_status_${mode}`,
-                new Setting(containerEl)
-                    .setName(`Color status ${map_modes[mode]}`)
-                    .addToggle(x =>
-                        x.setTooltip("Opaque")
-                            .setValue(this.is_opaque(`status_color_${mode}`))
-                            .onChange(async (value) => {
-                                await this.plugin.saveProperty(`color_status_${mode}`,
-                                    this.make_transparent(`color_status_${mode}`, !value));
-                                this.hide();
-                                this.display();
-                            }))
-                    .addColorPicker(x =>
-                        x.setValue((this.plugin.settings as any)[`status_color_${mode}`])
-                            .setDisabled(!this.is_opaque(`status_color_${mode}`))
-                            .onChange(async (value) => {
-                                await this.plugin.saveProperty(`color_status_${mode}`, value);
-                                this.hide();
-                                this.display();
-                            })));
+            this.ns(`Color status ${map_modes[mode]}`, `color_status_${mode}`)
+                .addToggle(x =>
+                    x.setTooltip("Opaque")
+                        .setValue(this.is_opaque(`status_color_${mode}`))
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty(`color_status_${mode}`,
+                                this.make_transparent(`color_status_${mode}`, !value));
+                            this.hide();
+                            this.display();
+                        }))
+                .addColorPicker(x =>
+                    x.setValue((this.plugin.settings as any)[`status_color_${mode}`])
+                        .setDisabled(!this.is_opaque(`status_color_${mode}`))
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty(`color_status_${mode}`, value);
+                            this.hide();
+                            this.display();
+                        }));
         }
 
-        new Setting(containerEl).setName("Tag Background").setHeading();
+        this.ns("Tag Background").setHeading();
         for (let mode of all_modes) {
-            this.with_reset(`search_color_bg_${mode}`,
-                new Setting(containerEl)
-                    .setName(`${map_modes[mode]} background color`)
-                    .addToggle(x =>
-                        x.setTooltip("Opaque")
-                            .setValue(this.is_opaque(`search_color_bg_${mode}`))
-                            .onChange(async (value) => {
-                                await this.plugin.saveProperty(`search_color_bg_${mode}`,
-                                    this.make_transparent(`search_color_bg_${mode}`, !value));
-                                this.hide();
-                                this.display();
-                            }))
-                    .addColorPicker(x =>
-                        x.setValue((this.plugin.settings as any)[`search_color_bg_${mode}`])
-                            .setDisabled(!this.is_opaque(`search_color_bg_${mode}`))
-                            .onChange(async (value) => {
-                                await this.plugin.saveProperty(`search_color_bg_${mode}`, value);
-                                this.hide();
-                                this.display();
-                            })));
+            this.ns(`${map_modes[mode]} background color`, `search_color_bg_${mode}`)
+                .addToggle(x =>
+                    x.setTooltip("Opaque")
+                        .setValue(this.is_opaque(`search_color_bg_${mode}`))
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty(`search_color_bg_${mode}`,
+                                this.make_transparent(`search_color_bg_${mode}`, !value));
+                            this.hide();
+                            this.display();
+                        }))
+                .addColorPicker(x =>
+                    x.setValue((this.plugin.settings as any)[`search_color_bg_${mode}`])
+                        .setDisabled(!this.is_opaque(`search_color_bg_${mode}`))
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty(`search_color_bg_${mode}`, value);
+                            this.hide();
+                            this.display();
+                        }));
         }
 
-        new Setting(containerEl).setName("Tag Foreground").setHeading();
+        this.ns("Tag Foreground").setHeading();
         for (let mode of all_modes) {
-            this.with_reset(`search_color_text_${mode}`,
-                new Setting(containerEl)
-                    .setName(`${map_modes[mode]} foreground color`)
-                    .addToggle(x =>
-                        x.setTooltip("Opaque")
-                            .setValue(this.is_opaque(`search_color_text_${mode}`))
-                            .onChange(async (value) => {
-                                await this.plugin.saveProperty(`search_color_text_${mode}`,
-                                    this.make_transparent(`search_color_text_${mode}`, !value));
-                                this.hide();
-                                this.display();
-                            }))
-                    .addColorPicker(x =>
-                        x.setValue((this.plugin.settings as any)[`search_color_text_${mode}`])
-                            .setDisabled(!this.is_opaque(`search_color_text_${mode}`))
-                            .onChange(async (value) => {
-                                await this.plugin.saveProperty(`search_color_text_${mode}`, value);
-                                this.hide();
-                                this.display();
-                            })));
+            this.ns(`${map_modes[mode]} foreground color`, `search_color_text_${mode}`)
+                .addToggle(x =>
+                    x.setTooltip("Opaque")
+                        .setValue(this.is_opaque(`search_color_text_${mode}`))
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty(`search_color_text_${mode}`,
+                                this.make_transparent(`search_color_text_${mode}`, !value));
+                            this.hide();
+                            this.display();
+                        }))
+                .addColorPicker(x =>
+                    x.setValue((this.plugin.settings as any)[`search_color_text_${mode}`])
+                        .setDisabled(!this.is_opaque(`search_color_text_${mode}`))
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty(`search_color_text_${mode}`, value);
+                            this.hide();
+                            this.display();
+                        }));
         }
 
-        new Setting(containerEl).setName("Tag Border").setHeading();
+        this.ns("Tag Border").setHeading();
         for (let mode of all_modes) {
-            this.with_reset(`search_color_border_${mode}`,
-                new Setting(containerEl)
-                    .setName(`${map_modes[mode]} border color`)
-                    .addToggle(x =>
-                        x.setTooltip("Opaque")
-                            .setValue(this.is_opaque(`search_color_border_${mode}`))
-                            .onChange(async (value) => {
-                                await this.plugin.saveProperty(`search_color_border_${mode}`,
-                                    this.make_transparent(`search_color_border_${mode}`, !value));
-                                this.hide();
-                                this.display();
-                            }))
-                    .addColorPicker(x =>
-                        x.setValue((this.plugin.settings as any)[`search_color_border_${mode}`])
-                            .setDisabled(!this.is_opaque(`search_color_border_${mode}`))
-                            .onChange(async (value) => {
-                                await this.plugin.saveProperty(`search_color_border_${mode}`, value);
-                                this.hide();
-                                this.display();
-                            })));
+            this.ns(`${map_modes[mode]} border color`, `search_color_border_${mode}`)
+                .addToggle(x =>
+                    x.setTooltip("Opaque")
+                        .setValue(this.is_opaque(`search_color_border_${mode}`))
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty(`search_color_border_${mode}`,
+                                this.make_transparent(`search_color_border_${mode}`, !value));
+                            this.hide();
+                            this.display();
+                        }))
+                .addColorPicker(x =>
+                    x.setValue((this.plugin.settings as any)[`search_color_border_${mode}`])
+                        .setDisabled(!this.is_opaque(`search_color_border_${mode}`))
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty(`search_color_border_${mode}`, value);
+                            this.hide();
+                            this.display();
+                        }));
         }
 
 
