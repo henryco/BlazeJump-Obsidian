@@ -1023,7 +1023,6 @@ class BlazeJumpSettingTab extends PluginSettingTab {
     }
 
 	public display(): void {
-        console.log('display');
         const all_modes = [
             'start',
             'end',
