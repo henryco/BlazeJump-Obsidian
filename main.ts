@@ -1015,9 +1015,9 @@ class BlazeJumpSettingTab extends PluginSettingTab {
             return transparent ? '#FFFFFF00' : '#FFFFFFFF';
 
         if (value.startsWith("#") && value.length === 7)
-            return `${value}${transparent ? '00' : 'FF'}`;
+            return `${value}${transparent ? '00' : ''}`;
         if (value.startsWith("#") && value.length === 9)
-            return `${value.substring(0, 7)}${transparent ? '00' : 'FF'}`;
+            return `${value.substring(0, 7)}${transparent ? '00' : ''}`;
 
         return value;
     }
