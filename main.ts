@@ -105,6 +105,7 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 
 // noinspection DuplicatedCode
 export default class BlazeJumpPlugin extends Plugin {
+	public default_settings: ExpandSelectPluginSettings;
 	public settings: ExpandSelectPluginSettings;
 
 	private search_tree: SearchTree;
@@ -953,12 +954,22 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     public async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.default_settings = {...this.settings};
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
-	public async saveSettings() {
-		await this.saveData(this.settings);
-	}
+    public async resetSettings() {
+        this.settings = {...this.default_settings};
+        await this.saveData(this.settings);
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    }
+
+    public async saveProperty(name: string, value?: any) {
+        if (!name || name.trim().length <= 0)
+            return;
+        (this.settings as any)[name] = value;
+        await this.saveData(this.settings);
+    }
 }
 
 class BlazeJumpSettingTab extends PluginSettingTab {
@@ -975,7 +986,40 @@ class BlazeJumpSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("BlazeJump Settings")
-			.setHeading();
+			.setHeading()
+            .addButton(x => {
+                x.setButtonText("Reset")
+                    .onClick(async () => {
+                        await this.plugin.resetSettings();
+                        this.hide();
+                        this.display();
+                    });
+            });
+
+        new Setting(containerEl)
+            .setName("Default Mode")
+            .addDropdown(x => {
+                x.setValue(this.plugin.settings.default_action)
+                    .addOption('start', "Word start")
+                    .addOption('end', "Word end")
+                    .addOption('any', "Any character")
+                    .addOption('line', "Line start")
+                    .addOption('terminator', "Line end")
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty('default_action', value);
+                    });
+            })
+
+        new Setting(containerEl)
+            .setName("Keyboard Layout")
+            .addTextArea(x => {
+                x.setValue((this.plugin.settings.keyboard_layout ?? '')
+                    .trim().replace(/\s+/g, '\n'))
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty('keyboard_layout', value);
+                    });
+            })
+
         // TODO settings
 	}
 }
