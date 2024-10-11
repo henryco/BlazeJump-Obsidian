@@ -58,6 +58,7 @@ interface ExpandSelectPluginSettings {
     convert_utf8_to_ascii?: boolean;
     auto_jump_on_single?: boolean;
     search_spellcheck_disable?: boolean;
+    capitalize_tags_labels?: boolean;
 
     search_dim_enabled?: boolean;
     search_dim_style?: string;
@@ -108,7 +109,8 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
     search_not_found_text: '🚫',
 
     convert_utf8_to_ascii: false,
-    auto_jump_on_single: false
+    auto_jump_on_single: false,
+    capitalize_tags_labels: false
 }
 
 // noinspection DuplicatedCode
@@ -222,6 +224,7 @@ export default class BlazeJumpPlugin extends Plugin {
         const settings = <any> this.settings;
         const st = this.resolveStatusColor();
         return {
+            capitalize: this.settings.capitalize_tags_labels === true,
             bg: settings[`search_color_bg_${this.mode ?? this.settings.default_action}`] ?? '#FFFFFF',
             text: settings[`search_color_text_${this.mode ?? this.settings.default_action}`] ?? st,
             border: settings[`search_color_border_${this.mode ?? this.settings.default_action}`] ?? st,
@@ -1394,6 +1397,17 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     .setTooltip("Disable")
                     .onChange(async (value) => {
                         await this.plugin.saveProperty(`search_spellcheck_disable`, value);
+                        this.hide();
+                        this.display();
+                    }));
+
+        this.ns("Capitalize text inside tags", 'capitalize_tags_labels')
+            .setDesc("May improve readability")
+            .addToggle(x =>
+                x.setValue(this.plugin.settings.capitalize_tags_labels === true)
+                    .setTooltip("Enable")
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty(`capitalize_tags_labels`, value);
                         this.hide();
                         this.display();
                     }));

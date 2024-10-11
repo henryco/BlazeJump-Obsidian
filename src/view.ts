@@ -75,9 +75,15 @@ export class BlazeFoundAreaWidget extends WidgetType {
         this.text = text;
     }
 
+    private provide_text(): string {
+        if (this.style.capitalize)
+            return this.text.toUpperCase();
+        return this.text.toLowerCase();
+    }
+
     public toDOM(_: EditorView): HTMLElement {
         const prefix = Array(this.style.offset).fill(' ').reduce((p, c) => p + c, '');
-        const text = prefix + this.text.toLowerCase().substring(this.style.offset);
+        const text = prefix + this.provide_text().substring(this.style.offset);
 
         const offset_x = this.search_position.coord.left - this.search_position.origin.left;
         const offset_y = this.search_position.coord.top - this.search_position.origin.top;

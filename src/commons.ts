@@ -9,6 +9,7 @@ export interface Coord {
 }
 
 export interface SearchStyle {
+    capitalize: boolean;
     bg: string;
     text: string;
     border: string;
