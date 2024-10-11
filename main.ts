@@ -66,7 +66,7 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	keyboard_allowed: "123456789abcdefghijklmnopqrstuvwxyz",
 	keyboard_depth: 2,
 
-	status_color_bg: '#00000000',
+	status_color_bg: '#FFFFFF00',
 
 	status_color_start: '#FF5733',
 	status_color_end: '#0000FF',
@@ -964,6 +964,10 @@ export default class BlazeJumpPlugin extends Plugin {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     }
 
+    public async resetProperty(name: string) {
+        // TODO
+    }
+
     public async saveProperty(name: string, value?: any) {
         console.debug("saveProperty:", name, value);
         if (!name || name.trim().length <= 0)
@@ -1013,6 +1017,14 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         await this.plugin.saveProperty('default_action', value);
                     });
             })
+            .addExtraButton(x =>
+                x.setIcon('rotate-ccw')
+                    .setTooltip("Reset defaults")
+                    .onClick(async () => {
+                        await this.plugin.resetProperty('default_action');
+                        this.hide();
+                        this.display();
+                    }));
 
         new Setting(containerEl).setName("Keyboard").setHeading();
         new Setting(containerEl)
@@ -1024,6 +1036,14 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         await this.plugin.saveProperty('keyboard_layout', value);
                     });
             })
+            .addExtraButton(x =>
+                x.setIcon('rotate-ccw')
+                    .setTooltip("Reset defaults")
+                    .onClick(async () => {
+                        await this.plugin.resetProperty('keyboard_layout');
+                        this.hide();
+                        this.display();
+                    }));
 
         new Setting(containerEl)
             .setName("Allowed Characters")
@@ -1032,7 +1052,15 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         await this.plugin.saveProperty('keyboard_allowed', value);
                     });
-            });
+            })
+            .addExtraButton(x =>
+                x.setIcon('rotate-ccw')
+                    .setTooltip("Reset defaults")
+                    .onClick(async () => {
+                        await this.plugin.resetProperty('keyboard_allowed');
+                        this.hide();
+                        this.display();
+                    }));
 
         new Setting(containerEl)
             .setName("Keyboard Depth")
@@ -1045,9 +1073,33 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                             console.error(e);
                         }
                     });
-            });
+            })
+            .addExtraButton(x =>
+                x.setIcon('rotate-ccw')
+                    .setTooltip("Reset defaults")
+                    .onClick(async () => {
+                        await this.plugin.resetProperty('keyboard_depth');
+                        this.hide();
+                        this.display();
+                    }));
 
         new Setting(containerEl).setName("Status color").setHeading();
+        new Setting(containerEl)
+            .setName(`Color status background`)
+            .addColorPicker(x =>
+                x.setValue((this.plugin.settings as any)[`status_color_bg`])
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty(`status_color_bg`, value);
+                    }))
+            .addExtraButton(x =>
+                x.setIcon('rotate-ccw')
+                    .setTooltip("Reset defaults")
+                    .onClick(async () => {
+                        await this.plugin.resetProperty('status_color_bg');
+                        this.hide();
+                        this.display();
+                    }));
+
         for (let mode of all_modes) {
             new Setting(containerEl)
                 .setName(`Color status ${mode}`)
@@ -1056,7 +1108,15 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                        .onChange(async (value) => {
                            await this.plugin.saveProperty(`color_status_${mode}`, value);
                        });
-                });
+                })
+                .addExtraButton(x =>
+                    x.setIcon('rotate-ccw')
+                        .setTooltip("Reset defaults")
+                        .onClick(async () => {
+                            await this.plugin.resetProperty(`status_color_${mode}`);
+                            this.hide();
+                            this.display();
+                        }));
         }
 
         new Setting(containerEl).setName("Search tag background").setHeading();
@@ -1068,7 +1128,15 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         .onChange(async (value) => {
                             await this.plugin.saveProperty(`search_color_bg_${mode}`, value);
                         });
-                });
+                })
+                .addExtraButton(x =>
+                    x.setIcon('rotate-ccw')
+                        .setTooltip("Reset defaults")
+                        .onClick(async () => {
+                            await this.plugin.resetProperty(`search_color_bg_${mode}`);
+                            this.hide();
+                            this.display();
+                        }));
         }
 
         new Setting(containerEl).setName("Search tag text").setHeading();
@@ -1080,7 +1148,15 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         .onChange(async (value) => {
                             await this.plugin.saveProperty(`search_color_text_${mode}`, value);
                         });
-                });
+                })
+                .addExtraButton(x =>
+                    x.setIcon('rotate-ccw')
+                        .setTooltip("Reset defaults")
+                        .onClick(async () => {
+                            await this.plugin.resetProperty(`search_color_text_${mode}`);
+                            this.hide();
+                            this.display();
+                        }));
         }
 
         new Setting(containerEl).setName("Search tag border").setHeading();
@@ -1092,7 +1168,15 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         .onChange(async (value) => {
                             await this.plugin.saveProperty(`search_color_border_${mode}`, value);
                         });
-                });
+                })
+                .addExtraButton(x =>
+                    x.setIcon('rotate-ccw')
+                        .setTooltip("Reset defaults")
+                        .onClick(async () => {
+                            await this.plugin.resetProperty(`search_color_border_${mode}`);
+                            this.hide();
+                            this.display();
+                        }));
         }
 
 
