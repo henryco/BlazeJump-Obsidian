@@ -1022,6 +1022,12 @@ class BlazeJumpSettingTab extends PluginSettingTab {
         return value;
     }
 
+    private ns(name: string, field?: string): Setting {
+        const {containerEl} = this;
+        let setting = new Setting(containerEl).setName(name);
+        return field ? this.with_reset(field, setting) : setting;
+    }
+
 	public display(): void {
         const all_modes = [
             'start',
@@ -1041,72 +1047,62 @@ class BlazeJumpSettingTab extends PluginSettingTab {
 		const {containerEl} = this;
 		containerEl.empty();
 
-		new Setting(containerEl)
-			.setName("BlazeJump Settings")
-			.setHeading()
-            .addButton(x => {
+		this.ns("BlazeJump Settings")
+            .setHeading()
+            .addButton(x =>
                 x.setButtonText("Reset")
                     .setWarning()
                     .onClick(async () => {
                         await this.plugin.resetSettings();
                         this.hide();
                         this.display();
-                    });
-            });
+                    }));
 
-        this.with_reset('default_action',
-            new Setting(containerEl)
-                .setName("Default Mode")
-                .addDropdown(x =>
-                    x.addOption('start', map_modes['start'])
-                        .addOption('end', map_modes['end'])
-                        .addOption('any', map_modes['any'])
-                        .addOption('line', map_modes['line'])
-                        .addOption('terminator', map_modes['terminator'])
-                        .setValue(this.plugin.settings.default_action)
-                        .onChange(async (value) => {
-                            await this.plugin.saveProperty('default_action', value);
-                            this.hide();
-                            this.display();
-                        })));
+        this.ns("Default Mode", 'default_action')
+            .addDropdown(x =>
+                x.addOption('start', map_modes['start'])
+                    .addOption('end', map_modes['end'])
+                    .addOption('any', map_modes['any'])
+                    .addOption('line', map_modes['line'])
+                    .addOption('terminator', map_modes['terminator'])
+                    .setValue(this.plugin.settings.default_action)
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty('default_action', value);
+                        this.hide();
+                        this.display();
+                    }));
 
         new Setting(containerEl).setName("Keyboard").setHeading();
-        this.with_reset('keyboard_layout',
-            new Setting(containerEl)
-                .setName("Keyboard Layout")
-                .addTextArea(x =>
-                    x.setValue((this.plugin.settings.keyboard_layout ?? '')
-                        .trim().replace(/\s+/g, '\n'))
-                        .onChange(async (value) => {
-                            await this.plugin.saveProperty('keyboard_layout', value);
-                            // TODO
-                        })));
+        this.ns("Keyboard Layout", 'keyboard_layout')
+            .addTextArea(x =>
+                x.setValue((this.plugin.settings.keyboard_layout ?? '')
+                    .trim().replace(/\s+/g, '\n'))
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty('keyboard_layout', value);
+                        // TODO
+                    }));
 
-        let allowed = this.with_reset('keyboard_allowed',
-            new Setting(containerEl)
-                .setName("Allowed Characters")
-                .addText(x =>
-                    x.setValue(this.plugin.settings.keyboard_allowed)
-                        .onChange(async (value) => {
-                            await this.plugin.saveProperty('keyboard_allowed', value);
-                            // TODO
-                        })));
+        this.ns("Allowed Characters", "keyboard_allowed")
+            .addText(x =>
+                x.setValue(this.plugin.settings.keyboard_allowed)
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty('keyboard_allowed', value);
+                        // TODO
+                    }));
 
-        this.with_reset('keyboard_depth',
-            new Setting(containerEl)
-                .setName("Keyboard Depth")
-                .addText(x =>
-                    x.setValue(`${this.plugin.settings.keyboard_depth}`)
-                        .onChange(async (value) => {
-                            try {
-                                await this.plugin.saveProperty('keyboard_depth', Number(value));
-                            } catch (e) {
-                                console.error(e);
-                            } finally {
-                                this.hide();
-                                this.display();
-                            }
-                        })));
+        this.ns('Keyboard Depth', 'keyboard_depth')
+            .addText(x =>
+                x.setValue(`${this.plugin.settings.keyboard_depth}`)
+                    .onChange(async (value) => {
+                        try {
+                            await this.plugin.saveProperty('keyboard_depth', Number(value));
+                        } catch (e) {
+                            console.error(e);
+                        } finally {
+                            this.hide();
+                            this.display();
+                        }
+                    }));
 
         new Setting(containerEl).setName("Status Color").setHeading();
         this.with_reset('status_color_bg',
