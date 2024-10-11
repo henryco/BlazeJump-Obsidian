@@ -13,6 +13,7 @@ interface ExpandSelectPluginSettings {
 	keyboard_allowed: string;
 	keyboard_depth: number;
 
+    status_color_fallback: string;
 	status_color_bg?: string;
 
 	status_color_start?: string;
@@ -66,6 +67,7 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	keyboard_allowed: "123456789abcdefghijklmnopqrstuvwxyz",
 	keyboard_depth: 2,
 
+    status_color_fallback: '#FF5733',
 	status_color_bg: '#FFFFFF00',
 
 	status_color_start: '#FF5733',
@@ -954,6 +956,8 @@ export default class BlazeJumpPlugin extends Plugin {
 
     public async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+
+
 	}
 
     public async resetSettings() {
