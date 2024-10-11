@@ -1308,48 +1308,21 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         this.display();
                     }));
 
-
-        //     search_dim_enabled?: boolean;
-        //     search_dim_style?: string;
-        //
-        //     search_not_found_text?: string;
-
-
         this.ns("Miscellaneous").setHeading();
-        this.ns("Convert Unicode to ASCII", 'convert_utf8_to_ascii')
-            .setDesc("For example: Ü -> U")
-            .addToggle(x =>
-                x.setValue(this.plugin.settings.convert_utf8_to_ascii === true)
-                    .setTooltip("Enable")
-                    .onChange(async (value) => {
-                        await this.plugin.saveProperty(`convert_utf8_to_ascii`, value);
-                        this.hide();
-                        this.display();
-                    }));
-        this.ns("Auto jump", 'auto_jump_on_single')
-            .setDesc("Jump automatically whenever there is only single candidate")
-            .addToggle(x =>
-                x.setValue(this.plugin.settings.auto_jump_on_single === true)
-                    .setTooltip("Enable")
-                    .onChange(async (value) => {
-                        await this.plugin.saveProperty(`auto_jump_on_single`, value);
-                        this.hide();
-                        this.display();
-                    }));
-        this.ns("Disable spellcheck", 'search_spellcheck_disable')
-            .setDesc("Disable spellcheck in editor when searching")
-            .addToggle(x =>
-                x.setValue(this.plugin.settings.search_spellcheck_disable === true)
-                    .setTooltip("Disable")
-                    .onChange(async (value) => {
-                        await this.plugin.saveProperty(`search_spellcheck_disable`, value);
-                        this.hide();
-                        this.display();
-                    }));
         this.ns("Word endings", "terminator_exceptions")
             .setDesc("Characters ignored when performing search on words endings")
+            .addToggle(x =>
+                x.setValue(this.plugin.settings.terminator_exceptions !== undefined)
+                    .setTooltip("Enable")
+                    .onChange(async (value) => {
+                        if (value) await this.plugin.resetProperty('terminator_exceptions');
+                        else await this.plugin.saveProperty('terminator_exceptions', undefined);
+                        this.hide();
+                        this.display();
+                    }))
             .addText(x =>
                 x.setValue(this.plugin.settings.terminator_exceptions ?? '')
+                    .setDisabled(this.plugin.settings.terminator_exceptions === undefined)
                     .onChange(async (value) => {
                         await this.plugin.saveProperty('terminator_exceptions', value);
                         // TODO
@@ -1374,6 +1347,55 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         // TODO
                     }));
 
-        // TODO settings
+        this.ns("Dim editor style", ['search_dim_enabled', 'search_dim_style'])
+            .setDesc("Dims editor when search, drastically improves readability")
+            .addToggle(x =>
+                x.setValue(this.plugin.settings.search_dim_enabled === true)
+                    .setTooltip("Enable")
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty(`search_dim_enabled`, value);
+                        this.hide();
+                        this.display();
+                    }))
+            .addTextArea(x =>
+                x.setValue((this.plugin.settings.search_dim_style ?? '').trim())
+                    .setDisabled(this.plugin.settings.search_dim_enabled !== true)
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty('search_dim_style', value);
+                        // TODO
+                    }));
+
+        this.ns("Convert Unicode to ASCII", 'convert_utf8_to_ascii')
+            .setDesc("For example: Ü -> U")
+            .addToggle(x =>
+                x.setValue(this.plugin.settings.convert_utf8_to_ascii === true)
+                    .setTooltip("Enable")
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty(`convert_utf8_to_ascii`, value);
+                        this.hide();
+                        this.display();
+                    }));
+
+        this.ns("Auto jump", 'auto_jump_on_single')
+            .setDesc("Jump automatically whenever there is only single candidate")
+            .addToggle(x =>
+                x.setValue(this.plugin.settings.auto_jump_on_single === true)
+                    .setTooltip("Enable")
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty(`auto_jump_on_single`, value);
+                        this.hide();
+                        this.display();
+                    }));
+
+        this.ns("Disable spellcheck", 'search_spellcheck_disable')
+            .setDesc("Disable spellcheck in editor when searching")
+            .addToggle(x =>
+                x.setValue(this.plugin.settings.search_spellcheck_disable === true)
+                    .setTooltip("Disable")
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty(`search_spellcheck_disable`, value);
+                        this.hide();
+                        this.display();
+                    }));
 	}
 }
