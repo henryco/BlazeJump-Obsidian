@@ -8,13 +8,13 @@ export class BlazePointerPulseWidget extends WidgetType {
     private position: SearchPosition;
     private style: PulseStyle;
 
-    constructor(position: SearchPosition, style: PulseStyle) {
+    public constructor(position: SearchPosition, style: PulseStyle) {
         super();
         this.position = position;
         this.style = style;
     }
 
-    toDOM(_: EditorView): HTMLElement {
+    public toDOM(_: EditorView): HTMLElement {
         const offset_x = this.position.coord.left - this.position.origin.left;
         const offset_y = this.position.coord.top - this.position.origin.top;
 
@@ -54,7 +54,7 @@ export class BlazePointerPulseWidget extends WidgetType {
         return el;
     }
 
-    destroy(dom: HTMLElement) {
+    public destroy(dom: HTMLElement) {
         const existingStyle = document.getElementById(BlazePointerPulseWidget.style_id);
         if (existingStyle)
             existingStyle.remove();
@@ -68,14 +68,14 @@ export class BlazeFoundAreaWidget extends WidgetType {
     private style: SearchStyle;
     private text: string;
 
-    constructor(text: string, search_position: SearchPosition, style: SearchStyle) {
+    public constructor(text: string, search_position: SearchPosition, style: SearchStyle) {
         super();
         this.search_position = search_position;
         this.style = style;
         this.text = text;
     }
 
-    toDOM(_: EditorView): HTMLElement {
+    public toDOM(_: EditorView): HTMLElement {
         const prefix = Array(this.style.offset).fill(' ').reduce((p, c) => p + c, '');
         const text = prefix + this.text.toLowerCase().substring(this.style.offset);
 
@@ -109,21 +109,21 @@ export class BlazeFoundAreaWidget extends WidgetType {
 class BlazeViewPlugin implements PluginValue {
     decorations: DecorationSet = Decoration.none;
 
-    constructor() {
+    public constructor() {
         inter_plugin_state.state.plugin_draw_callback =
             () => this.build_decorations();
     }
 
-    update(update: ViewUpdate) {
+    public update(update: ViewUpdate) {
         if (inter_plugin_state.state.editor_callback)
             inter_plugin_state.state.editor_callback(update.view);
     }
 
-    destroy() {
+    public destroy() {
         inter_plugin_state.state = {};
     }
 
-    build_decorations() {
+    private build_decorations() {
         const positions = inter_plugin_state.state.positions;
         const pointer = inter_plugin_state.state.pointer;
 

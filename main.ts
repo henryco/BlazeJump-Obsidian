@@ -105,54 +105,25 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 
 // noinspection DuplicatedCode
 export default class BlazeJumpPlugin extends Plugin {
-	settings: ExpandSelectPluginSettings;
+	public settings: ExpandSelectPluginSettings;
 
-	search_tree: SearchTree;
-	mode?: MODE_TYPE = undefined;
+	private search_tree: SearchTree;
+	private mode?: MODE_TYPE = undefined;
 
-	statusBar?: HTMLElement;
+	private statusBar?: HTMLElement;
 
-	callback_provided_input: any;
-	callback_start_search: any;
-    callback_mouse_reset: any;
+	private callback_provided_input: any;
+	private callback_start_search: any;
+    private callback_mouse_reset: any;
 
-    spellcheck?: string;
+    private spellcheck?: string;
 
-    offset: number = 0;
+    private offset: number = 0;
 
-	range_from: number;
-	range_to: number;
+	private range_from: number;
+	private range_to: number;
 
-	resolveStatusColor(): string {
-		return <string> {
-			'start': this.settings.status_color_start,
-			'end': this.settings.status_color_end,
-			'any': this.settings.status_color_any,
-			'line': this.settings.status_color_line,
-			'terminator': this.settings.status_color_terminator,
-		}[this.mode ?? this.settings.default_action];
-	}
-
-	resolveSearchColor(idx: number = 0): SearchStyle {
-		const settings = <any> this.settings;
-		const st = this.resolveStatusColor();
-		return {
-			bg: settings[`search_color_bg_${this.mode ?? this.settings.default_action}`] ?? 'white',
-			text: settings[`search_color_text_${this.mode ?? this.settings.default_action}`] ?? st,
-			border: settings[`search_color_border_${this.mode ?? this.settings.default_action}`] ?? st,
-            offset: this.offset,
-			idx: idx
-		}
-	}
-
-    resolvePulseStyle(): PulseStyle {
-        return {
-            duration: this.settings.search_jump_pulse_duration ?? 0.15,
-            bg: this.settings.search_jump_pulse_color ?? 'red'
-        }
-    }
-
-	async onload() {
+	public async onload() {
 		await this.loadSettings();
 
 		this.search_tree = new SearchTree(
@@ -223,12 +194,41 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.addSettingTab(new BlazeJumpSettingTab(this.app, this));
 	}
 
-	onunload() {
+	public onunload() {
 		inter_plugin_state.state = {};
 		this.resetAction();
 	}
 
-	statusSet(text: string) {
+    private resolveStatusColor(): string {
+        return <string> {
+            'start': this.settings.status_color_start,
+            'end': this.settings.status_color_end,
+            'any': this.settings.status_color_any,
+            'line': this.settings.status_color_line,
+            'terminator': this.settings.status_color_terminator,
+        }[this.mode ?? this.settings.default_action];
+    }
+
+    private resolveSearchColor(idx: number = 0): SearchStyle {
+        const settings = <any> this.settings;
+        const st = this.resolveStatusColor();
+        return {
+            bg: settings[`search_color_bg_${this.mode ?? this.settings.default_action}`] ?? 'white',
+            text: settings[`search_color_text_${this.mode ?? this.settings.default_action}`] ?? st,
+            border: settings[`search_color_border_${this.mode ?? this.settings.default_action}`] ?? st,
+            offset: this.offset,
+            idx: idx
+        }
+    }
+
+    private resolvePulseStyle(): PulseStyle {
+        return {
+            duration: this.settings.search_jump_pulse_duration ?? 0.15,
+            bg: this.settings.search_jump_pulse_color ?? 'red'
+        }
+    }
+
+    private statusSet(text: string) {
 		this.statusClear();
 		this.statusBar = this.addStatusBarItem();
 
@@ -251,12 +251,12 @@ export default class BlazeJumpPlugin extends Plugin {
 		}});
 	}
 
-	statusClear() {
+    private statusClear() {
 		this.statusBar?.remove();
 		this.statusBar = undefined;
 	}
 
-	toggleMode(_?: Editor) {
+    private toggleMode(_?: Editor) {
 		const mode_map = {
 			'start': 'end',
 			'end': 'any',
@@ -269,12 +269,12 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.mode = <MODE_TYPE> mode;
 	}
 
-    toggleLineMode(left: boolean, _?: Editor) {
+    private toggleLineMode(left: boolean, _?: Editor) {
         this.resetAction(_);
         this.mode = left ? 'line' : 'terminator';
     }
 
-    toggleDim(active: boolean) {
+    private toggleDim(active: boolean) {
         if (!this.settings.search_dim_enabled)
             return;
 
@@ -299,7 +299,7 @@ export default class BlazeJumpPlugin extends Plugin {
         }
     }
 
-    toggleSpellcheck(active: boolean) {
+    private toggleSpellcheck(active: boolean) {
         if (!this.settings.search_spellcheck_disable)
             return;
 
@@ -326,7 +326,7 @@ export default class BlazeJumpPlugin extends Plugin {
         }
     }
 
-    pulseInit(active: boolean): void {
+    private pulseInit(active: boolean): void {
         if (!this.settings.search_start_pulse)
             return;
 
@@ -355,7 +355,7 @@ export default class BlazeJumpPlugin extends Plugin {
         }
     }
 
-    jumpTo(editor: Editor, position: SearchPosition) {
+    private jumpTo(editor: Editor, position: SearchPosition) {
         editor.setCursor(position.start);
 
         if (!this.settings.search_jump_pulse)
@@ -375,7 +375,7 @@ export default class BlazeJumpPlugin extends Plugin {
         }, (this.settings.search_jump_pulse_duration ?? 0) * 1000);
     }
 
-	resetAction(_?: Editor, full: boolean = true) {
+    private resetAction(_?: Editor, full: boolean = true) {
         if (full) {
             this.statusClear();
             this.toggleDim(false);
@@ -405,43 +405,43 @@ export default class BlazeJumpPlugin extends Plugin {
         inter_plugin_state.state.pointer = undefined;
 	}
 
-	blazeAction(editor: Editor, _: any) {
+    private blazeAction(editor: Editor, _: any) {
         this.resetAction(editor, false);
         this.toggleMode(editor);
 		this.searchAction(editor);
 	}
 
-	startAction(editor: Editor, _: any) {
+    private startAction(editor: Editor, _: any) {
         this.resetAction(editor);
         this.mode = 'start';
 		this.searchAction(editor);
 	}
 
-	endAction(editor: Editor, _: any) {
+	private endAction(editor: Editor, _: any) {
         this.resetAction(editor);
         this.mode = 'end';
 		this.searchAction(editor);
 	}
 
-	anyAction(editor: Editor, _: any) {
+	private anyAction(editor: Editor, _: any) {
         this.resetAction(editor);
         this.mode = 'any';
 		this.searchAction(editor);
 	}
 
-    beginningAction(editor: Editor, _: any) {
+    private beginningAction(editor: Editor, _: any) {
         this.resetAction(editor);
         this.mode = 'line';
         this.lineAction(editor);
     }
 
-    terminatorAction(editor: Editor, _: any) {
+    private terminatorAction(editor: Editor, _: any) {
         this.resetAction(editor);
         this.mode = 'terminator';
         this.lineAction(editor);
     }
 
-    lineAction(editor: Editor) {
+    private lineAction(editor: Editor) {
         this.statusSet("BlazeMode: ");
         this.toggleSpellcheck(false);
         this.pulseInit(true);
@@ -582,7 +582,7 @@ export default class BlazeJumpPlugin extends Plugin {
         window.addEventListener("auxclick", callback_on_mouse_reset, { once: true });
     }
 
-	searchAction(editor: Editor) {
+	private searchAction(editor: Editor) {
         this.statusSet("BlazeMode: ");
         this.pulseInit(true);
 
@@ -785,7 +785,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		window.addEventListener("auxclick", callback_on_mouse_reset, { once: true });
 	}
 
-    performLineSearch(editor: Editor) {
+    private performLineSearch(editor: Editor) {
         const view = (<EditorView> (<any> editor)['cm']);
 
         const from = editor.offsetToPos(this.range_from);
@@ -876,7 +876,7 @@ export default class BlazeJumpPlugin extends Plugin {
         return this.freeze_positions();
     }
 
-	performSearch(editor: Editor, search: string) {
+	private performSearch(editor: Editor, search: string) {
 		const term_exceptions = [...this.settings.terminator_exceptions ?? ''];
 
         const view = (<EditorView> (<any> editor)['cm']);
@@ -940,36 +940,36 @@ export default class BlazeJumpPlugin extends Plugin {
 		return positions;
 	}
 
-    freeze_positions(): SearchPosition[] {
+    private freeze_positions(): SearchPosition[] {
         return this.search_tree.freeze_nodes()
             .map(x => ({...x.value as SearchPosition, name: x.full_id.substring(1)}))
             .sort((a, b) => a.index_s - b.index_s);
     }
 
-    normalize_text(str: string): string {
+    private normalize_text(str: string): string {
         return (this.settings.convert_utf8_to_ascii === true)
             ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
             : str;
     }
 
-	async loadSettings() {
+    public async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
-	async saveSettings() {
+	public async saveSettings() {
 		await this.saveData(this.settings);
 	}
 }
 
 class BlazeJumpSettingTab extends PluginSettingTab {
-	plugin: BlazeJumpPlugin;
+	private plugin: BlazeJumpPlugin;
 
-	constructor(app: App, plugin: BlazeJumpPlugin) {
+	public constructor(app: App, plugin: BlazeJumpPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
-	display(): void {
+	public display(): void {
 		const {containerEl} = this;
 		containerEl.empty();
 
