@@ -16,24 +16,28 @@ interface ExpandSelectPluginSettings {
     status_color_fallback: string;
 	status_color_bg?: string;
 
+    // ASSIGNED AUTOMATICALLY
 	status_color_start?: string;
 	status_color_end?: string;
 	status_color_any?: string;
 	status_color_line?: string;
 	status_color_terminator?: string;
 
+    // ASSIGNED AUTOMATICALLY
 	search_color_bg_start?: string;
 	search_color_bg_end?: string;
 	search_color_bg_any?: string;
 	search_color_bg_line?: string;
 	search_color_bg_terminator?: string;
 
+    // ASSIGNED AUTOMATICALLY
 	search_color_text_start?: string;
 	search_color_text_end?: string;
 	search_color_text_any?: string;
 	search_color_text_line?: string;
 	search_color_text_terminator?: string;
 
+    // ASSIGNED AUTOMATICALLY
 	search_color_border_start?: string;
 	search_color_border_end?: string;
 	search_color_border_any?: string;
@@ -107,6 +111,7 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 
 // noinspection DuplicatedCode
 export default class BlazeJumpPlugin extends Plugin {
+	public default_settings: ExpandSelectPluginSettings;
 	public settings: ExpandSelectPluginSettings;
 
 	private search_tree: SearchTree;
@@ -215,7 +220,7 @@ export default class BlazeJumpPlugin extends Plugin {
         const settings = <any> this.settings;
         const st = this.resolveStatusColor();
         return {
-            bg: settings[`search_color_bg_${this.mode ?? this.settings.default_action}`] ?? 'white',
+            bg: settings[`search_color_bg_${this.mode ?? this.settings.default_action}`] ?? '#FFFFFF',
             text: settings[`search_color_text_${this.mode ?? this.settings.default_action}`] ?? st,
             border: settings[`search_color_border_${this.mode ?? this.settings.default_action}`] ?? st,
             offset: this.offset,
@@ -236,9 +241,9 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		this.statusBar.createEl("span", { text: `${text} `, attr: {
 			style: `
-			background-color: ${this.settings.status_color_bg ?? 'transparent'}; 
-			border: thin solid ${this.resolveStatusColor() ?? 'red'};
-			color: ${this.resolveStatusColor() ?? 'red'};
+			background-color: ${this.settings.status_color_bg ?? '#FFFFFF00'}; 
+			border: thin solid ${this.resolveStatusColor() ?? this.settings.status_color_fallback};
+			color: ${this.resolveStatusColor() ?? this.settings.status_color_fallback};
 			font-size: xx-small;
 			border-radius: 5px;
 			display: inline-grid;
@@ -955,22 +960,32 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     public async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        const all_modes = ['start', 'end', 'any', 'line', 'terminator'];
 
+        let def_set = {...DEFAULT_SETTINGS};
+        for (let mode of all_modes) {
+            const st = ((def_set as any)[`status_color_${mode}`]) ?? ((def_set as any)['status_color_fallback']);
+            (def_set as any)[`search_color_bg_${mode}`] = ((def_set as any)[`search_color_bg_${mode}`] ?? '#FFFFFF');
+            (def_set as any)[`search_color_text_${mode}`] = ((def_set as any)[`search_color_text_${mode}`] ?? st);
+            (def_set as any)[`search_color_border_${mode}`] = ((def_set as any)[`search_color_text_${mode}`] ?? st);
+        }
+
+        this.default_settings = {...def_set};
+        this.settings = Object.assign({}, this.default_settings, await this.loadData());
 
 	}
 
     public async resetSettings() {
-        this.settings = {...DEFAULT_SETTINGS};
+        this.settings = {...this.default_settings};
         await this.saveData(this.settings);
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.settings = Object.assign({}, this.default_settings, await this.loadData());
     }
 
     public async resetProperty(name: string) {
         console.info('resetProperty', name);
         if (!name || name.trim().length <= 0)
             return;
-        (this.settings as any)[name] = (DEFAULT_SETTINGS as any)[name];
+        (this.settings as any)[name] = (this.default_settings as any)[name];
         await this.saveData(this.settings);
     }
 
@@ -992,7 +1007,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
 	}
 
     private with_reset(name: string, setting: Setting): Setting {
-        const basic = (DEFAULT_SETTINGS as any)[name];
+        const basic = (this.plugin.default_settings as any)[name];
         const current = (this.plugin.settings as any)[name];
         return `${basic}` != `${current}`
             ? setting.addExtraButton(x =>
