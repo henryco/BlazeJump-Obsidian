@@ -138,10 +138,10 @@ export class SearchTree {
     }
 
     private initKeyboardLayout(keyboard_layout: string, keyboard_allowed: string): void {
-        const arr = keyboard_layout.toLowerCase().trim().split(/\s+|\n+/);
+        const arr = `${keyboard_layout}`.toLowerCase().trim().split(/\s+|\n+/);
         const width = arr.reduce((p, c) => Math.max(p, c.length), 0);
         this.layout_characters = arr.reduce((p, c) => [...p, ...c, ...Array(width - c.length).fill(null)], [])
-            .map(x => keyboard_allowed.toLowerCase().includes(x) ? x : null)
+            .map(x => `${keyboard_allowed}`.toLowerCase().includes(x) ? x : null)
             .map(x => x !== '#' ? x : null);
         this.layout_height = arr.length;
         this.layout_width = width;

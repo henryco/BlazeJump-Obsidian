@@ -66,22 +66,22 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
 	keyboard_allowed: "123456789abcdefghijklmnopqrstuvwxyz",
 	keyboard_depth: 2,
 
-	status_color_bg: 'transparent',
+	status_color_bg: '#00000000',
 
-	status_color_start: 'Crimson',
-	status_color_end: 'Blue',
-	status_color_any: 'Green',
+	status_color_start: '#FF5733',
+	status_color_end: '#0000FF',
+	status_color_any: '#008000',
 
-	status_color_line: 'Magenta',
-	status_color_terminator: 'DimGray',
+	status_color_line: '#FF00FF',
+	status_color_terminator: '#696969',
 
-    search_color_text_start: 'Crimson',
-    search_color_text_end: 'Blue',
-    search_color_text_any: 'Aqua',
+    search_color_text_start: '#FF5733',
+    search_color_text_end: '#0000FF',
+    search_color_text_any: '#00FFFF',
 
-	search_color_bg_start: 'Yellow',
-	search_color_bg_end: 'Yellow',
-	search_color_bg_any: 'Purple',
+	search_color_bg_start: '#FFFF00',
+	search_color_bg_end: '#FFFF00',
+	search_color_bg_any: '#800080',
 
     search_dim_enabled: true,
     search_dim_style: 'color: var(--text-faint);',
@@ -89,7 +89,7 @@ const DEFAULT_SETTINGS: ExpandSelectPluginSettings = {
     search_spellcheck_disable: true,
 
     search_jump_pulse: true,
-    search_jump_pulse_color: 'red',
+    search_jump_pulse_color: '#FF0000',
     search_jump_pulse_duration: 0.15,
 
     search_start_pulse: true,
@@ -965,6 +965,7 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     public async saveProperty(name: string, value?: any) {
+        console.debug("saveProperty:", name, value);
         if (!name || name.trim().length <= 0)
             return;
         (this.settings as any)[name] = value;
@@ -981,6 +982,8 @@ class BlazeJumpSettingTab extends PluginSettingTab {
 	}
 
 	public display(): void {
+        const all_modes = ['start', 'end', 'any', 'line', 'terminator'];
+
 		const {containerEl} = this;
 		containerEl.empty();
 
@@ -1011,6 +1014,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     });
             })
 
+        new Setting(containerEl).setName("Keyboard").setHeading();
         new Setting(containerEl)
             .setName("Keyboard Layout")
             .addTextArea(x => {
@@ -1020,6 +1024,77 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         await this.plugin.saveProperty('keyboard_layout', value);
                     });
             })
+
+        new Setting(containerEl)
+            .setName("Allowed Characters")
+            .addText(x => {
+                x.setValue(this.plugin.settings.keyboard_allowed)
+                    .onChange(async (value) => {
+                        await this.plugin.saveProperty('keyboard_allowed', value);
+                    });
+            });
+
+        new Setting(containerEl)
+            .setName("Keyboard Depth")
+            .addText(x => {
+                x.setValue(`${this.plugin.settings.keyboard_depth}`)
+                    .onChange(async (value) => {
+                        try {
+                            await this.plugin.saveProperty('keyboard_depth', Number(value));
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    });
+            });
+
+        new Setting(containerEl).setName("Status color").setHeading();
+        for (let mode of all_modes) {
+            new Setting(containerEl)
+                .setName(`Color status ${mode}`)
+                .addColorPicker(x => {
+                   x.setValue((this.plugin.settings as any)[`status_color_${mode}`])
+                       .onChange(async (value) => {
+                           await this.plugin.saveProperty(`color_status_${mode}`, value);
+                       });
+                });
+        }
+
+        new Setting(containerEl).setName("Search tag background").setHeading();
+        for (let mode of all_modes) {
+            new Setting(containerEl)
+                .setName(`Color search background ${mode}`)
+                .addColorPicker(x => {
+                    x.setValue((this.plugin.settings as any)[`search_color_bg_${mode}`])
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty(`search_color_bg_${mode}`, value);
+                        });
+                });
+        }
+
+        new Setting(containerEl).setName("Search tag text").setHeading();
+        for (let mode of all_modes) {
+            new Setting(containerEl)
+                .setName(`Color search text ${mode}`)
+                .addColorPicker(x => {
+                    x.setValue((this.plugin.settings as any)[`search_color_text_${mode}`])
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty(`search_color_text_${mode}`, value);
+                        });
+                });
+        }
+
+        new Setting(containerEl).setName("Search tag border").setHeading();
+        for (let mode of all_modes) {
+            new Setting(containerEl)
+                .setName(`Color search border ${mode}`)
+                .addColorPicker(x => {
+                    x.setValue((this.plugin.settings as any)[`search_color_border_${mode}`])
+                        .onChange(async (value) => {
+                            await this.plugin.saveProperty(`search_color_border_${mode}`, value);
+                        });
+                });
+        }
+
 
         // TODO settings
 	}
