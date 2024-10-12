@@ -974,8 +974,8 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		const t1 = new Date().getTime();
 
-		console.log(`indexing: ${t1 - t0}ms`);
-		console.log(`found: ${positions.length}`);
+		console.debug(`indexing: ${t1 - t0}ms`);
+		console.debug(`found: ${positions.length}`);
 
 		return positions;
 	}
@@ -1014,7 +1014,7 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     public async resetProperty(name: string) {
-        console.info('resetProperty', name);
+        console.debug('resetProperty', name);
         if (!name || name.trim().length <= 0)
             return;
         (this.settings as any)[name] = (this.default_settings as any)[name];
@@ -1022,7 +1022,7 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     public async saveProperty(name: string, value?: any) {
-        console.info("saveProperty:", name, value);
+        console.debug("saveProperty:", name, value);
         if (!name || name.trim().length <= 0)
             return;
         (this.settings as any)[name] = value;
