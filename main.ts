@@ -1031,6 +1031,7 @@ export default class BlazeJumpPlugin extends Plugin {
 }
 
 class BlazeJumpSettingTab extends PluginSettingTab {
+    private difference: boolean = false;
 	private plugin: BlazeJumpPlugin;
 
 	public constructor(app: App, plugin: BlazeJumpPlugin) {
@@ -1067,6 +1068,11 @@ class BlazeJumpSettingTab extends PluginSettingTab {
         for (let name of names) {
             const basic = (this.plugin.default_settings as any)[name];
             const current = (this.plugin.settings as any)[name];
+
+            if (`${basic}` != `${current}` && !this.difference) {
+                this.difference = true;
+            }
+
             if (`${basic}` != `${current}` || always) {
 
                 if ((setting.components?.[0] as any)?.extraSettingsEl?.ariaLabel === label)
@@ -1123,6 +1129,8 @@ class BlazeJumpSettingTab extends PluginSettingTab {
     }
 
 	public display(): void {
+        this.difference = false;
+
         const all_modes = [
             'start',
             'end',
@@ -1141,9 +1149,9 @@ class BlazeJumpSettingTab extends PluginSettingTab {
 		const {containerEl} = this;
 		containerEl.empty();
 
-		let head = this.ns("BlazeJump Settings").setHeading();
-        // TODO
-        head = this.with_global_reset(head);
+		let head = this.ns("BlazeJump Settings")
+            .setDesc("Beta")
+            .setHeading();
 
         this.ns("Default Mode", 'default_action')
             .addDropdown(x =>
@@ -1476,5 +1484,8 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                         this.hide();
                         this.display();
                     }));
+
+        if (this.difference)
+            head = this.with_global_reset(head);
 	}
 }
