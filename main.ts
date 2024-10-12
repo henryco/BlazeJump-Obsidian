@@ -137,72 +137,76 @@ export default class BlazeJumpPlugin extends Plugin {
 	public async onload() {
 		await this.loadSettings();
 
-		this.search_tree = new SearchTree(
-			this.settings.keyboard_layout,
-			this.settings.keyboard_allowed,
-			this.settings.keyboard_depth
-		);
+		try {
+            this.search_tree = new SearchTree(
+                this.settings.keyboard_layout,
+                this.settings.keyboard_allowed,
+                this.settings.keyboard_depth
+            );
 
-		inter_plugin_state.state.style_provider = (idx: number = 0) => this.resolveSearchColor(idx);
-        inter_plugin_state.state.pulse_provider = () => this.resolvePulseStyle();
+            inter_plugin_state.state.style_provider = (idx: number = 0) => this.resolveSearchColor(idx);
+            inter_plugin_state.state.pulse_provider = () => this.resolvePulseStyle();
 
-        inter_plugin_state.state.editor_callback = (view: EditorView) => {
-			if (view.visibleRanges.length <= 0)
-				return;
-			const range = view.visibleRanges[0];
-			this.range_from = range.from;
-			this.range_to = range.to;
-		};
+            inter_plugin_state.state.editor_callback = (view: EditorView) => {
+                if (view.visibleRanges.length <= 0)
+                    return;
+                const range = view.visibleRanges[0];
+                this.range_from = range.from;
+                this.range_to = range.to;
+            };
 
-		this.registerEditorExtension(blaze_jump_view_plugin);
+            this.registerEditorExtension(blaze_jump_view_plugin);
 
-		this.addCommand({
-			id: "blaze-jump-toggle",
-			name: "BlazeJump toggle and jump",
-			editorCallback: (editor, ctx) => this.blazeAction(editor, ctx),
-			hotkeys: [{
-				modifiers: ['Ctrl'],
-				key: '`',
-			}]
-		});
+            this.addCommand({
+                id: "blaze-jump-toggle",
+                name: "BlazeJump toggle and jump",
+                editorCallback: (editor, ctx) => this.blazeAction(editor, ctx),
+                hotkeys: [{
+                    modifiers: ['Ctrl'],
+                    key: '`',
+                }]
+            });
 
-		this.addCommand({
-			id: "blaze-jump-start",
-			name: "BlazeJump start",
-			editorCallback: (editor, ctx) => this.startAction(editor, ctx)
-		});
+            this.addCommand({
+                id: "blaze-jump-start",
+                name: "BlazeJump start",
+                editorCallback: (editor, ctx) => this.startAction(editor, ctx)
+            });
 
-		this.addCommand({
-			id: "blaze-jump-end",
-			name: "BlazeJump end",
-			editorCallback: (editor, ctx) => this.endAction(editor, ctx)
-		});
+            this.addCommand({
+                id: "blaze-jump-end",
+                name: "BlazeJump end",
+                editorCallback: (editor, ctx) => this.endAction(editor, ctx)
+            });
 
-		this.addCommand({
-			id: "blaze-jump-any",
-			name: "BlazeJump any",
-			editorCallback: (editor, ctx) => this.anyAction(editor, ctx)
-		});
+            this.addCommand({
+                id: "blaze-jump-any",
+                name: "BlazeJump any",
+                editorCallback: (editor, ctx) => this.anyAction(editor, ctx)
+            });
 
-		this.addCommand({
-			id: 'blaze-jump-abort',
-			name: "BlazeJump abort search",
-			editorCallback: (editor) => this.resetAction(editor)
-		});
+            this.addCommand({
+                id: 'blaze-jump-abort',
+                name: "BlazeJump abort search",
+                editorCallback: (editor) => this.resetAction(editor)
+            });
 
-        this.addCommand({
-            id: 'blaze-jump-line',
-            name: "BlazeJump jump to line",
-            editorCallback: (editor, ctx) => this.beginningAction(editor, ctx)
-        });
+            this.addCommand({
+                id: 'blaze-jump-line',
+                name: "BlazeJump jump to line",
+                editorCallback: (editor, ctx) => this.beginningAction(editor, ctx)
+            });
 
-        this.addCommand({
-            id: 'blaze-jump-terminator',
-            name: "BlazeJump jump to the end of a line",
-            editorCallback: (editor, ctx) => this.terminatorAction(editor, ctx)
-        });
-
-		this.addSettingTab(new BlazeJumpSettingTab(this.app, this));
+            this.addCommand({
+                id: 'blaze-jump-terminator',
+                name: "BlazeJump jump to the end of a line",
+                editorCallback: (editor, ctx) => this.terminatorAction(editor, ctx)
+            });
+        } catch (e) {
+            console.error(e);
+        } finally {
+            this.addSettingTab(new BlazeJumpSettingTab(this.app, this));
+        }
 	}
 
 	public onunload() {
@@ -1001,7 +1005,6 @@ export default class BlazeJumpPlugin extends Plugin {
 
         this.default_settings = {...def_set};
         this.settings = Object.assign({}, this.default_settings, await this.loadData());
-
 	}
 
     public async resetSettings() {
