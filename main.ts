@@ -1293,6 +1293,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     }));
 
         this.ns('Jump pulse color', 'search_jump_pulse_color')
+            .setDesc("Pulse color of area under caret after jump")
             .addToggle(x =>
                 x.setTooltip("Opaque")
                     .setValue(this.is_opaque(`search_jump_pulse_color`))
