@@ -1178,13 +1178,13 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     }));
 
         for (let mode of all_modes) {
-            this.ns(`Color status ${map_modes[mode]}`, `color_status_${mode}`)
+            this.ns(`Color status ${map_modes[mode]}`, `status_color_${mode}`)
                 .addToggle(x =>
                     x.setTooltip("Opaque")
                         .setValue(this.is_opaque(`status_color_${mode}`))
                         .onChange(async (value) => {
-                            await this.plugin.saveProperty(`color_status_${mode}`,
-                                this.make_transparent(`color_status_${mode}`, !value));
+                            await this.plugin.saveProperty(`status_color_${mode}`,
+                                this.make_transparent(`status_color_${mode}`, !value));
                             this.hide();
                             this.display();
                         }))
@@ -1192,7 +1192,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     x.setValue((this.plugin.settings as any)[`status_color_${mode}`])
                         .setDisabled(!this.is_opaque(`status_color_${mode}`))
                         .onChange(async (value) => {
-                            await this.plugin.saveProperty(`color_status_${mode}`, value);
+                            await this.plugin.saveProperty(`status_color_${mode}`, value);
                             this.hide();
                             this.display();
                         }));
