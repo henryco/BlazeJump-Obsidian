@@ -498,6 +498,14 @@ export default class BlazeJumpPlugin extends Plugin {
             event.preventDefault();
             event.stopPropagation();
 
+            if (event.which === 16 ||
+                event.keyCode === 16 ||
+                `${event.key}`.toLowerCase() === 'shift'
+            ) {
+                window.addEventListener('keydown', callback_on_provided, { once: true });
+                return;
+            }
+
             if (event.keyCode === 27 ||
                 event.which === 27 ||
                 `${event.key}`.toLowerCase() === 'escape' ||
@@ -537,7 +545,7 @@ export default class BlazeJumpPlugin extends Plugin {
             }
 
             try {
-                const char = event.key;
+                const char = `${event.key}`.toLowerCase();
                 this.search_tree.narrow(char);
                 this.offset += 1;
 
@@ -618,6 +626,14 @@ export default class BlazeJumpPlugin extends Plugin {
                 event.preventDefault();
                 event.stopPropagation();
 
+                if (event.which === 16 ||
+                    event.keyCode === 16 ||
+                    `${event.key}`.toLowerCase() === 'shift'
+                ) {
+                    window.addEventListener('keydown', callback_on_provided, { once: true });
+                    return;
+                }
+
                 if (event.keyCode === 27 ||
                     event.which === 27 ||
                     `${event.key}`.toLowerCase() === 'escape' ||
@@ -653,7 +669,7 @@ export default class BlazeJumpPlugin extends Plugin {
                     return;
                 }
 
-                const char = event.key;
+                const char = `${event.key}`.toLowerCase();
 
                 this.offset += 1;
                 this.search_tree.narrow(char);
@@ -700,6 +716,14 @@ export default class BlazeJumpPlugin extends Plugin {
             event.preventDefault();
             event.stopPropagation();
 
+            if (event.which === 16 ||
+                event.keyCode === 16 ||
+                `${event.key}`.toLowerCase() === 'shift'
+            ) {
+                window.addEventListener('keydown', callback_on_start, { once: true });
+                return;
+            }
+
             if (event.keyCode === 27 ||
                 event.which === 27 ||
                 `${event.key}`.toLowerCase() === 'escape' ||
@@ -742,7 +766,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 this.toggleSpellcheck(false);
                 this.toggleDim(true);
 
-                const char = event.key;
+                const char = `${event.key}`.toLowerCase();
 
 				if (char.length <= 2 && char.trim().length > 0) {
 					const positions = this.performSearch(editor, char);
