@@ -1043,6 +1043,8 @@ class BlazeJumpSettingTab extends PluginSettingTab {
             const basic = (this.plugin.default_settings as any)[name];
             const current = (this.plugin.settings as any)[name];
             if (`${basic}` != `${current}`) {
+                if ((setting.components?.[0] as any)?.extraSettingsEl?.ariaLabel === 'Reset defaults')
+                    return setting;
                 return setting.addExtraButton(x =>
                     x.setIcon('rotate-ccw')
                         .setTooltip("Reset defaults")
