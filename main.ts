@@ -1046,6 +1046,21 @@ class BlazeJumpSettingTab extends PluginSettingTab {
         return setting;
     }
 
+    private with_global_reset(setting: Setting): Setting {
+        const label = 'Reset';
+        if (setting.components?.length >= 1)
+            return setting;
+        return setting
+            .addButton(x =>
+            x.setButtonText(label)
+                .setWarning()
+                .onClick(async () => {
+                    await this.plugin.resetSettings();
+                    this.hide();
+                    this.display();
+                }))
+    }
+
     private with_reset(names: string[], setting: Setting, always: boolean = false): Setting {
         const label = 'Reset defaults';
 
@@ -1126,16 +1141,9 @@ class BlazeJumpSettingTab extends PluginSettingTab {
 		const {containerEl} = this;
 		containerEl.empty();
 
-		this.ns("BlazeJump Settings")
-            .setHeading()
-            .addButton(x =>
-                x.setButtonText("Reset")
-                    .setWarning()
-                    .onClick(async () => {
-                        await this.plugin.resetSettings();
-                        this.hide();
-                        this.display();
-                    }));
+		let head = this.ns("BlazeJump Settings").setHeading();
+        // TODO
+        head = this.with_global_reset(head);
 
         this.ns("Default Mode", 'default_action')
             .addDropdown(x =>
@@ -1160,6 +1168,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         await this.plugin.saveProperty('keyboard_layout', value);
                         this.toggle_defaults(kl, true);
+                        this.with_global_reset(head);
                     }));
 
         let ka = this.ns("Allowed Characters", "keyboard_allowed", true)
@@ -1168,6 +1177,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         await this.plugin.saveProperty('keyboard_allowed', value);
                         this.toggle_defaults(ka, true);
+                        this.with_global_reset(head);
                     }));
 
         let kd = this.ns('Keyboard Depth', 'keyboard_depth', true)
@@ -1180,6 +1190,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                             console.error(e);
                         } finally {
                             this.toggle_defaults(kd, true);
+                            this.with_global_reset(head);
                         }
                     }));
 
@@ -1313,6 +1324,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                             console.error(e);
                         } finally {
                             this.toggle_defaults(pu, true);
+                            this.with_global_reset(head);
                         }
                     }));
 
@@ -1337,6 +1349,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                             console.error(e);
                         } finally {
                             this.toggle_defaults(pj, true);
+                            this.with_global_reset(head);
                         }
                     }));
 
@@ -1378,6 +1391,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         await this.plugin.saveProperty('terminator_exceptions', value);
                         this.toggle_defaults(we, true);
+                        this.with_global_reset(head);
                     }));
 
         let nf = this.ns("Nothing found message", 'search_not_found_text', true)
@@ -1397,6 +1411,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         await this.plugin.saveProperty('search_not_found_text', value);
                         this.toggle_defaults(nf, true);
+                        this.with_global_reset(head);
                     }));
 
         let di = this.ns("Dim editor style", ['search_dim_enabled', 'search_dim_style'], true)
@@ -1415,6 +1430,7 @@ class BlazeJumpSettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         await this.plugin.saveProperty('search_dim_style', value);
                         this.toggle_defaults(di, true);
+                        this.with_global_reset(head);
                     }));
 
         this.ns("Convert Unicode to ASCII", 'convert_utf8_to_ascii')
