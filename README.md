@@ -1,1 +1,1 @@
-# AceJump for Obsidian
+# BlazeJump Obsidian
