@@ -1,11 +1,14 @@
 {
 	"id": "blaze-jump",
-	"name": "Blaze Jump",
+	"name": "BlazeJump",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "AceJump for Obsidian",
 	"author": "henryco",
 	"authorUrl": "https://github.com/henryco",
-	"fundingUrl": "https://github.com/henryco",
+	"fundingUrl": {
+        "GitHub Sponsor": "https://github.com/sponsors/henryco",
+        "Buy Me a Coffee": "https://buymeacoffee.com/henrycoxd"
+    },
 	"isDesktopOnly": true
 }
