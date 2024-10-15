@@ -1,6 +1,8 @@
 import {EditorPosition} from "obsidian";
 import {EditorView} from "@codemirror/view";
 
+export type MODE_TYPE = 'start' | 'end' | 'any' | 'line' | 'terminator';
+
 export interface Coord {
     bottom: number;
     left: number;
