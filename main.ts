@@ -742,7 +742,7 @@ export default class BlazeJumpPlugin extends Plugin {
         let first: Rect | null = null;
         let anchor: EditorPosition | null = null;
 
-        for (let i = line_f; i < line_t; i++) {
+        for (let i = line_f; i <= line_t; i++) {
             const start = <EditorPosition> { line: i, ch: 0 };
             const length = editor.getLine(i).length;
 
