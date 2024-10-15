@@ -670,7 +670,11 @@ export default class BlazeJumpPlugin extends Plugin {
 					if (!positions || positions.length <= 0) {
 						this.resetAction(editor);
 						if (inter_plugin_state.state.plugin_draw_callback)
-							inter_plugin_state.state.plugin_draw_callback();
+							inter_plugin_state.state.plugin_draw_callback()
+                        if (this.settings.search_not_found_text &&
+                            this.settings.search_not_found_text.trim() !== '') {
+                            new Notice(this.settings.search_not_found_text);
+                        }
 						return;
 					}
 
