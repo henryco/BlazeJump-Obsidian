@@ -172,8 +172,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                 x.addOption('start', map_modes['start'])
                     .addOption('end', map_modes['end'])
                     .addOption('any', map_modes['any'])
-                    .addOption('line', map_modes['line'])
-                    .addOption('terminator', map_modes['terminator'])
                     .setValue(this.settings.default_action)
                     .onChange(async (value) => {
                         await this.saveProperty('default_action', value);
