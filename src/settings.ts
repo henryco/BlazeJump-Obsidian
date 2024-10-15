@@ -54,6 +54,7 @@ export interface BlazeJumpPluginSettings {
     auto_jump_on_single?: boolean;
     search_spellcheck_disable?: boolean;
     capitalize_tags_labels?: boolean;
+    jump_after_word_on_end?: boolean;
 
     search_dim_enabled?: boolean;
     search_dim_style?: string;
@@ -105,7 +106,8 @@ export const DEFAULT_SETTINGS: BlazeJumpPluginSettings = {
 
     convert_utf8_to_ascii: false,
     auto_jump_on_single: false,
-    capitalize_tags_labels: false
+    capitalize_tags_labels: false,
+    jump_after_word_on_end: true
 }
 
 export class BlazeJumpSettingTab extends PluginSettingTab {
@@ -497,13 +499,24 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.display();
                     }));
 
+        this.ns("Jump to the end at word-end", 'jump_after_word_on_end')
+            .setDesc("Jumps to the end of the word in 'Word end' mode")
+            .addToggle(x =>
+                x.setValue(this.settings.jump_after_word_on_end === true)
+                    .setTooltip("Enable")
+                    .onChange(async (value) => {
+                        await this.saveProperty(`jump_after_word_on_end`, value);
+                        this.hide();
+                        this.display();
+                    }));
+
         if (this.difference)
             head = this.with_global_reset(head);
     }
 
     private async loadSettings() {
         const all_modes = ['start', 'end', 'any', 'line', 'terminator'];
-        // TODO
+
         let def_set = {...DEFAULT_SETTINGS};
         for (let mode of all_modes) {
             const st = ((def_set as any)[`status_color_${mode}`]) ?? ((def_set as any)['status_color_fallback']);

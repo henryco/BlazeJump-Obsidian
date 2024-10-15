@@ -59,11 +59,11 @@ export default class BlazeJumpPlugin extends Plugin {
                 name: "BlazeJump toggle and jump",
                 editorCallback: (editor, ctx) => this.blazeAction(editor, ctx),
 
-                // TODO REMOVE HOTKEYS
-                hotkeys: [{
-                    modifiers: ['Ctrl'],
-                    key: '`',
-                }]
+                // hotkeys: [{
+                //     modifiers: ['Ctrl'],
+                //     key: '`',
+                // }]
+
             });
 
             this.addCommand({
@@ -820,6 +820,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	private performSearch(editor: Editor, search: string) {
 		const term_exceptions = [...this.settings.exceptions ?? ''];
+        const word_end_offset = this.settings.jump_after_word_on_end ? 1 : 0;
 
         const view = (<EditorView> (<any> editor)['cm']);
         const search_lower = this.normalize_text(search.toLowerCase());
@@ -863,10 +864,10 @@ export default class BlazeJumpPlugin extends Plugin {
 				const two = editor.offsetToPos(index + search.length + 1 + this.range_from);
 				const nv = editor.getRange(start, two).trim();
 				if (nv.length === 1) {
-                    search_position.start.ch += 1;
+                    search_position.start.ch += word_end_offset;
                     this.search_tree.assign(search_lower, search_position);
                 } else if (nv.length === 2 && term_exceptions.some(x => x === nv.at(1))) {
-                    search_position.start.ch += 1;
+                    search_position.start.ch += word_end_offset;
                     this.search_tree.assign(search_lower, search_position);
                 }
 			}
