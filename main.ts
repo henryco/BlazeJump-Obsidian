@@ -114,13 +114,7 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
     private resolveStatusColor(): string {
-        return <string> {
-            'start': this.settings.status_color_start,
-            'end': this.settings.status_color_end,
-            'any': this.settings.status_color_any,
-            'line': this.settings.status_color_line,
-            'terminator': this.settings.status_color_terminator,
-        }[this.mode ?? this.settings.default_action];
+        return <string>(this.settings as any)[`status_color_${this.mode ?? this.settings.default_action}`];
     }
 
     private resolveSearchColor(idx: number = 0): SearchStyle {
