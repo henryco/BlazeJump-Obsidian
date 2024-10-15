@@ -814,7 +814,7 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
 	private performSearch(editor: Editor, search: string) {
-		const term_exceptions = [...this.settings.terminator_exceptions ?? ''];
+		const term_exceptions = [...this.settings.exceptions ?? ''];
 
         const view = (<EditorView> (<any> editor)['cm']);
         const search_lower = this.normalize_text(search.toLowerCase());
@@ -848,6 +848,8 @@ export default class BlazeJumpPlugin extends Plugin {
 				const pre = editor.offsetToPos((index > 0 ? index - 1 : index) + this.range_from);
 				const nv = editor.getRange(pre, end).trim();
 				if (nv.length === 1) {
+                    this.search_tree.assign(search_lower, search_position);
+                } else if (nv.length === 2 && term_exceptions.some(x => x === nv.substring(0, 1))) {
                     this.search_tree.assign(search_lower, search_position);
                 }
 			}

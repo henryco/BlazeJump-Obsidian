@@ -59,7 +59,7 @@ export interface BlazeJumpPluginSettings {
     search_dim_style?: string;
 
     search_not_found_text?: string;
-    terminator_exceptions?: string;
+    exceptions?: string;
 }
 
 export const DEFAULT_SETTINGS: BlazeJumpPluginSettings = {
@@ -99,7 +99,7 @@ export const DEFAULT_SETTINGS: BlazeJumpPluginSettings = {
     search_start_pulse: true,
     search_start_pulse_duration: 0.15,
 
-    terminator_exceptions: `.,;:'"\``,
+    exceptions: `!?@#$%^&*()<>[]{}/\\|_+-=~.,;:'"\``,
 
     search_not_found_text: '🚫',
 
@@ -394,22 +394,22 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                     }));
 
         this.ns("Miscellaneous").setHeading();
-        let we = this.ns("Word endings", "terminator_exceptions", true)
-            .setDesc("Characters ignored when performing search on words endings")
+        let we = this.ns("Special characters", "exceptions", true)
+            .setDesc("Characters ignored when performing search on words")
             .addToggle(x =>
-                x.setValue(this.settings.terminator_exceptions !== undefined)
+                x.setValue(this.settings.exceptions !== undefined)
                     .setTooltip("Enable")
                     .onChange(async (value) => {
-                        if (value) await this.resetProperty('terminator_exceptions');
-                        else await this.saveProperty('terminator_exceptions', undefined);
+                        if (value) await this.resetProperty('exceptions');
+                        else await this.saveProperty('exceptions', undefined);
                         this.hide();
                         this.display();
                     }))
             .addText(x =>
-                x.setValue(this.settings.terminator_exceptions ?? '')
-                    .setDisabled(this.settings.terminator_exceptions === undefined)
+                x.setValue(this.settings.exceptions ?? '')
+                    .setDisabled(this.settings.exceptions === undefined)
                     .onChange(async (value) => {
-                        await this.saveProperty('terminator_exceptions', value);
+                        await this.saveProperty('exceptions', value);
                         this.toggle_defaults(we, true);
                         this.with_global_reset(head);
                     }));
