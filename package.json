@@ -1,6 +1,6 @@
 {
 	"name": "blaze-jump",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "AceJump for obsidian",
 	"main": "main.js",
 	"scripts": {
@@ -10,7 +10,7 @@
 	},
 	"keywords": [],
 	"author": "henryco",
-	"license": "MIT",
+	"license": "LGPL-2.1-only",
 	"devDependencies": {
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
