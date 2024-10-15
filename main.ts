@@ -800,12 +800,13 @@ export default class BlazeJumpPlugin extends Plugin {
                 const stp = <EditorPosition> { line: i, ch: Math.max(0, length - 1) };
                 const edp = <EditorPosition> { line: i, ch: Math.max(0, length ) };
                 const zero = view.coordsAtPos(editor.posToOffset(start));
+                const tos = editor.posToOffset(start);
                 const pos = editor.posToOffset(stp);
                 const coord = view.coordsAtPos(pos);
                 this.search_tree.assign(search_char, <SearchPosition> {
                     offset: this.calc_offset(editor.getLine(i), term_exceptions),
-                    index_e: pos + 1,
-                    index_s: pos,
+                    index_e: tos + 1,
+                    index_s: tos,
                     origin: zero,
                     coord: coord,
                     start: edp,
