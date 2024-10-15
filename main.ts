@@ -723,6 +723,7 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
     private performLineSearch(editor: Editor) {
+        const term_exceptions = [...this.settings.exceptions ?? ''];
         const view = (<EditorView> (<any> editor)['cm']);
 
         const from = editor.offsetToPos(this.range_from);
@@ -768,6 +769,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 const pos = editor.posToOffset(anchor);
                 const zero = view.coordsAtPos(editor.posToOffset(start));
                 this.search_tree.assign(search_char, <SearchPosition> {
+                    offset: this.calc_offset(editor.getLine(anchor.line), term_exceptions),
                     index_e: pos + 1,
                     index_s: pos,
                     origin: first,
@@ -784,6 +786,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 const pos = editor.posToOffset(start);
                 const zero = view.coordsAtPos(pos);
                 this.search_tree.assign(search_char, <SearchPosition> {
+                    offset: this.calc_offset(editor.getLine(i), term_exceptions),
                     index_e: pos + 1,
                     index_s: pos,
                     origin: zero,
@@ -800,6 +803,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 const pos = editor.posToOffset(stp);
                 const coord = view.coordsAtPos(pos);
                 this.search_tree.assign(search_char, <SearchPosition> {
+                    offset: this.calc_offset(editor.getLine(i), term_exceptions),
                     index_e: pos + 1,
                     index_s: pos,
                     origin: zero,
@@ -831,9 +835,9 @@ export default class BlazeJumpPlugin extends Plugin {
             const coord = view.coordsAtPos(index + this.range_from);
 
 			let search_position = <SearchPosition> {
+                offset: this.calc_offset(editor.getLine(start.line), term_exceptions),
 				index_e: index + this.range_from - start.ch + search.length,
 				index_s: index + this.range_from - start.ch,
-				value: editor.getRange(start, end),
                 origin: zero,
 				coord: coord,
 				start: start,
@@ -849,7 +853,7 @@ export default class BlazeJumpPlugin extends Plugin {
 				const nv = editor.getRange(pre, end).trim();
 				if (nv.length === 1) {
                     this.search_tree.assign(search_lower, search_position);
-                } else if (nv.length === 2 && term_exceptions.some(x => x === nv.substring(0, 1))) {
+                } else if (nv.length === 2 && term_exceptions.some(x => x === nv.at(0))) {
                     this.search_tree.assign(search_lower, search_position);
                 }
 			}
@@ -860,7 +864,7 @@ export default class BlazeJumpPlugin extends Plugin {
 				if (nv.length === 1) {
                     search_position.start.ch += 1;
                     this.search_tree.assign(search_lower, search_position);
-                } else if (nv.length === 2 && term_exceptions.some(x => x === nv.substring(1))) {
+                } else if (nv.length === 2 && term_exceptions.some(x => x === nv.at(1))) {
                     search_position.start.ch += 1;
                     this.search_tree.assign(search_lower, search_position);
                 }
@@ -878,6 +882,20 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		return positions;
 	}
+
+    private calc_offset(line: string, term_exceptions: string[]): number {
+        // this is workaround for very *peculiar* behaviour of markdown editor live-preview for bold/italics/etc...
+        let l_offset = 1;
+        while (l_offset < line.length - 1) {
+            const cc = line.at(l_offset);
+            if (cc && term_exceptions.some(x => x === cc)) {
+                l_offset += 1;
+                continue;
+            }
+            break;
+        }
+        return l_offset;
+    }
 
     private freeze_positions(): SearchPosition[] {
         return this.search_tree.freeze_nodes()

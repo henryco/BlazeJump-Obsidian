@@ -144,16 +144,15 @@ class BlazeViewPlugin implements PluginValue {
             let i = 0;
             for (let position of positions) {
                 builder.add(
-                    position.index_s + 1,
-                    position.index_s + 1,
-                    Decoration.replace({
+                    position.index_s + position.offset,
+                    position.index_s + position.offset,
+                    Decoration.widget({
                         widget: new BlazeFoundAreaWidget(
                             position.name,
                             position,
                             <SearchStyle> {
                                 ...(inter_plugin_state.state.style_provider?.(i++)),
-                            }),
-                        inclusive: false
+                            })
                     })
                 );
             }
@@ -161,9 +160,9 @@ class BlazeViewPlugin implements PluginValue {
 
         else if (pointer) {
             builder.add(
-                pointer.index_s + 1,
-                pointer.index_s + 1,
-                Decoration.replace({
+                pointer.index_s + pointer.offset,
+                pointer.index_s + pointer.offset,
+                Decoration.widget({
                     widget: new BlazePointerPulseWidget(
                         pointer,
                         <PulseStyle> {
