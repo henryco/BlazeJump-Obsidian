@@ -37,6 +37,7 @@ export interface SearchPosition {
 }
 
 export interface InterState {
+    plugin_draw_observers?: ({ id: string, fn: () => void })[];
     plugin_draw_callback?: () => void;
     editor_callback?: (view: EditorView) => void;
     style_provider?: (i: number) => SearchStyle;
@@ -50,7 +51,15 @@ class InterPluginState {
     public state: InterState;
 
     private constructor() {
-        this.state = {};
+        this.state = {
+            plugin_draw_observers: [],
+            plugin_draw_callback: function () {
+                if (!this.plugin_draw_observers || this.plugin_draw_observers.length <= 0)
+                    return;
+                for (let observer of this.plugin_draw_observers)
+                    observer?.fn();
+            }
+        };
     }
 
     public static getInstance() {

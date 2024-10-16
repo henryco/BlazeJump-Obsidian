@@ -113,13 +113,21 @@ export class BlazeFoundAreaWidget extends WidgetType {
 }
 
 class BlazeViewPlugin implements PluginValue {
-    decorations: DecorationSet = Decoration.none;
+    private static id_counter: number = 0;
+
+    private readonly local_id: number;
+    public decorations: DecorationSet = Decoration.none;
 
     public constructor() {
-        // TODO REPLACE WITH ARRAY OBSERVERS
-        if (!inter_plugin_state.state.plugin_draw_callback)
-            inter_plugin_state.state.plugin_draw_callback =
-                () => this.build_decorations();
+        this.local_id = BlazeViewPlugin.id_counter++;
+
+        if (!inter_plugin_state.state.plugin_draw_observers)
+            inter_plugin_state.state.plugin_draw_observers = [];
+
+        inter_plugin_state.state.plugin_draw_observers.push({
+            id: `${this.local_id}`,
+            fn: () => this.build_decorations(),
+        });
     }
 
     public update(update: ViewUpdate) {
@@ -128,7 +136,13 @@ class BlazeViewPlugin implements PluginValue {
     }
 
     public destroy() {
-
+        if (!inter_plugin_state.state.plugin_draw_observers)
+            return;
+        for (let observer of inter_plugin_state.state.plugin_draw_observers) {
+            if (observer.id !== `${this.local_id}`)
+                continue;
+            inter_plugin_state.state.plugin_draw_observers.remove(observer);
+        }
     }
 
     private build_decorations() {
