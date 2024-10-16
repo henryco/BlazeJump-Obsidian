@@ -47,9 +47,14 @@ export default class BlazeJumpPlugin extends Plugin {
             inter_plugin_state.state.editor_callback = (view: EditorView) => {
                 if (view.visibleRanges.length <= 0)
                     return;
-                const range = view.visibleRanges[0];
-                this.range_from = range.from;
-                this.range_to = range.to;
+
+                // console.log('callback');
+                // for (let range of view.visibleRanges) {
+                //     console.log(range);
+                // }
+
+                this.range_from = view.visibleRanges[0].from;
+                this.range_to = view.visibleRanges[view.visibleRanges.length - 1].to;
             };
 
             this.registerEditorExtension(blaze_jump_view_plugin);
