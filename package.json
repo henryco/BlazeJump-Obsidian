@@ -1,7 +1,7 @@
 {
 	"name": "blaze-jump",
-	"version": "1.0.1",
-	"description": "AceJump for obsidian",
+	"version": "1.0.2",
+	"description": "Blazingly fast navigation for obsidian",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
