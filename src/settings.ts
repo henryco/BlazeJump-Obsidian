@@ -144,6 +144,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         this.difference = false;
 
         if (!this.initialized) {
+            console.error("Settings are not initialized");
             throw "Should call initialize() before!"
         }
 

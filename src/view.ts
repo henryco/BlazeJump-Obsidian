@@ -88,7 +88,7 @@ export class BlazeFoundAreaWidget extends WidgetType {
         const offset_x = this.search_position.coord.left - this.search_position.origin.left;
         const offset_y = this.search_position.coord.top - this.search_position.origin.top;
 
-        const el = document.createElement("div");
+        const el = document.createElement("span");
         el.innerText = text;
 
         el.style.backgroundColor = `${this.style.bg}`;
@@ -126,7 +126,7 @@ class BlazeViewPlugin implements PluginValue {
     }
 
     public destroy() {
-        inter_plugin_state.state = {};
+        console.debug('destroy view plugin');
     }
 
     private build_decorations() {
