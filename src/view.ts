@@ -126,7 +126,7 @@ class BlazeViewPlugin implements PluginValue {
     }
 
     public destroy() {
-        console.debug('destroy view plugin');
+
     }
 
     private build_decorations() {

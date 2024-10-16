@@ -773,6 +773,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 const end = <EditorPosition> { line: i, ch: 1 };
                 const pos = editor.posToOffset(anchor);
                 const zero = view.coordsAtPos(editor.posToOffset(start));
+
+                if (!zero)
+                    continue;
+
                 this.search_tree.assign(search_char, <SearchPosition> {
                     offset: this.calc_offset(editor.getLine(anchor.line), term_exceptions),
                     index_e: pos + 1,
@@ -790,6 +794,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 const end = <EditorPosition> { line: i, ch: 1 };
                 const pos = editor.posToOffset(start);
                 const zero = view.coordsAtPos(pos);
+
+                if (!zero)
+                    continue;
+
                 this.search_tree.assign(search_char, <SearchPosition> {
                     offset: this.calc_offset(editor.getLine(i), term_exceptions),
                     index_e: pos + 1,
@@ -808,6 +816,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 const tos = editor.posToOffset(start);
                 const pos = editor.posToOffset(stp);
                 const coord = view.coordsAtPos(pos);
+
+                if (!coord || !zero)
+                    continue;
+
                 this.search_tree.assign(search_char, <SearchPosition> {
                     offset: this.calc_offset(editor.getLine(i), term_exceptions),
                     index_e: tos + 1,
@@ -840,6 +852,11 @@ export default class BlazeJumpPlugin extends Plugin {
 
             const zero = view.coordsAtPos(index + this.range_from - start.ch);
             const coord = view.coordsAtPos(index + this.range_from);
+
+            if (!zero || !coord) {
+                index = search_area.indexOf(search_lower, index + 1);
+                continue;
+            }
 
 			let search_position = <SearchPosition> {
                 offset: this.calc_offset(editor.getLine(start.line), term_exceptions),
