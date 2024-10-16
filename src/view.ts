@@ -116,8 +116,10 @@ class BlazeViewPlugin implements PluginValue {
     decorations: DecorationSet = Decoration.none;
 
     public constructor() {
-        inter_plugin_state.state.plugin_draw_callback =
-            () => this.build_decorations();
+        // TODO REPLACE WITH ARRAY OBSERVERS
+        if (!inter_plugin_state.state.plugin_draw_callback)
+            inter_plugin_state.state.plugin_draw_callback =
+                () => this.build_decorations();
     }
 
     public update(update: ViewUpdate) {
