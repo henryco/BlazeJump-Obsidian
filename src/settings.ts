@@ -167,7 +167,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         containerEl.empty();
 
         let head = this.ns("BlazeJump Settings")
-            .setDesc("Beta")
+            .setDesc(`Version: ${this.plugin?.manifest?.version ?? 'latest'}`)
             .setHeading();
 
         this.ns("Default Mode", 'default_action')
