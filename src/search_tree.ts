@@ -523,41 +523,6 @@ export class SearchTree {
         return 'h';
     }
 
-    // private init_search_tree(
-    //     node: BlazeNode<any>,
-    //     index: number = 0,
-    //     n: number = 0,
-    //     limit: number = 1000
-    // ): number {
-    //     if (n > limit)
-    //         throw "Overflow";
-    //
-    //     node.search = <SearchContext> {
-    //         single: true,
-    //         index: index,
-    //         max: index,
-    //         min: index
-    //     };
-    //
-    //     this.search_array.push(node);
-    //
-    //     const children = node.children;
-    //     if (!children) {
-    //         return index;
-    //     }
-    //
-    //     let max: number = index;
-    //     for (let child of children) {
-    //         max = this.init_search_tree(child, max + 1, n + 1, limit);
-    //     }
-    //
-    //     node.search.single = false;
-    //     node.search.min = index + 1;
-    //     node.search.max = max;
-    //
-    //     return max;
-    // }
-
     public reset(): void {
         this.search_node = create_node("#");
         // this.search_array = [];
