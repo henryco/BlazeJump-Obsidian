@@ -13,11 +13,15 @@
   <img alt="GitHub Sponsors" src="https://img.shields.io/github/sponsors/henryco?color=purple">
 </p>
 
-`BlazeJump` is a plugin for <a href="https://obsidian.md">Obsidian</a> making text navigation blazingly fast.
+<p align="center">
+BlazeJump is a plugin for <a href="https://obsidian.md">Obsidian</a> making text navigation blazingly fast. 
+<br/>
 This plugin inspired by <a href="https://github.com/abo-abo/avy"> Emacs-Avy</a> and
 <a href="https://github.com/Lokaltog/vim-easymotion"> Vim-EasyMotion</a>.
+</p>
 
 ---
+
 <p align="center" style="background: black">
   <img src="https://github.com/henryco/BlazeJump-Obsidian/blob/master/doc/s1.gif?raw=true" height="350" width="auto" alt="demo" align="center">
 </p>
