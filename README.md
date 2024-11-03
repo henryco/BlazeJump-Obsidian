@@ -6,18 +6,22 @@
   <a href="https://github.com/henryco/BlazeJump-Obsidian/releases/latest">
     <img src="https://img.shields.io/github/manifest-json/v/henryco/BlazeJump-Obsidian?color=crimson" alt="Manifest">
   </a>
+
   <a href="https://github.com/henryco/BlazeJump-Obsidian/blob/master/LICENSE">
     <img src="https://img.shields.io/github/license/henryco/BlazeJump-Obsidian" alt="License">
   </a>
 
-  <img alt="GitHub Sponsors" src="https://img.shields.io/github/sponsors/henryco?color=purple">
+  <a href="https://github.com/sponsors/henryco">
+    <img alt="GitHub Sponsors" src="https://img.shields.io/github/sponsors/henryco?color=purple">
+  </a>
 </p>
 
+---
+
 <p align="center">
-BlazeJump is a plugin for <a href="https://obsidian.md">Obsidian</a> making text navigation blazingly fast. 
-<br/>
-This plugin inspired by <a href="https://github.com/abo-abo/avy"> Emacs-Avy</a> and
-<a href="https://github.com/Lokaltog/vim-easymotion"> Vim-EasyMotion</a>.
+    BlazeJump is a plugin for <a href="https://obsidian.md">Obsidian</a> making text navigation blazingly fast. <br/>
+    This plugin inspired by <a href="https://github.com/abo-abo/avy"> Emacs-Avy</a> and
+    <a href="https://github.com/Lokaltog/vim-easymotion"> Vim-EasyMotion</a>.
 </p>
 
 ---
