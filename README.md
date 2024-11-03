@@ -2,7 +2,7 @@
 <h1 align="center" style="color: orangered;">
 <img alt="" align="center" height="70" width="55" src="https://github.com/henryco/BlazeJump-Obsidian/blob/master/doc/logo.png?raw=true"> BlazeJump for Obsidian</h1>
 
-<p align="center">
+<div align="center">
   <a href="https://github.com/henryco/BlazeJump-Obsidian/releases/latest">
     <img src="https://img.shields.io/github/manifest-json/v/henryco/BlazeJump-Obsidian?color=crimson" alt="Manifest">
   </a>
@@ -14,9 +14,8 @@
   <a href="https://github.com/sponsors/henryco">
     <img alt="GitHub Sponsors" src="https://img.shields.io/github/sponsors/henryco?color=purple">
   </a>
-</p>
+</div>
 
----
 
 <p align="center">
     BlazeJump is a plugin for <a href="https://obsidian.md">Obsidian</a> making text navigation blazingly fast. <br/>
