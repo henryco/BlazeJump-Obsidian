@@ -45,7 +45,7 @@ BlazeJump provide 5 navigation modes. </br>
 
 
 #### Basic workflow:
-1. Active jump mode (i.e. beginning of the word)
+1. Activate jump mode (i.e. beginning of the word)
 2. Type the character you want to jump to
 3. Tags will appear at the positions of matching characters
 4. Type the character shown on the tag at the position you want to jump to
