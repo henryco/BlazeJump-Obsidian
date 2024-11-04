@@ -1,5 +1,6 @@
 
 <h1 align="center" style="color: orangered;">
+
 <img alt="" align="center" height="60" width="50" src="https://github.com/henryco/BlazeJump-Obsidian/blob/master/doc/logo.png?raw=true"> BlazeJump for Obsidian</h1>
 
 <div align="center">
