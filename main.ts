@@ -4,11 +4,13 @@ import {EditorView, Rect} from "@codemirror/view";
 import {SearchTree} from "./src/search_tree";
 import {blaze_jump_view_plugin} from "./src/view"
 import {BlazeJumpPluginSettings, BlazeJumpSettingTab} from "./src/settings";
+import {EN_TRANSLATIONS, provide_translations, Translations} from "./src/translations";
 
 // noinspection DuplicatedCode,JSUnusedGlobalSymbols
 export default class BlazeJumpPlugin extends Plugin {
 
     private plugin_settings: BlazeJumpSettingTab;
+    private lang: Translations;
 
 	private search_tree: SearchTree;
 	private mode?: MODE_TYPE = undefined;
@@ -31,8 +33,20 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
 	public async onload() {
-        this.plugin_settings = await new BlazeJumpSettingTab(this.app, this)
-            .initialize();
+
+        try {
+            this.plugin_settings = await new BlazeJumpSettingTab(this.app, this).initialize();
+        } catch (e) {
+            console.error(e);
+            return;
+        }
+
+        try {
+            this.lang = provide_translations(this.plugin_settings.getSettings().language)
+        } catch (e) {
+            console.error(e);
+            this.lang = EN_TRANSLATIONS;
+        }
 
 		try {
             this.search_tree = new SearchTree(
@@ -47,12 +61,6 @@ export default class BlazeJumpPlugin extends Plugin {
             inter_plugin_state.state.editor_callback = (view: EditorView) => {
                 if (view.visibleRanges.length <= 0)
                     return;
-
-                // console.log('callback');
-                // for (let range of view.visibleRanges) {
-                //     console.log(range);
-                // }
-
                 this.range_from = view.visibleRanges[0].from;
                 this.range_to = view.visibleRanges[view.visibleRanges.length - 1].to;
             };
@@ -103,7 +111,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
             this.addCommand({
                 id: 'blaze-jump-terminator',
-                name: "BlazeJump jump to the end of a line",
+                name: "BlazeJump jump to the end of the line",
                 editorCallback: (editor, ctx) => this.terminatorAction(editor, ctx)
             });
         } catch (e) {
@@ -338,7 +346,7 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     private lineAction(editor: Editor) {
-        this.statusSet("BlazeMode: ");
+        this.statusSet(`${this.lang.mode}: `);
         this.toggleSpellcheck(false);
         this.pulseInit(true);
         this.toggleDim(true);
@@ -437,7 +445,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 this.resetAction(editor, new_positions.length <= 1);
 
                 if (new_positions.length > 1) {
-                    this.statusSet("BlazeMode: " + `${char}`);
+                    this.statusSet(`${this.lang.mode}: ${char}`);
                     inter_plugin_state.state.positions = [...new_positions];
                     window.addEventListener('keydown', callback_on_provided, { once: true });
                 }
@@ -487,7 +495,7 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
 	private searchAction(editor: Editor) {
-        this.statusSet("BlazeMode: ");
+        this.statusSet(`${this.lang.mode}: `);
         this.pulseInit(true);
 
         const callback_on_mouse_reset = (event: any) => {
@@ -563,7 +571,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 this.resetAction(editor, new_positions.length <= 1);
 
                 if (new_positions.length > 1) {
-                    this.statusSet("BlazeMode: " + `${char}`);
+                    this.statusSet(`${this.lang.mode}: ${char}`);
                     inter_plugin_state.state.positions = [...new_positions];
                     window.addEventListener('keydown', callback_on_provided, { once: true });
                 }
@@ -674,7 +682,7 @@ export default class BlazeJumpPlugin extends Plugin {
 					inter_plugin_state.state.positions = [...positions];
                     inter_plugin_state.state.pointer = undefined;
 
-					this.statusSet("BlazeMode: " + `${char}`);
+					this.statusSet(`${this.lang.mode}: ${char}`);
 					window.addEventListener('keydown', callback_on_provided, { once: true });
 				} else {
 					this.resetAction(editor);

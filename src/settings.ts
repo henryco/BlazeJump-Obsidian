@@ -1,8 +1,11 @@
 import {MODE_TYPE} from "./commons";
 import {App, Plugin, PluginSettingTab, Setting} from "obsidian";
+import {EN_TRANSLATIONS, provide_translations, Translations} from "./translations";
 
 export interface BlazeJumpPluginSettings {
     default_action: MODE_TYPE;
+
+    language: string;
 
     // set
     keyboard_layout: string;
@@ -66,6 +69,8 @@ export interface BlazeJumpPluginSettings {
 export const DEFAULT_SETTINGS: BlazeJumpPluginSettings = {
     default_action: "start",
 
+    language: 'EN',
+
     keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
     keyboard_allowed: "123456789abcdefghijklmnopqrstuvwxyz",
     keyboard_depth: 2,
@@ -114,7 +119,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
 
     private default_settings: BlazeJumpPluginSettings;
     private settings: BlazeJumpPluginSettings;
-
+    private lang: Translations;
     private plugin: Plugin;
 
     private difference: boolean = false;
@@ -133,8 +138,11 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         try {
             console.debug("settings initialization");
             await this.loadSettings();
+
+            this.lang = provide_translations(this.settings.language);
         } catch (e) {
             console.error(e);
+            this.lang = EN_TRANSLATIONS;
         }
         this.initialized = true;
         return this;
@@ -156,21 +164,21 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
             'terminator'
         ];
         const map_modes = {
-            [all_modes[0]]: 'Word start',
-            [all_modes[1]]: 'Word end',
-            [all_modes[2]]: 'Any character',
-            [all_modes[3]]: 'Line start',
-            [all_modes[4]]: 'Line end',
+            [all_modes[0]]: this.lang.word_start,
+            [all_modes[1]]: this.lang.word_end,
+            [all_modes[2]]: this.lang.any_char,
+            [all_modes[3]]: this.lang.line_start,
+            [all_modes[4]]: this.lang.line_end,
         };
 
         const {containerEl} = this;
         containerEl.empty();
 
-        let head = this.ns("BlazeJump")
+        let head = this.ns(this.lang.bj)
             .setDesc(`Version: ${this.plugin?.manifest?.version ?? 'latest'}`)
             .setHeading();
 
-        this.ns("Default Mode", 'default_action')
+        this.ns(this.lang.def_mode, 'default_action')
             .addDropdown(x =>
                 x.addOption('start', map_modes['start'])
                     .addOption('end', map_modes['end'])
@@ -182,7 +190,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.display();
                     }));
 
-        let kl = this.ns("Keyboard layout", 'keyboard_layout', true)
+        let kl = this.ns(this.lang.keyboard_layout, 'keyboard_layout', true)
             .addTextArea(x =>
                 x.setValue((this.settings.keyboard_layout ?? '')
                     .trim().replace(/\s+/g, '\n'))
@@ -192,7 +200,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.with_global_reset(head);
                     }));
 
-        let ka = this.ns("Allowed characters", "keyboard_allowed", true)
+        let ka = this.ns(this.lang.allowed_chars, "keyboard_allowed", true)
             .addText(x =>
                 x.setValue(this.settings.keyboard_allowed)
                     .onChange(async (value) => {
@@ -201,7 +209,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.with_global_reset(head);
                     }));
 
-        let kd = this.ns('Search depth', 'keyboard_depth', true)
+        let kd = this.ns(this.lang.search_depth, 'keyboard_depth', true)
             .addText(x =>
                 x.setValue(`${this.settings.keyboard_depth}`)
                     .onChange(async (value) => {
@@ -215,10 +223,10 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         }
                     }));
 
-        this.ns('Status Color').setHeading();
-        this.ns('Color status background', 'status_color_bg')
+        this.ns(this.lang.status_color).setHeading();
+        this.ns(this.lang.status_color_bg, 'status_color_bg')
             .addToggle(x =>
-                x.setTooltip("Opaque")
+                x.setTooltip(this.lang.opaque)
                     .setValue(this.is_opaque(`status_color_bg`))
                     .onChange(async (value) => {
                         await this.saveProperty(`status_color_bg`,
@@ -236,9 +244,9 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                     }));
 
         for (let mode of all_modes) {
-            this.ns(`Color status ${map_modes[mode]}`, `status_color_${mode}`)
+            this.ns(`${this.lang.status_color} ${map_modes[mode]}`, `status_color_${mode}`)
                 .addToggle(x =>
-                    x.setTooltip("Opaque")
+                    x.setTooltip(this.lang.opaque)
                         .setValue(this.is_opaque(`status_color_${mode}`))
                         .onChange(async (value) => {
                             await this.saveProperty(`status_color_${mode}`,
@@ -256,11 +264,11 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         }));
         }
 
-        this.ns("Tag Background").setHeading();
+        this.ns(this.lang.tag_bg).setHeading();
         for (let mode of all_modes) {
-            this.ns(`${map_modes[mode]} background color`, `search_color_bg_${mode}`)
+            this.ns(`${map_modes[mode]} ${this.lang.color_bg}`, `search_color_bg_${mode}`)
                 .addToggle(x =>
-                    x.setTooltip("Opaque")
+                    x.setTooltip(this.lang.opaque)
                         .setValue(this.is_opaque(`search_color_bg_${mode}`))
                         .onChange(async (value) => {
                             await this.saveProperty(`search_color_bg_${mode}`,
@@ -278,11 +286,11 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         }));
         }
 
-        this.ns("Tag Foreground").setHeading();
+        this.ns(this.lang.tag_fg).setHeading();
         for (let mode of all_modes) {
-            this.ns(`${map_modes[mode]} foreground color`, `search_color_text_${mode}`)
+            this.ns(`${map_modes[mode]} ${this.lang.color_fg}`, `search_color_text_${mode}`)
                 .addToggle(x =>
-                    x.setTooltip("Opaque")
+                    x.setTooltip(this.lang.opaque)
                         .setValue(this.is_opaque(`search_color_text_${mode}`))
                         .onChange(async (value) => {
                             await this.saveProperty(`search_color_text_${mode}`,
@@ -300,11 +308,11 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         }));
         }
 
-        this.ns("Tag Border").setHeading();
+        this.ns(this.lang.tag_border).setHeading();
         for (let mode of all_modes) {
-            this.ns(`${map_modes[mode]} border color`, `search_color_border_${mode}`)
+            this.ns(`${map_modes[mode]} ${this.lang.border_color}`, `search_color_border_${mode}`)
                 .addToggle(x =>
-                    x.setTooltip("Opaque")
+                    x.setTooltip(this.lang.opaque)
                         .setValue(this.is_opaque(`search_color_border_${mode}`))
                         .onChange(async (value) => {
                             await this.saveProperty(`search_color_border_${mode}`,
@@ -322,13 +330,13 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         }));
         }
 
-        this.ns("Pulse").setHeading();
+        this.ns(this.lang.pulse).setHeading();
 
-        let pu = this.ns("Start pulse duration", ['search_start_pulse', 'search_start_pulse_duration'], true)
-            .setDesc("Value in milliseconds")
+        let pu = this.ns(this.lang.pulse_start_duration, ['search_start_pulse', 'search_start_pulse_duration'], true)
+            .setDesc(this.lang.value_ms)
             .addToggle(x =>
                 x.setValue(this.settings.search_start_pulse === true)
-                    .setTooltip("Enable")
+                    .setTooltip(this.lang.enable)
                     .onChange(async (value) => {
                         await this.saveProperty(`search_start_pulse`, value);
                         this.hide();
@@ -337,7 +345,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
             .addText(x =>
                 x.setValue(`${(this.settings.search_start_pulse_duration ?? 0) * 1000}`)
                     .setDisabled(this.settings.search_start_pulse !== true)
-                    .setPlaceholder("Duration in ms")
+                    .setPlaceholder(this.lang.duration_ms)
                     .onChange(async (value) => {
                         try {
                             await this.saveProperty('search_start_pulse_duration', Number(value) / 1000);
@@ -349,11 +357,11 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         }
                     }));
 
-        let pj = this.ns("Jump pulse duration", ['search_jump_pulse', 'search_jump_pulse_duration'], true)
-            .setDesc("Value in milliseconds")
+        let pj = this.ns(this.lang.pulse_jump_duration, ['search_jump_pulse', 'search_jump_pulse_duration'], true)
+            .setDesc(this.lang.value_ms)
             .addToggle(x =>
                 x.setValue(this.settings.search_jump_pulse === true)
-                    .setTooltip("Enable")
+                    .setTooltip(this.lang.enable)
                     .onChange(async (value) => {
                         await this.saveProperty(`search_jump_pulse`, value);
                         this.hide();
@@ -362,7 +370,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
             .addText(x =>
                 x.setValue(`${(this.settings.search_jump_pulse_duration ?? 0) * 1000}`)
                     .setDisabled(this.settings.search_jump_pulse !== true)
-                    .setPlaceholder("Duration in ms")
+                    .setPlaceholder(this.lang.duration_ms)
                     .onChange(async (value) => {
                         try {
                             await this.saveProperty('search_jump_pulse_duration', Number(value) / 1000);
@@ -374,10 +382,10 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         }
                     }));
 
-        this.ns('Jump pulse color', 'search_jump_pulse_color')
-            .setDesc("Pulse color of area under caret after jump")
+        this.ns(this.lang.pulse_jump_color, 'search_jump_pulse_color')
+            .setDesc(this.lang.pulse_jump_color_desc)
             .addToggle(x =>
-                x.setTooltip("Opaque")
+                x.setTooltip(this.lang.opaque)
                     .setValue(this.is_opaque(`search_jump_pulse_color`))
                     .onChange(async (value) => {
                         await this.saveProperty(`search_jump_pulse_color`,
@@ -394,12 +402,12 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.display();
                     }));
 
-        this.ns("Miscellaneous").setHeading();
-        let we = this.ns("Special characters", "exceptions", true)
-            .setDesc("Characters ignored when performing search on words")
+        this.ns(this.lang.miscellaneous).setHeading();
+        let we = this.ns(this.lang.special_chars, "exceptions", true)
+            .setDesc(this.lang.special_chars_exceptions)
             .addToggle(x =>
                 x.setValue(this.settings.exceptions !== undefined)
-                    .setTooltip("Enable")
+                    .setTooltip(this.lang.enable)
                     .onChange(async (value) => {
                         if (value) await this.resetProperty('exceptions');
                         else await this.saveProperty('exceptions', undefined);
@@ -415,11 +423,11 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.with_global_reset(head);
                     }));
 
-        let nf = this.ns("Nothing found message", 'search_not_found_text', true)
-            .setDesc("Generic message shown when nothing found")
+        let nf = this.ns(this.lang.not_found_msg, 'search_not_found_text', true)
+            .setDesc(this.lang.not_found_msg_desc)
             .addToggle(x =>
                 x.setValue(this.settings.search_not_found_text !== undefined)
-                    .setTooltip("Enable")
+                    .setTooltip(this.lang.enable)
                     .onChange(async (value) => {
                         if (value) await this.resetProperty('search_not_found_text');
                         else await this.saveProperty('search_not_found_text', undefined);
@@ -435,11 +443,11 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.with_global_reset(head);
                     }));
 
-        let di = this.ns("Dim editor style", ['search_dim_enabled', 'search_dim_style'], true)
-            .setDesc("Dims editor when search, drastically improves readability")
+        let di = this.ns(this.lang.dim_editor_style, ['search_dim_enabled', 'search_dim_style'], true)
+            .setDesc(this.lang.dim_editor_style_desc)
             .addToggle(x =>
                 x.setValue(this.settings.search_dim_enabled === true)
-                    .setTooltip("Enable")
+                    .setTooltip(this.lang.enable)
                     .onChange(async (value) => {
                         await this.saveProperty(`search_dim_enabled`, value);
                         this.hide();
@@ -454,55 +462,55 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.with_global_reset(head);
                     }));
 
-        this.ns("Convert Unicode to ASCII", 'convert_utf8_to_ascii')
-            .setDesc("For example: Ü -> U")
+        this.ns(this.lang.convert_utf8, 'convert_utf8_to_ascii')
+            .setDesc(this.lang.convert_utf8_desc)
             .addToggle(x =>
                 x.setValue(this.settings.convert_utf8_to_ascii === true)
-                    .setTooltip("Enable")
+                    .setTooltip(this.lang.enable)
                     .onChange(async (value) => {
                         await this.saveProperty(`convert_utf8_to_ascii`, value);
                         this.hide();
                         this.display();
                     }));
 
-        this.ns("Auto jump", 'auto_jump_on_single')
-            .setDesc("Jump automatically whenever there is only single candidate")
+        this.ns(this.lang.auto_jump, 'auto_jump_on_single')
+            .setDesc(this.lang.auto_jump_desc)
             .addToggle(x =>
                 x.setValue(this.settings.auto_jump_on_single === true)
-                    .setTooltip("Enable")
+                    .setTooltip(this.lang.enable)
                     .onChange(async (value) => {
                         await this.saveProperty(`auto_jump_on_single`, value);
                         this.hide();
                         this.display();
                     }));
 
-        this.ns("Disable spellcheck", 'search_spellcheck_disable')
-            .setDesc("Disable spellcheck in editor when searching")
+        this.ns(this.lang.disable_spellcheck, 'search_spellcheck_disable')
+            .setDesc(this.lang.disable_spellcheck_desc)
             .addToggle(x =>
                 x.setValue(this.settings.search_spellcheck_disable === true)
-                    .setTooltip("Disable")
+                    .setTooltip(this.lang.disable)
                     .onChange(async (value) => {
                         await this.saveProperty(`search_spellcheck_disable`, value);
                         this.hide();
                         this.display();
                     }));
 
-        this.ns("Capitalize text inside tags", 'capitalize_tags_labels')
-            .setDesc("May improve readability")
+        this.ns(this.lang.capitalize_tags, 'capitalize_tags_labels')
+            .setDesc(this.lang.capitalize_tags_desc)
             .addToggle(x =>
                 x.setValue(this.settings.capitalize_tags_labels === true)
-                    .setTooltip("Enable")
+                    .setTooltip(this.lang.enable)
                     .onChange(async (value) => {
                         await this.saveProperty(`capitalize_tags_labels`, value);
                         this.hide();
                         this.display();
                     }));
 
-        this.ns("Jump to the end at word-end", 'jump_after_word_on_end')
-            .setDesc("Jumps to the end of the word in 'Word end' mode")
+        this.ns(this.lang.jump_to_word_end, 'jump_after_word_on_end')
+            .setDesc(this.lang.jump_to_word_end_desc)
             .addToggle(x =>
                 x.setValue(this.settings.jump_after_word_on_end === true)
-                    .setTooltip("Enable")
+                    .setTooltip(this.lang.enable)
                     .onChange(async (value) => {
                         await this.saveProperty(`jump_after_word_on_end`, value);
                         this.hide();
@@ -559,7 +567,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
     }
 
     private with_global_reset(setting: Setting): Setting {
-        const label = 'Reset';
+        const label = this.lang.reset;
         if (setting.components?.length >= 1)
             return setting;
         return setting
@@ -574,7 +582,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
     }
 
     private with_reset(names: string[], setting: Setting, always: boolean = false): Setting {
-        const label = 'Reset defaults';
+        const label = this.lang.reset_defaults;
 
         for (let name of names) {
             const basic = (this.default_settings as any)[name];
