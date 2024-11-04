@@ -24,33 +24,22 @@ export class BlazePointerPulseWidget extends WidgetType {
             const style = document.createElement('style');
             style.id = BlazePointerPulseWidget.style_id;
             style.textContent = `                  
-                    .blaze-widget-pulse {
-                      animation: pulse-pointer ${this.style.duration ?? 0.15}s 1 forwards;
+                    .blaze-jump-widget-pulse {
+                      animation: blaze-jump-pulse-pointer ${this.style.duration ?? 0.15}s 1 forwards;
                       background-color: ${this.style.bg ?? 'red'};
-                    }
-                    @keyframes pulse-pointer {
-                        0% { opacity: 0; }
-                        50% { opacity: 1; }
-                        100% { opacity: 0; visibility: hidden; }
                     }
                 `;
             document.head.appendChild(style);
         }
 
         const el = document.createElement("span");
-        el.addClass('blaze-widget-pulse');
-        el.innerText = " ";
-        el.style.position = 'absolute';
+        el.className = 'blaze-jump-widget-pulse';
+
         el.style.left = `${offset_x}px`;
         el.style.top = `${offset_y}px`;
-        el.style.zIndex = '-1';
-        el.style.fontFamily = 'monospace';
-        el.style.fontWeight = 'bold';
-        el.style.marginTop = '-1px';
-        el.style.overflowWrap = 'normal';
-        el.style.wordBreak = 'keep-all';
-        el.style.whiteSpace = 'pre';
-        el.style.cursor = 'default';
+
+        el.innerText = " ";
+
         return el;
     }
 
@@ -89,24 +78,16 @@ export class BlazeFoundAreaWidget extends WidgetType {
         const offset_y = this.search_position.coord.top - this.search_position.origin.top;
 
         const el = document.createElement("span");
-        el.innerText = text;
+        el.className = 'blaze-jump-search-tag';
 
         el.style.backgroundColor = `${this.style.bg}`;
         el.style.color = `${this.style.text}`;
-        el.style.border = `thin dashed ${this.style.border}`;
+        el.style.borderColor = `${this.style.border}`;
         el.style.zIndex = `${5000 + this.style.idx}`;
         el.style.left = `${offset_x}px`;
         el.style.top = `${offset_y}px`;
-        el.style.position = 'absolute';
-        el.style.fontWeight = 'bold';
-        el.style.paddingLeft = '3px';
-        el.style.paddingRight = '3px';
-        el.style.fontFamily = 'monospace';
-        el.style.marginTop = '-1px';
-        el.style.overflowWrap = 'normal';
-        el.style.wordBreak = 'keep-all';
-        el.style.whiteSpace = 'pre';
-        el.style.cursor = 'default';
+
+        el.innerText = text;
 
         return el;
     }

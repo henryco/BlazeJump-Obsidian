@@ -1,8 +1,51 @@
-/*
+.blaze-jump-status-bar {
+    font-size: xx-small;
+    border-radius: 5px;
+    display: inline-grid;
+    align-items: center;
+    align-content: center;
+    text-align: center;
+    line-height: 13px;
+    margin: -3px;
+    padding-left: 4px;
+    padding-right: 4px;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.blaze-jump-search-tag {
+    border-style: dashed;
+    border-width: thin;
+    position: absolute;
+    font-weight: bold;
+    padding-left: 3px;
+    padding-right: 3px;
+    font-family: monospace;
+    margin-top: -1px;
+    overflow-wrap: normal;
+    word-break: keep-all;
+    white-space: pre;
+    cursor: default;
+}
 
-If your plugin does not need CSS, delete this file.
+.blaze-jump-widget-pulse {
+    position: absolute;
+    z-index: -1;
+    font-family: monospace;
+    font-weight: bold;
+    margin-top: -1px;
+    overflow-wrap: normal;
+    word-break: keep-all;
+    white-space: pre;
+    cursor: default;
+}
 
-*/
+@keyframes blaze-jump-content-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+@keyframes blaze-jump-pulse-pointer {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; visibility: hidden; }
+}

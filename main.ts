@@ -5,7 +5,7 @@ import {SearchTree} from "./src/search_tree";
 import {blaze_jump_view_plugin} from "./src/view"
 import {BlazeJumpPluginSettings, BlazeJumpSettingTab} from "./src/settings";
 
-// noinspection DuplicatedCode
+// noinspection DuplicatedCode,JSUnusedGlobalSymbols
 export default class BlazeJumpPlugin extends Plugin {
 
     private plugin_settings: BlazeJumpSettingTab;
@@ -64,10 +64,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 name: "BlazeJump toggle and jump",
                 editorCallback: (editor, ctx) => this.blazeAction(editor, ctx),
 
-                // hotkeys: [{
-                //     modifiers: ['Ctrl'],
-                //     key: '`',
-                // }]
+                hotkeys: [{
+                    modifiers: ['Ctrl'],
+                    key: '`',
+                }]
 
             });
 
@@ -146,21 +146,11 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.statusClear();
 		this.statusBar = this.addStatusBarItem();
 
-		this.statusBar.createEl("span", { text: `${text} `, attr: {
+		this.statusBar.createEl("span", { text: `${text} `, cls: 'blaze-jump-status-bar', attr: {
 			style: `
 			background-color: ${this.settings.status_color_bg ?? '#FFFFFF00'}; 
 			border: thin solid ${this.resolveStatusColor() ?? this.settings.status_color_fallback};
 			color: ${this.resolveStatusColor() ?? this.settings.status_color_fallback};
-			font-size: xx-small;
-			border-radius: 5px;
-			display: inline-grid;
-			align-items: center;
-			align-content: center;
-			text-align: center;
-			line-height: 13px;
-			margin: -3px;
-			padding-left: 4px;
-			padding-right: 4px;
 			`
 		}});
 	}
@@ -257,12 +247,7 @@ export default class BlazeJumpPlugin extends Plugin {
             style.id = style_id;
             style.textContent = `                  
                     .cm-content {
-                      animation: pulse ${this.settings.search_start_pulse_duration ?? 0.15}s 1 forwards;
-                    }
-                    @keyframes pulse {
-                        0% { opacity: 1; }
-                        50% { opacity: 0.5; }
-                        100% { opacity: 1; }
+                      animation: blaze-jump-content-pulse ${this.settings.search_start_pulse_duration ?? 0.15}s 1 forwards;
                     }
                 `;
             document.head.appendChild(style);
