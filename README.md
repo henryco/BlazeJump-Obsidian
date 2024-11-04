@@ -1,10 +1,9 @@
-
 <h1 align="center" style="color: orangered;">
 
 <img alt="" align="center" height="60" width="50" src="https://github.com/henryco/BlazeJump-Obsidian/blob/master/doc/logo.png?raw=true"> BlazeJump for Obsidian</h1>
 
 <p align="center">
-    BlazeJump is a plugin for <a href="https://obsidian.md">Obsidian</a> making text navigation blazingly fast. <br/>
+    BlazeJump is a plugin for <a href="https://obsidian.md">Obsidian</a> that makes text navigation blazingly fast. <br/>
     This plugin inspired by <a href="https://github.com/abo-abo/avy"> Emacs-Avy</a> and
     <a href="https://github.com/Lokaltog/vim-easymotion"> Vim-EasyMotion</a>.
 </p>
@@ -32,10 +31,8 @@
 ---
 
 ### Features
-* Ergonomic indexing and tagging heuristic
-* Highly customizable (with support of custom layouts and styles)
-* Very simple and small
-* Very fast
+* Ergonomic indexing and tagging heuristics
+* Fully customizable (with support of custom layouts and styles)
 
 ### How it works
 BlazeJump provide 5 navigation modes. </br>
