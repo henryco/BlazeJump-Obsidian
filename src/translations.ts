@@ -47,6 +47,13 @@ export interface Translations {
     readonly jump_to_word_end_desc: string;
     readonly reset: string
     readonly reset_defaults: string;
+    readonly command_toggle: string;
+    readonly command_word_start: string;
+    readonly command_word_end: string;
+    readonly command_any_char: string;
+    readonly command_abort: string;
+    readonly command_line_start: string;
+    readonly command_line_end: string;
 }
 
 export const EN_TRANSLATIONS: Translations = {
@@ -97,7 +104,14 @@ export const EN_TRANSLATIONS: Translations = {
     jump_to_word_end: 'Jump to the end at word-end',
     jump_to_word_end_desc: 'Jumps to the end of the word in \'Word end\' mode',
     reset: 'Reset',
-    reset_defaults: 'Reset defaults'
+    reset_defaults: 'Reset defaults',
+    command_toggle: 'BlazeJump toggle and jump',
+    command_word_start: 'BlazeJump start',
+    command_word_end: 'BlazeJump end',
+    command_any_char: 'BlazeJump any',
+    command_abort: 'BlazeJump abort search',
+    command_line_start: 'BlazeJump jump to line',
+    command_line_end: 'BlazeJump jump to the line end'
 }
 
 export const provide_translations = (lang: string): Translations => {

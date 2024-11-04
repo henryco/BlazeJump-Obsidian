@@ -69,7 +69,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
             this.addCommand({
                 id: "blaze-jump-toggle",
-                name: "BlazeJump toggle and jump",
+                name: this.lang.command_toggle,
                 editorCallback: (editor, ctx) => this.blazeAction(editor, ctx),
 
                 hotkeys: [{
@@ -81,37 +81,37 @@ export default class BlazeJumpPlugin extends Plugin {
 
             this.addCommand({
                 id: "blaze-jump-start",
-                name: "BlazeJump start",
+                name: this.lang.command_word_start,
                 editorCallback: (editor, ctx) => this.startAction(editor, ctx)
             });
 
             this.addCommand({
                 id: "blaze-jump-end",
-                name: "BlazeJump end",
+                name: this.lang.command_word_end,
                 editorCallback: (editor, ctx) => this.endAction(editor, ctx)
             });
 
             this.addCommand({
                 id: "blaze-jump-any",
-                name: "BlazeJump any",
+                name: this.lang.command_any_char,
                 editorCallback: (editor, ctx) => this.anyAction(editor, ctx)
             });
 
             this.addCommand({
                 id: 'blaze-jump-abort',
-                name: "BlazeJump abort search",
+                name: this.lang.command_abort,
                 editorCallback: (editor) => this.resetAction(editor)
             });
 
             this.addCommand({
                 id: 'blaze-jump-line',
-                name: "BlazeJump jump to line",
+                name: this.lang.command_line_start,
                 editorCallback: (editor, ctx) => this.beginningAction(editor, ctx)
             });
 
             this.addCommand({
                 id: 'blaze-jump-terminator',
-                name: "BlazeJump jump to the end of the line",
+                name: this.lang.command_line_end,
                 editorCallback: (editor, ctx) => this.terminatorAction(editor, ctx)
             });
         } catch (e) {
