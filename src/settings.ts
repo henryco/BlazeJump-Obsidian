@@ -166,7 +166,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         const {containerEl} = this;
         containerEl.empty();
 
-        let head = this.ns("BlazeJump Settings")
+        let head = this.ns("BlazeJump")
             .setDesc(`Version: ${this.plugin?.manifest?.version ?? 'latest'}`)
             .setHeading();
 
@@ -182,9 +182,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.display();
                     }));
 
-        this.ns('Keyboard').setHeading();
-
-        let kl = this.ns("Keyboard Layout", 'keyboard_layout', true)
+        let kl = this.ns("Keyboard layout", 'keyboard_layout', true)
             .addTextArea(x =>
                 x.setValue((this.settings.keyboard_layout ?? '')
                     .trim().replace(/\s+/g, '\n'))
@@ -194,7 +192,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.with_global_reset(head);
                     }));
 
-        let ka = this.ns("Allowed Characters", "keyboard_allowed", true)
+        let ka = this.ns("Allowed characters", "keyboard_allowed", true)
             .addText(x =>
                 x.setValue(this.settings.keyboard_allowed)
                     .onChange(async (value) => {
@@ -203,7 +201,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.with_global_reset(head);
                     }));
 
-        let kd = this.ns('Keyboard Depth', 'keyboard_depth', true)
+        let kd = this.ns('Search depth', 'keyboard_depth', true)
             .addText(x =>
                 x.setValue(`${this.settings.keyboard_depth}`)
                     .onChange(async (value) => {
