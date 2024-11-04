@@ -4,7 +4,7 @@
 
 <p align="center">
     BlazeJump is a plugin for <a href="https://obsidian.md">Obsidian</a> that makes text navigation blazingly fast. <br/>
-    This plugin inspired by <a href="https://github.com/abo-abo/avy"> Emacs-Avy</a> and
+    This plugin is inspired by <a href="https://github.com/abo-abo/avy"> Emacs-Avy</a> and
     <a href="https://github.com/Lokaltog/vim-easymotion"> Vim-EasyMotion</a>.
 </p>
 
@@ -32,7 +32,7 @@
 
 ### Features
 * Ergonomic indexing and tagging heuristics
-* Fully customizable (with support of custom layouts and styles)
+* Fully customizable (with support of custom keyboard layouts and styles)
 
 ### How it works
 BlazeJump provide 5 navigation modes. </br>
@@ -47,7 +47,7 @@ BlazeJump provide 5 navigation modes. </br>
 #### Basic workflow:
 1. Active jump mode (i.e. beginning of the word)
 2. Type the character you want to jump to
-3. Tags will appear at the position of matching characters
+3. Tags will appear at the positions of matching characters
 4. Type the character shown on the tag at the position you want to jump to
 
 <br/>
