@@ -189,9 +189,6 @@ export default class BlazeJumpPlugin extends Plugin {
                 const style = document.createElement('style');
                 style.id = style_id;
                 style.textContent = `
-                    .markdown-source-view {
-                      
-                    }
                     .cm-content {
                       ${this.settings.search_dim_style ?? ''}
                     }
