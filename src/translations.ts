@@ -8,7 +8,8 @@ export interface Translations {
     readonly line_start: string;
     readonly line_end: string;
     readonly def_mode: string;
-    readonly keyboard_layout: string;
+    readonly keyboard_layout_main: string;
+    readonly keyboard_layouts: string;
     readonly ignored_chars: string;
     readonly search_depth: string;
     readonly opaque: string;
@@ -67,7 +68,8 @@ export const EN_TRANSLATIONS: Translations = {
     line_start: 'Line start',
     line_end: 'Line end',
     def_mode: 'Default Mode',
-    keyboard_layout: 'Keyboard layout',
+    keyboard_layout_main: 'Main',
+    keyboard_layouts: 'Keyboard Layouts',
     ignored_chars: 'Ignored characters',
     search_depth: 'Search depth',
     opaque: 'Opaque',

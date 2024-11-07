@@ -8,7 +8,7 @@ export interface BlazeJumpPluginSettings {
     language: string;
 
     // set
-    keyboard_layout: string[];
+    keyboard_layouts: string[];
     keyboard_ignored: string;
     keyboard_depth: number;
 
@@ -71,7 +71,7 @@ export const DEFAULT_SETTINGS: BlazeJumpPluginSettings = {
 
     language: 'en',
 
-    keyboard_layout: ["1234567890 qwertyuiop asdfghjkl zxcvbnm"],
+    keyboard_layouts: ["1234567890 qwertyuiop asdfghjkl zxcvbnm"],
     keyboard_ignored: "",
     keyboard_depth: 2,
 
@@ -213,27 +213,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.display();
                     }));
 
-        let kl = this.ns(this.lang.keyboard_layout, 'keyboard_layout', true)
-            .addTextArea(x => {
-                // x.setValue((this.settings.keyboard_layout ?? '').trim().replace(/\s+/g, '\n'));
-                // TODO FIXME
-                return x.onChange(async (value) => {
-                    await this.saveProperty('keyboard_layout', value);
-                    this.toggle_defaults(kl, true);
-                    this.with_global_reset(head);
-                });
-            });
-
-        let ka = this.ns(this.lang.ignored_chars, "keyboard_ignored", true)
-            .addText(x =>
-                x.setValue(this.settings.keyboard_ignored)
-                    .onChange(async (value) => {
-
-                        await this.saveProperty('keyboard_ignored', value);
-                        this.toggle_defaults(ka, true);
-                        this.with_global_reset(head);
-                    }));
-
         let kd = this.ns(this.lang.search_depth, 'keyboard_depth', true)
             .addText(x =>
                 x.setValue(`${this.settings.keyboard_depth}`)
@@ -247,6 +226,44 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                             this.with_global_reset(head);
                         }
                     }));
+
+        let ka = this.ns(this.lang.ignored_chars, "keyboard_ignored", true)
+            .addText(x =>
+                x.setValue(this.settings.keyboard_ignored)
+                    .onChange(async (value) => {
+
+                        await this.saveProperty('keyboard_ignored', value);
+                        this.toggle_defaults(ka, true);
+                        this.with_global_reset(head);
+                    }));
+
+
+        this.ns(this.lang.keyboard_layouts).setHeading();
+
+        let kl = this.ns(this.lang.keyboard_layout_main, 'keyboard_layouts', true);
+        kl.addTextArea(x => {
+            x.setValue((this.settings.keyboard_layouts[0] ?? '').trim().replace(/\s+/g, '\n'));
+            return x.onChange(async (value) => {
+                await this.saveProperty('keyboard_layouts', value, 0);
+                this.toggle_defaults(kl, true);
+                this.with_global_reset(head);
+            });
+        });
+
+        // for (let i = 0; i < Math.max(2, this.settings.keyboard_layouts?.length ?? 1); i++) {
+        //     const layout = this.settings.keyboard_layouts[i] ?? '';
+        //     let kl = this.ns(this.lang.keyboard_layout_main, 'keyboard_layouts', true);
+        //     kl.addTextArea(x => {
+        //         x.setValue(layout.trim().replace(/\s+/g, '\n'));
+        //         // TODO FIXME
+        //         return x.onChange(async (value) => {
+        //             // await this.saveProperty('keyboard_layouts', value);
+        //             // this.toggle_defaults(kl, true);
+        //             // this.with_global_reset(head);
+        //         });
+        //     });
+        // }
+
 
         this.ns(this.lang.pulse).setHeading();
 
@@ -575,12 +592,18 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         await this.plugin.saveData(this.settings);
     }
 
-    private async saveProperty(name: string, value?: any) {
-        console.debug("saveProperty:", name, value);
+    private async saveProperty(name: string, value?: any, index: number = -1) {
+        console.debug("saveProperty:", name, value, (index >= 0 ? index : ''));
         if (!name || name.trim().length <= 0)
             return;
-        (this.settings as any)[name] = value;
-        await this.plugin.saveData(this.settings);
+
+        if (index >= 0) {
+            (this.settings as any)[name][index] = value;
+            await this.plugin.saveData(this.settings);
+        } else {
+            (this.settings as any)[name] = value;
+            await this.plugin.saveData(this.settings);
+        }
 
         this.refresh_call?.();
     }
@@ -623,7 +646,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
 
                 if ((setting.components?.[0] as any)?.extraSettingsEl?.ariaLabel === label)
                     return setting;
-                if ((setting.components?.[setting.components?.length - 1 ] as any)?.extraSettingsEl?.ariaLabel === label)
+                if ((setting.components?.[setting.components?.length - 1] as any)?.extraSettingsEl?.ariaLabel === label)
                     return setting;
 
                 let extra_button = setting.addExtraButton(x =>

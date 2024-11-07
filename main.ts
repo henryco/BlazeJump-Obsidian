@@ -43,7 +43,7 @@ export default class BlazeJumpPlugin extends Plugin {
     public async onReload() {
         try {
             this.search_tree = new SearchTree(
-                this.settings.keyboard_layout,
+                this.settings.keyboard_layouts,
                 this.settings.keyboard_ignored,
                 this.settings.keyboard_depth
             );
