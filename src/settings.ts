@@ -8,7 +8,8 @@ export interface BlazeJumpPluginSettings {
     language: string;
 
     // set
-    keyboard_layouts: string[];
+    keyboard_layout_main: string;
+    keyboard_layout_custom: string[];
     keyboard_ignored: string;
     keyboard_depth: number;
 
@@ -71,7 +72,8 @@ export const DEFAULT_SETTINGS: BlazeJumpPluginSettings = {
 
     language: 'en',
 
-    keyboard_layouts: ["1234567890 qwertyuiop asdfghjkl zxcvbnm"],
+    keyboard_layout_main: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
+    keyboard_layout_custom: [],
     keyboard_ignored: "",
     keyboard_depth: 2,
 
@@ -240,30 +242,45 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
 
         this.ns(this.lang.keyboard_layouts).setHeading();
 
-        let kl = this.ns(this.lang.keyboard_layout_main, 'keyboard_layouts', true);
+        let kl = this.ns(this.lang.keyboard_layout_main, 'keyboard_layout_main', true);
         kl.addTextArea(x => {
-            x.setValue((this.settings.keyboard_layouts[0] ?? '').trim().replace(/\s+/g, '\n'));
+            x.setValue((this.settings.keyboard_layout_main ?? '').trim().replace(/\s+/g, '\n'));
             return x.onChange(async (value) => {
-                await this.saveProperty('keyboard_layouts', value, 0);
+                await this.saveProperty('keyboard_layout_main', value);
                 this.toggle_defaults(kl, true);
                 this.with_global_reset(head);
             });
         });
 
-        // for (let i = 0; i < Math.max(2, this.settings.keyboard_layouts?.length ?? 1); i++) {
-        //     const layout = this.settings.keyboard_layouts[i] ?? '';
-        //     let kl = this.ns(this.lang.keyboard_layout_main, 'keyboard_layouts', true);
-        //     kl.addTextArea(x => {
-        //         x.setValue(layout.trim().replace(/\s+/g, '\n'));
-        //         // TODO FIXME
-        //         return x.onChange(async (value) => {
-        //             // await this.saveProperty('keyboard_layouts', value);
-        //             // this.toggle_defaults(kl, true);
-        //             // this.with_global_reset(head);
-        //         });
-        //     });
-        // }
+        for (let i = 0; i < this.settings.keyboard_layout_custom?.length ?? 0; i++) {
+            const layout = this.settings.keyboard_layout_custom[i] ?? ''
+            this.ns(`${this.lang.layout} ${i + 1}`)
+                .addExtraButton(x =>
+                    x.setIcon('trash')
+                        .setTooltip(this.lang.remove_layout)
+                        .onClick(async () => {
+                            this.settings.keyboard_layout_custom.splice(i, 1);
+                            await this.saveProperty('keyboard_layout_custom', this.settings.keyboard_layout_custom);
+                            this.hide();
+                            this.display();
+                        }))
+                .addTextArea(x =>
+                    x.setValue(layout.trim().replace(/\s+/g, '\n'))
+                        .onChange(async (value) => {
+                            await this.saveProperty('keyboard_layout_custom', value, i);
+                        }));
+        }
 
+        new Setting(containerEl).addExtraButton(x =>
+            x.setIcon('circle-plus')
+                .setTooltip(this.lang.add_layout)
+                .setDisabled((this.settings.keyboard_layout_custom?.length ?? 0) >= 10)
+                .onClick(async () => {
+                    this.settings.keyboard_layout_custom.push('');
+                    await this.saveProperty('keyboard_layout_custom', this.settings.keyboard_layout_custom);
+                    this.hide();
+                    this.display();
+                }));
 
         this.ns(this.lang.pulse).setHeading();
 

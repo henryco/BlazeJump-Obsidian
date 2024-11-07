@@ -10,6 +10,9 @@ export interface Translations {
     readonly def_mode: string;
     readonly keyboard_layout_main: string;
     readonly keyboard_layouts: string;
+    readonly layout: string;
+    readonly add_layout: string;
+    readonly remove_layout: string;
     readonly ignored_chars: string;
     readonly search_depth: string;
     readonly opaque: string;
@@ -70,6 +73,9 @@ export const EN_TRANSLATIONS: Translations = {
     def_mode: 'Default Mode',
     keyboard_layout_main: 'Main',
     keyboard_layouts: 'Keyboard Layouts',
+    layout: 'Layout',
+    add_layout: 'Add layout',
+    remove_layout: 'Remove layout',
     ignored_chars: 'Ignored characters',
     search_depth: 'Search depth',
     opaque: 'Opaque',
