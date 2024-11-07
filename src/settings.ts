@@ -599,6 +599,8 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         this.settings = {...this.default_settings};
         await this.plugin.saveData(this.settings);
         this.settings = Object.assign({}, this.default_settings, await this.plugin.loadData());
+
+        this.refresh_call?.();
     }
 
     private async resetProperty(name: string) {
@@ -607,6 +609,8 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
             return;
         (this.settings as any)[name] = (this.default_settings as any)[name];
         await this.plugin.saveData(this.settings);
+
+        this.refresh_call?.();
     }
 
     private async saveProperty(name: string, value?: any, index: number = -1) {
