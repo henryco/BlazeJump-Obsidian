@@ -42,9 +42,11 @@ export default class BlazeJumpPlugin extends Plugin {
 
     public async onReload() {
         try {
+            const layout = [this.settings.keyboard_layout_main,
+                ...(this.settings.keyboard_layout_custom?.filter(x => x.trim() !== ''))];
+
             this.search_tree = new SearchTree(
-                [this.settings.keyboard_layout_main,
-                    ...(this.settings.keyboard_layout_custom?.filter(x => x.trim() !== ''))],
+                layout,
                 this.settings.keyboard_ignored,
                 this.settings.keyboard_depth
             );
@@ -116,14 +118,13 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
 	public async onload() {
-
         try {
             this.plugin_settings = await new BlazeJumpSettingTab(this.app, this).initialize();
             this.plugin_settings.setCallback(() => {
-                this.onunload();
+                inter_plugin_state.state = {};
+                this.resetAction();
                 this.onReload();
-                console.log('Settings reloaded');
-            })
+            });
         } catch (e) {
             console.error(e);
             return;
