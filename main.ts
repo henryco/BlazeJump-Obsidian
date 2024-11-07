@@ -837,6 +837,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		const search_area = visible_text.substring(this.range_from, this.range_to);
 
         const layout_idx = this.search_tree.recognize_layout(search);
+        console.log('===>', layout_idx);
 
 		let index = search_area.indexOf(search_lower);
 		const t0 = new Date().getTime();

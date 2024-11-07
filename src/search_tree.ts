@@ -1,5 +1,6 @@
 export interface KeyboardLayout {
     readonly layout_characters: (string | null)[];
+    readonly layout_original: string[];
     readonly layout_width: number;
     readonly layout_height: number;
 }
@@ -144,6 +145,7 @@ export class SearchTree {
     private static initKeyboardLayout(keyboard_layout: string, keyboard_ignored: string): KeyboardLayout {
         const arr = `${keyboard_layout}`.toLowerCase().trim().split(/\s+|\n+/);
         const width = arr.reduce((p, c) => Math.max(p, c.length), 0);
+        const layout_original = [...(`${keyboard_layout}`.toLowerCase().trim())];
         const layout_characters = arr.reduce((p, c) => [...p, ...c, ...Array(width - c.length).fill(null)], [])
             .map(x => `${keyboard_ignored}`.toLowerCase().includes(x) ? null : x)
             .map(x => x !== '#' ? x : null);
@@ -151,6 +153,7 @@ export class SearchTree {
         const layout_width = width;
         return <KeyboardLayout> {
             layout_characters,
+            layout_original,
             layout_width,
             layout_height
         }
@@ -532,8 +535,8 @@ export class SearchTree {
         return collect_nodes(this.search_node);
     }
 
-    public mid_layout_char(n: number): string {
-        const layout = this.layouts[n] ?? this.layouts[0];
+    public mid_layout_char(layout_index: number): string {
+        const layout = this.layouts[layout_index] ?? this.layouts[0];
 
         const mid_x = Math.floor(layout.layout_width / 2);
         const mid_y = Math.floor(layout.layout_height / 2);
@@ -554,14 +557,8 @@ export class SearchTree {
         try {
             for (let i = 0; i < this.layouts.length; i++){
                 const layout = this.layouts[i];
-                const index = layout.layout_characters.indexOf(input.toLowerCase());
+                const index = layout.layout_original.indexOf(input.toLowerCase());
                 if (index >= 0)
-                    return i;
-            }
-            for (let i = 0; i < this.layouts.length; i++){
-                const layout = this.layouts[i];
-                const index = layout.layout_characters.length / 2;
-                if (layout.layout_characters[index] != null)
                     return i;
             }
         } catch (e) {
