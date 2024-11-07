@@ -362,8 +362,20 @@ export class SearchTree {
         pos?: [number, number]
 
     ): [char: string, pos: [number, number], depth: number] {
-
         const [x, y] = this.coord(input, layout);
+        return this.next_key_xy(layout, [x, y], depth, pos);
+    }
+
+    private next_key_xy(
+
+        layout: KeyboardLayout,
+        mid_point: [number, number],
+        depth?: number,
+        pos?: [number, number]
+
+    ): [char: string, pos: [number, number], depth: number] {
+
+        const [x, y] = mid_point;
 
         let k_pos: [number, number] | undefined = pos ? [...pos] : undefined;
         let k_depth: number = depth ?? 0;
@@ -521,19 +533,19 @@ export class SearchTree {
     }
 
     public mid_layout_char(n: number): string {
-        // TODO FIXME
-        const layout = this.layouts[n] ? this.layouts[n] : this.layouts[0];
+        const layout = this.layouts[n] ?? this.layouts[0];
 
         const mid_x = Math.floor(layout.layout_width / 2);
         const mid_y = Math.floor(layout.layout_height / 2);
-        let char = this.from(mid_x, mid_y, layout);
+
+        const char = this.from(mid_x, mid_y, layout);
         if (char)
             return char;
-        for (let j = 0; j < layout.layout_characters.length; j++) {
-            char = layout.layout_characters[j];
-            if (char)
-                return char;
-        }
+
+        const [c, _, d] = this.next_key_xy(layout, [mid_x, mid_y]);
+        if (c && d >= 0)
+            return c;
+
         console.warn('No allowed characters found');
         return 'h';
     }
