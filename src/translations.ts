@@ -1,6 +1,7 @@
 export interface Translations {
     readonly bj: string;
     readonly mode: string;
+    readonly language: string;
     readonly word_start: string;
     readonly word_end: string;
     readonly any_char: string;
@@ -8,7 +9,7 @@ export interface Translations {
     readonly line_end: string;
     readonly def_mode: string;
     readonly keyboard_layout: string;
-    readonly allowed_chars: string;
+    readonly ignored_chars: string;
     readonly search_depth: string;
     readonly opaque: string;
     readonly status_color: string;
@@ -59,6 +60,7 @@ export interface Translations {
 export const EN_TRANSLATIONS: Translations = {
     bj: 'BlazeJump',
     mode: 'BlazeMode',
+    language: 'Language',
     word_start: 'Word start',
     word_end: 'Word end',
     any_char: 'Any character',
@@ -66,7 +68,7 @@ export const EN_TRANSLATIONS: Translations = {
     line_end: 'Line end',
     def_mode: 'Default Mode',
     keyboard_layout: 'Keyboard layout',
-    allowed_chars: 'Allowed characters',
+    ignored_chars: 'Ignored characters',
     search_depth: 'Search depth',
     opaque: 'Opaque',
     status_color: 'Color status',
@@ -114,8 +116,21 @@ export const EN_TRANSLATIONS: Translations = {
     command_line_end: 'BlazeJump jump to the line end'
 }
 
+
+// **** LANGUAGES SHOULD BE REGISTERED THERE ****
+export const TRANSLATIONS: {[lang: string]: Translations} = {
+    'en': EN_TRANSLATIONS
+}
+// **** LANGUAGES SHOULD BE REGISTERED THERE ****
+
+
 export const provide_translations = (lang: string): Translations => {
-    if (`${lang}`.toLowerCase() === 'en')
-        return EN_TRANSLATIONS;
+    const obj = TRANSLATIONS[`${lang}`.toLowerCase()]
+    if (obj !== null && obj !== undefined)
+        return obj;
     return EN_TRANSLATIONS;
+}
+
+export const provide_languages = (): string[] => {
+    return Object.keys(TRANSLATIONS).filter(x => TRANSLATIONS.hasOwnProperty(x));
 }

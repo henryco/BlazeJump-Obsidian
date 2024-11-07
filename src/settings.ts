@@ -1,6 +1,6 @@
 import {MODE_TYPE} from "./commons";
 import {App, Plugin, PluginSettingTab, Setting} from "obsidian";
-import {EN_TRANSLATIONS, provide_translations, Translations} from "./translations";
+import {EN_TRANSLATIONS, provide_translations, provide_languages, Translations} from "./translations";
 
 export interface BlazeJumpPluginSettings {
     default_action: MODE_TYPE;
@@ -8,8 +8,8 @@ export interface BlazeJumpPluginSettings {
     language: string;
 
     // set
-    keyboard_layout: string;
-    keyboard_allowed: string;
+    keyboard_layout: string[];
+    keyboard_ignored: string;
     keyboard_depth: number;
 
     // set
@@ -69,10 +69,10 @@ export interface BlazeJumpPluginSettings {
 export const DEFAULT_SETTINGS: BlazeJumpPluginSettings = {
     default_action: "start",
 
-    language: 'EN',
+    language: 'en',
 
-    keyboard_layout: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
-    keyboard_allowed: "123456789abcdefghijklmnopqrstuvwxyz",
+    keyboard_layout: ["1234567890 qwertyuiop asdfghjkl zxcvbnm"],
+    keyboard_ignored: "",
     keyboard_depth: 2,
 
     status_color_fallback: '#FF5733',
@@ -119,15 +119,25 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
 
     private default_settings: BlazeJumpPluginSettings;
     private settings: BlazeJumpPluginSettings;
-    private lang: Translations;
     private plugin: Plugin;
 
     private difference: boolean = false;
     private initialized: boolean = false;
 
+    private refresh_call?: (() => void);
+
     public constructor(app: App, plugin: Plugin) {
         super(app, plugin);
         this.plugin = plugin;
+    }
+
+    private get lang(): Translations {
+        try {
+            return provide_translations(this.settings.language);
+        } catch (e) {
+            console.error("Provide translations error", e);
+            return EN_TRANSLATIONS;
+        }
     }
 
     public getSettings(): BlazeJumpPluginSettings {
@@ -138,14 +148,15 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         try {
             console.debug("settings initialization");
             await this.loadSettings();
-
-            this.lang = provide_translations(this.settings.language);
         } catch (e) {
             console.error(e);
-            this.lang = EN_TRANSLATIONS;
         }
         this.initialized = true;
         return this;
+    }
+
+    public setCallback(cb: (() => void)) {
+        this.refresh_call = cb;
     }
 
     public display(): void {
@@ -178,6 +189,18 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
             .setDesc(`Version: ${this.plugin?.manifest?.version ?? 'latest'}`)
             .setHeading();
 
+        this.ns(this.lang.language, 'language')
+            .addDropdown(x => {
+                for (let l of provide_languages())
+                    x.addOption(l, l);
+                x.setValue(this.settings.language)
+                    .onChange(async (value) => {
+                        await this.saveProperty('language', value);
+                        this.hide();
+                        this.display();
+                    });
+            });
+
         this.ns(this.lang.def_mode, 'default_action')
             .addDropdown(x =>
                 x.addOption('start', map_modes['start'])
@@ -191,20 +214,22 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                     }));
 
         let kl = this.ns(this.lang.keyboard_layout, 'keyboard_layout', true)
-            .addTextArea(x =>
-                x.setValue((this.settings.keyboard_layout ?? '')
-                    .trim().replace(/\s+/g, '\n'))
-                    .onChange(async (value) => {
-                        await this.saveProperty('keyboard_layout', value);
-                        this.toggle_defaults(kl, true);
-                        this.with_global_reset(head);
-                    }));
+            .addTextArea(x => {
+                // x.setValue((this.settings.keyboard_layout ?? '').trim().replace(/\s+/g, '\n'));
+                // TODO FIXME
+                return x.onChange(async (value) => {
+                    await this.saveProperty('keyboard_layout', value);
+                    this.toggle_defaults(kl, true);
+                    this.with_global_reset(head);
+                });
+            });
 
-        let ka = this.ns(this.lang.allowed_chars, "keyboard_allowed", true)
+        let ka = this.ns(this.lang.ignored_chars, "keyboard_ignored", true)
             .addText(x =>
-                x.setValue(this.settings.keyboard_allowed)
+                x.setValue(this.settings.keyboard_ignored)
                     .onChange(async (value) => {
-                        await this.saveProperty('keyboard_allowed', value);
+
+                        await this.saveProperty('keyboard_ignored', value);
                         this.toggle_defaults(ka, true);
                         this.with_global_reset(head);
                     }));
@@ -222,113 +247,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                             this.with_global_reset(head);
                         }
                     }));
-
-        this.ns(this.lang.status_color).setHeading();
-        this.ns(this.lang.status_color_bg, 'status_color_bg')
-            .addToggle(x =>
-                x.setTooltip(this.lang.opaque)
-                    .setValue(this.is_opaque(`status_color_bg`))
-                    .onChange(async (value) => {
-                        await this.saveProperty(`status_color_bg`,
-                            this.make_transparent(`status_color_bg`, !value));
-                        this.hide();
-                        this.display();
-                    }))
-            .addColorPicker(x =>
-                x.setValue((this.settings as any)[`status_color_bg`])
-                    .setDisabled(!this.is_opaque(`status_color_bg`))
-                    .onChange(async (value) => {
-                        await this.saveProperty(`status_color_bg`, value);
-                        this.hide();
-                        this.display();
-                    }));
-
-        for (let mode of all_modes) {
-            this.ns(`${this.lang.status_color} ${map_modes[mode]}`, `status_color_${mode}`)
-                .addToggle(x =>
-                    x.setTooltip(this.lang.opaque)
-                        .setValue(this.is_opaque(`status_color_${mode}`))
-                        .onChange(async (value) => {
-                            await this.saveProperty(`status_color_${mode}`,
-                                this.make_transparent(`status_color_${mode}`, !value));
-                            this.hide();
-                            this.display();
-                        }))
-                .addColorPicker(x =>
-                    x.setValue((this.settings as any)[`status_color_${mode}`])
-                        .setDisabled(!this.is_opaque(`status_color_${mode}`))
-                        .onChange(async (value) => {
-                            await this.saveProperty(`status_color_${mode}`, value);
-                            this.hide();
-                            this.display();
-                        }));
-        }
-
-        this.ns(this.lang.tag_bg).setHeading();
-        for (let mode of all_modes) {
-            this.ns(`${map_modes[mode]} ${this.lang.color_bg}`, `search_color_bg_${mode}`)
-                .addToggle(x =>
-                    x.setTooltip(this.lang.opaque)
-                        .setValue(this.is_opaque(`search_color_bg_${mode}`))
-                        .onChange(async (value) => {
-                            await this.saveProperty(`search_color_bg_${mode}`,
-                                this.make_transparent(`search_color_bg_${mode}`, !value));
-                            this.hide();
-                            this.display();
-                        }))
-                .addColorPicker(x =>
-                    x.setValue((this.settings as any)[`search_color_bg_${mode}`])
-                        .setDisabled(!this.is_opaque(`search_color_bg_${mode}`))
-                        .onChange(async (value) => {
-                            await this.saveProperty(`search_color_bg_${mode}`, value);
-                            this.hide();
-                            this.display();
-                        }));
-        }
-
-        this.ns(this.lang.tag_fg).setHeading();
-        for (let mode of all_modes) {
-            this.ns(`${map_modes[mode]} ${this.lang.color_fg}`, `search_color_text_${mode}`)
-                .addToggle(x =>
-                    x.setTooltip(this.lang.opaque)
-                        .setValue(this.is_opaque(`search_color_text_${mode}`))
-                        .onChange(async (value) => {
-                            await this.saveProperty(`search_color_text_${mode}`,
-                                this.make_transparent(`search_color_text_${mode}`, !value));
-                            this.hide();
-                            this.display();
-                        }))
-                .addColorPicker(x =>
-                    x.setValue((this.settings as any)[`search_color_text_${mode}`])
-                        .setDisabled(!this.is_opaque(`search_color_text_${mode}`))
-                        .onChange(async (value) => {
-                            await this.saveProperty(`search_color_text_${mode}`, value);
-                            this.hide();
-                            this.display();
-                        }));
-        }
-
-        this.ns(this.lang.tag_border).setHeading();
-        for (let mode of all_modes) {
-            this.ns(`${map_modes[mode]} ${this.lang.border_color}`, `search_color_border_${mode}`)
-                .addToggle(x =>
-                    x.setTooltip(this.lang.opaque)
-                        .setValue(this.is_opaque(`search_color_border_${mode}`))
-                        .onChange(async (value) => {
-                            await this.saveProperty(`search_color_border_${mode}`,
-                                this.make_transparent(`search_color_border_${mode}`, !value));
-                            this.hide();
-                            this.display();
-                        }))
-                .addColorPicker(x =>
-                    x.setValue((this.settings as any)[`search_color_border_${mode}`])
-                        .setDisabled(!this.is_opaque(`search_color_border_${mode}`))
-                        .onChange(async (value) => {
-                            await this.saveProperty(`search_color_border_${mode}`, value);
-                            this.hide();
-                            this.display();
-                        }));
-        }
 
         this.ns(this.lang.pulse).setHeading();
 
@@ -517,6 +435,113 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.display();
                     }));
 
+        this.ns(this.lang.status_color).setHeading();
+        this.ns(this.lang.status_color_bg, 'status_color_bg')
+            .addToggle(x =>
+                x.setTooltip(this.lang.opaque)
+                    .setValue(this.is_opaque(`status_color_bg`))
+                    .onChange(async (value) => {
+                        await this.saveProperty(`status_color_bg`,
+                            this.make_transparent(`status_color_bg`, !value));
+                        this.hide();
+                        this.display();
+                    }))
+            .addColorPicker(x =>
+                x.setValue((this.settings as any)[`status_color_bg`])
+                    .setDisabled(!this.is_opaque(`status_color_bg`))
+                    .onChange(async (value) => {
+                        await this.saveProperty(`status_color_bg`, value);
+                        this.hide();
+                        this.display();
+                    }));
+
+        for (let mode of all_modes) {
+            this.ns(`${this.lang.status_color} ${map_modes[mode]}`, `status_color_${mode}`)
+                .addToggle(x =>
+                    x.setTooltip(this.lang.opaque)
+                        .setValue(this.is_opaque(`status_color_${mode}`))
+                        .onChange(async (value) => {
+                            await this.saveProperty(`status_color_${mode}`,
+                                this.make_transparent(`status_color_${mode}`, !value));
+                            this.hide();
+                            this.display();
+                        }))
+                .addColorPicker(x =>
+                    x.setValue((this.settings as any)[`status_color_${mode}`])
+                        .setDisabled(!this.is_opaque(`status_color_${mode}`))
+                        .onChange(async (value) => {
+                            await this.saveProperty(`status_color_${mode}`, value);
+                            this.hide();
+                            this.display();
+                        }));
+        }
+
+        this.ns(this.lang.tag_bg).setHeading();
+        for (let mode of all_modes) {
+            this.ns(`${map_modes[mode]} ${this.lang.color_bg}`, `search_color_bg_${mode}`)
+                .addToggle(x =>
+                    x.setTooltip(this.lang.opaque)
+                        .setValue(this.is_opaque(`search_color_bg_${mode}`))
+                        .onChange(async (value) => {
+                            await this.saveProperty(`search_color_bg_${mode}`,
+                                this.make_transparent(`search_color_bg_${mode}`, !value));
+                            this.hide();
+                            this.display();
+                        }))
+                .addColorPicker(x =>
+                    x.setValue((this.settings as any)[`search_color_bg_${mode}`])
+                        .setDisabled(!this.is_opaque(`search_color_bg_${mode}`))
+                        .onChange(async (value) => {
+                            await this.saveProperty(`search_color_bg_${mode}`, value);
+                            this.hide();
+                            this.display();
+                        }));
+        }
+
+        this.ns(this.lang.tag_fg).setHeading();
+        for (let mode of all_modes) {
+            this.ns(`${map_modes[mode]} ${this.lang.color_fg}`, `search_color_text_${mode}`)
+                .addToggle(x =>
+                    x.setTooltip(this.lang.opaque)
+                        .setValue(this.is_opaque(`search_color_text_${mode}`))
+                        .onChange(async (value) => {
+                            await this.saveProperty(`search_color_text_${mode}`,
+                                this.make_transparent(`search_color_text_${mode}`, !value));
+                            this.hide();
+                            this.display();
+                        }))
+                .addColorPicker(x =>
+                    x.setValue((this.settings as any)[`search_color_text_${mode}`])
+                        .setDisabled(!this.is_opaque(`search_color_text_${mode}`))
+                        .onChange(async (value) => {
+                            await this.saveProperty(`search_color_text_${mode}`, value);
+                            this.hide();
+                            this.display();
+                        }));
+        }
+
+        this.ns(this.lang.tag_border).setHeading();
+        for (let mode of all_modes) {
+            this.ns(`${map_modes[mode]} ${this.lang.border_color}`, `search_color_border_${mode}`)
+                .addToggle(x =>
+                    x.setTooltip(this.lang.opaque)
+                        .setValue(this.is_opaque(`search_color_border_${mode}`))
+                        .onChange(async (value) => {
+                            await this.saveProperty(`search_color_border_${mode}`,
+                                this.make_transparent(`search_color_border_${mode}`, !value));
+                            this.hide();
+                            this.display();
+                        }))
+                .addColorPicker(x =>
+                    x.setValue((this.settings as any)[`search_color_border_${mode}`])
+                        .setDisabled(!this.is_opaque(`search_color_border_${mode}`))
+                        .onChange(async (value) => {
+                            await this.saveProperty(`search_color_border_${mode}`, value);
+                            this.hide();
+                            this.display();
+                        }));
+        }
+
         if (this.difference)
             head = this.with_global_reset(head);
     }
@@ -556,6 +581,8 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
             return;
         (this.settings as any)[name] = value;
         await this.plugin.saveData(this.settings);
+
+        this.refresh_call?.();
     }
 
     private toggle_defaults(setting: Setting, enable: boolean = false): Setting {

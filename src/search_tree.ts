@@ -121,45 +121,74 @@ const collect_nodes = <T> (
     return arr;
 }
 
-export class SearchTree {
-    private readonly layout_depth: number;
-    private layout_characters: (string | null)[];
-    private layout_width: number;
-    private layout_height: number;
+export interface KeyboardLayout {
+    readonly layout_characters: (string | null)[];
+    readonly layout_width: number;
+    readonly layout_height: number;
+}
 
-    // private search_array: BlazeNode<any>[];
+export class SearchTree {
+    private readonly layouts: KeyboardLayout[] = [];
+    private readonly layout_depth: number;
+
     private search_node: BlazeNode<any>;
 
-    public constructor(keyboard_layout: string, keyboard_allowed: string, distance: number) {
-        this.initKeyboardLayout(keyboard_layout, keyboard_allowed);
+    public constructor(keyboard_layouts: string[], keyboard_ignored: string, distance: number) {
+        for (const layout of keyboard_layouts) {
+            this.layouts.push(SearchTree.initKeyboardLayout(layout, keyboard_ignored));
+        }
         this.search_node = create_node("#");
         this.layout_depth = distance;
-        // this.search_array = [];
     }
 
-    private initKeyboardLayout(keyboard_layout: string, keyboard_allowed: string): void {
+    private static initKeyboardLayout(keyboard_layout: string, keyboard_ignored: string): KeyboardLayout {
         const arr = `${keyboard_layout}`.toLowerCase().trim().split(/\s+|\n+/);
         const width = arr.reduce((p, c) => Math.max(p, c.length), 0);
-        this.layout_characters = arr.reduce((p, c) => [...p, ...c, ...Array(width - c.length).fill(null)], [])
-            .map(x => `${keyboard_allowed}`.toLowerCase().includes(x) ? x : null)
+        const layout_characters = arr.reduce((p, c) => [...p, ...c, ...Array(width - c.length).fill(null)], [])
+            .map(x => `${keyboard_ignored}`.toLowerCase().includes(x) ? null : x)
             .map(x => x !== '#' ? x : null);
-        this.layout_height = arr.length;
-        this.layout_width = width;
+        const layout_height = arr.length;
+        const layout_width = width;
+        return <KeyboardLayout> {
+            layout_characters,
+            layout_width,
+            layout_height
+        }
     }
 
-    private coord(input: string): [x: number, y: number] {
-        let index = this.layout_characters.indexOf(input.toLowerCase());
+    private recognize_layout(input: string) {
+        try {
+            for (let layout of this.layouts) {
+                const index = layout.layout_characters.indexOf(input.toLowerCase());
+                if (index >= 0) return layout;
+            }
+            for (let layout of this.layouts) {
+                const index = layout.layout_characters.length / 2;
+                if (layout.layout_characters[index] != null)
+                    return layout;
+            }
+        } catch (e) {
+            console.error(`unknown layout for input: ${input}`, e);
+            return this.layouts[0];
+        }
+
+        console.warn(`unknown layout for input: ${input}`);
+        return this.layouts[0];
+    }
+
+    private coord(input: string, layout: KeyboardLayout): [x: number, y: number] {
+        let index = layout.layout_characters.indexOf(input.toLowerCase());
         if (index <= -1)
-            index = this.layout_characters.length / 2;
-        const y = Math.floor(index / this.layout_width);
-        const x = index - (this.layout_width * y);
+            index = layout.layout_characters.length / 2;
+        const y = Math.floor(index / layout.layout_width);
+        const x = index - (layout.layout_width * y);
         return [x, y];
     }
 
-    private from(x: number, y: number): string | null {
-        if (x < 0 || y < 0 || y >= this.layout_height || x >= this.layout_width)
+    private from(x: number, y: number, layout: KeyboardLayout): string | null {
+        if (x < 0 || y < 0 || y >= layout.layout_height || x >= layout.layout_width)
             return null;
-        return this.layout_characters[x + (this.layout_width * y)];
+        return layout.layout_characters[x + (layout.layout_width * y)];
     }
 
     private static predict_xy_spiral(
@@ -347,20 +376,21 @@ export class SearchTree {
 
     private next_key(
 
+        layout: KeyboardLayout,
         input: string,
         depth?: number,
         pos?: [number, number]
 
     ): [char: string, pos: [number, number], depth: number] {
 
-        const [x, y] = this.coord(input);
+        const [x, y] = this.coord(input, layout);
 
         let k_pos: [number, number] | undefined = pos ? [...pos] : undefined;
         let k_depth: number = depth ?? 0;
 
         const max_spin = Math.min(
             Math.pow(1 + (Math.max(0, k_depth) * 2), 2) + 1,
-            (this.layout_height + this.layout_width) * 2
+            (layout.layout_height + layout.layout_width) * 2
         );
 
         let char: string | null = null;
@@ -376,12 +406,12 @@ export class SearchTree {
                 (k_pos ?? [x, y]),
                 [x, y],
                 k_depth,
-                this.layout_width,
-                this.layout_height,
+                layout.layout_width,
+                layout.layout_height,
                 this.layout_depth
             );
 
-            char = this.from(i_x, i_y);
+            char = this.from(i_x, i_y, layout);
 
             k_pos = [i_x, i_y];
             k_depth = i_depth;
@@ -398,6 +428,7 @@ export class SearchTree {
 
     private add_node(
 
+        layout: KeyboardLayout,
         input: string,
         position: any,
         node: BlazeNode<any>,
@@ -415,17 +446,17 @@ export class SearchTree {
             if (!node.children || node.children.length <= 0)
                 throw "Impossible state, full node MUST contain children";
             let left = node.children[0];
-            return this.add_node(left.id, position, left, root, n + 1, limit);
+            return this.add_node(layout, left.id, position, left, root, n + 1, limit);
         }
 
-        const [char, i_pos, i_depth] = this.next_key(input, node.context.depth, node.context.position);
+        const [char, i_pos, i_depth] = this.next_key(layout, input, node.context.depth, node.context.position);
         node.context.position = i_pos;
         node.context.depth = i_depth;
 
         if (!!node.value) {
             // Existing singular value in node
 
-            const [_, n_pos, n_depth] = this.next_key(node.id);
+            const [_, n_pos, n_depth] = this.next_key(layout, node.id);
             let n_context = <NodeContext> {
                 position: n_pos,
                 depth: n_depth,
@@ -450,7 +481,7 @@ export class SearchTree {
                 node.children = [];
             }
 
-            const [_, n_pos, n_depth] = this.next_key(char);
+            const [_, n_pos, n_depth] = this.next_key(layout, char);
             let n_context = <NodeContext> {
                 position: n_pos,
                 depth: n_depth,
@@ -467,17 +498,17 @@ export class SearchTree {
 
         if (!node.context.full) {
             rotate_node(node);
-            return this.add_node(input, position, root, root, n + 1, limit);
+            return this.add_node(layout, input, position, root, root, n + 1, limit);
         }
 
         if (!node.children || node.children.length <= 0)
             throw "Impossible state, full node MUST contain children";
         let left = node.children[0];
-        return this.add_node(left.id, position, left, root, n + 1, limit);
+        return this.add_node(layout, left.id, position, left, root, n + 1, limit);
     }
 
     public assign(input: string, position: any): void {
-        this.add_node(input, position, this.search_node, this.search_node);
+        this.add_node(this.recognize_layout(input), input, position, this.search_node, this.search_node);
     }
 
     public narrow(input: string): BlazeNode<any> {
@@ -508,14 +539,17 @@ export class SearchTree {
         return collect_nodes(this.search_node);
     }
 
-    public midLayoutChar(): string {
-        const mid_x = Math.floor(this.layout_width / 2);
-        const mid_y = Math.floor(this.layout_height / 2);
-        let char = this.from(mid_x, mid_y);
+    public mid_layout_char(n: number): string {
+        // TODO FIXME
+        const layout = this.layouts[n] ? this.layouts[n] : this.layouts[0];
+
+        const mid_x = Math.floor(layout.layout_width / 2);
+        const mid_y = Math.floor(layout.layout_height / 2);
+        let char = this.from(mid_x, mid_y, layout);
         if (char)
             return char;
-        for (let j = 0; j < this.layout_characters.length; j++) {
-            char = this.layout_characters[j];
+        for (let j = 0; j < layout.layout_characters.length; j++) {
+            char = layout.layout_characters[j];
             if (char)
                 return char;
         }

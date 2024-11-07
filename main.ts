@@ -10,7 +10,6 @@ import {EN_TRANSLATIONS, provide_translations, Translations} from "./src/transla
 export default class BlazeJumpPlugin extends Plugin {
 
     private plugin_settings: BlazeJumpSettingTab;
-    private lang: Translations;
 
 	private search_tree: SearchTree;
 	private mode?: MODE_TYPE = undefined;
@@ -32,26 +31,20 @@ export default class BlazeJumpPlugin extends Plugin {
         return this.plugin_settings.getSettings();
     }
 
-	public async onload() {
-
+    private get lang(): Translations {
         try {
-            this.plugin_settings = await new BlazeJumpSettingTab(this.app, this).initialize();
+            return provide_translations(this.settings.language);
         } catch (e) {
-            console.error(e);
-            return;
+            console.error("Provide translations error", e);
+            return EN_TRANSLATIONS;
         }
+    }
 
+    public async onReload() {
         try {
-            this.lang = provide_translations(this.plugin_settings.getSettings().language)
-        } catch (e) {
-            console.error(e);
-            this.lang = EN_TRANSLATIONS;
-        }
-
-		try {
             this.search_tree = new SearchTree(
                 this.settings.keyboard_layout,
-                this.settings.keyboard_allowed,
+                this.settings.keyboard_ignored,
                 this.settings.keyboard_depth
             );
 
@@ -72,10 +65,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 name: this.lang.command_toggle,
                 editorCallback: (editor, ctx) => this.blazeAction(editor, ctx),
 
-                // hotkeys: [{
-                //     modifiers: ['Ctrl'],
-                //     key: '`',
-                // }]
+                hotkeys: [{
+                    modifiers: ['Ctrl'],
+                    key: '`',
+                }]
 
             });
 
@@ -119,6 +112,23 @@ export default class BlazeJumpPlugin extends Plugin {
         } finally {
             this.addSettingTab(this.plugin_settings);
         }
+    }
+
+	public async onload() {
+
+        try {
+            this.plugin_settings = await new BlazeJumpSettingTab(this.app, this).initialize();
+            this.plugin_settings.setCallback(() => {
+                this.onunload();
+                this.onReload();
+                console.log('Settings reloaded');
+            })
+        } catch (e) {
+            console.error(e);
+            return;
+        }
+
+        await this.onReload();
 	}
 
 	public onunload() {
@@ -729,7 +739,7 @@ export default class BlazeJumpPlugin extends Plugin {
             return [];
         }
 
-        const search_char = this.search_tree.midLayoutChar();
+        const search_char = this.search_tree.mid_layout_char(0);
 
         const line_f = from.line;
         const line_t = to.line;
