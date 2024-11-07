@@ -40,16 +40,21 @@ export default class BlazeJumpPlugin extends Plugin {
         }
     }
 
-    public async onReload() {
-        try {
-            const layout = [this.settings.keyboard_layout_main,
-                ...(this.settings.keyboard_layout_custom?.filter(x => x.trim() !== ''))];
+    private async initialize() {
+        this.search_tree = new SearchTree(
+            [this.settings.keyboard_layout_main,
+                ...(this.settings.keyboard_layout_custom?.filter(x => x.trim() !== ''))],
+            this.settings.keyboard_ignored,
+            this.settings.keyboard_depth
+        );
+    }
 
-            this.search_tree = new SearchTree(
-                layout,
-                this.settings.keyboard_ignored,
-                this.settings.keyboard_depth
-            );
+	public async onload() {
+        try {
+            this.plugin_settings = await new BlazeJumpSettingTab(this.app, this).initialize();
+            this.plugin_settings.setCallback(() => this.initialize());
+
+            await this.initialize();
 
             inter_plugin_state.state.style_provider = (idx: number = 0) => this.resolveSearchColor(idx);
             inter_plugin_state.state.pulse_provider = () => this.resolvePulseStyle();
@@ -115,22 +120,6 @@ export default class BlazeJumpPlugin extends Plugin {
         } finally {
             this.addSettingTab(this.plugin_settings);
         }
-    }
-
-	public async onload() {
-        try {
-            this.plugin_settings = await new BlazeJumpSettingTab(this.app, this).initialize();
-            this.plugin_settings.setCallback(() => {
-                inter_plugin_state.state = {};
-                this.resetAction();
-                this.onReload();
-            });
-        } catch (e) {
-            console.error(e);
-            return;
-        }
-
-        await this.onReload();
 	}
 
 	public onunload() {
