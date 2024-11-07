@@ -730,7 +730,8 @@ export default class BlazeJumpPlugin extends Plugin {
             return [];
         }
 
-        const search_char = this.search_tree.mid_layout_char(0);
+        const layout_idx = 0;
+        const search_char = this.search_tree.mid_layout_char(layout_idx);
 
         const line_f = from.line;
         const line_t = to.line;
@@ -776,7 +777,7 @@ export default class BlazeJumpPlugin extends Plugin {
                     coord: zero,
                     start: start,
                     end: end
-                });
+                }, layout_idx);
 
                 continue;
             }
@@ -797,7 +798,7 @@ export default class BlazeJumpPlugin extends Plugin {
                     coord: zero,
                     start: start,
                     end: end
-                });
+                }, layout_idx);
             }
 
             else if (this.mode === 'terminator') {
@@ -819,7 +820,7 @@ export default class BlazeJumpPlugin extends Plugin {
                     coord: coord,
                     start: edp,
                     end: edp
-                });
+                }, layout_idx);
             }
         }
 
@@ -834,6 +835,8 @@ export default class BlazeJumpPlugin extends Plugin {
         const search_lower = this.normalize_text(search.toLowerCase());
 		const visible_text = editor.getValue().toLowerCase();
 		const search_area = visible_text.substring(this.range_from, this.range_to);
+
+        const layout_idx = this.search_tree.recognize_layout(search);
 
 		let index = search_area.indexOf(search_lower);
 		const t0 = new Date().getTime();
@@ -860,16 +863,16 @@ export default class BlazeJumpPlugin extends Plugin {
 			};
 
 			if (this.mode === 'any') {
-				this.search_tree.assign(search_lower, search_position);
+				this.search_tree.assign(search_lower, search_position, layout_idx);
 			}
 
 			else if (this.mode === 'start') {
 				const pre = editor.offsetToPos((index > 0 ? index - 1 : index) + this.range_from);
 				const nv = editor.getRange(pre, end).trim();
 				if (nv.length === 1) {
-                    this.search_tree.assign(search_lower, search_position);
+                    this.search_tree.assign(search_lower, search_position, layout_idx);
                 } else if (nv.length === 2 && term_exceptions.some(x => x === nv.at(0))) {
-                    this.search_tree.assign(search_lower, search_position);
+                    this.search_tree.assign(search_lower, search_position, layout_idx);
                 }
 			}
 
@@ -878,10 +881,10 @@ export default class BlazeJumpPlugin extends Plugin {
 				const nv = editor.getRange(start, two).trim();
 				if (nv.length === 1) {
                     search_position.start.ch += word_end_offset;
-                    this.search_tree.assign(search_lower, search_position);
+                    this.search_tree.assign(search_lower, search_position, layout_idx);
                 } else if (nv.length === 2 && term_exceptions.some(x => x === nv.at(1))) {
                     search_position.start.ch += word_end_offset;
-                    this.search_tree.assign(search_lower, search_position);
+                    this.search_tree.assign(search_lower, search_position, layout_idx);
                 }
 			}
 

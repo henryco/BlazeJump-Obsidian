@@ -1,3 +1,9 @@
+export interface KeyboardLayout {
+    readonly layout_characters: (string | null)[];
+    readonly layout_width: number;
+    readonly layout_height: number;
+}
+
 export interface NodeContext {
     position?: [x: number, y: number];
     counter: number;
@@ -121,12 +127,6 @@ const collect_nodes = <T> (
     return arr;
 }
 
-export interface KeyboardLayout {
-    readonly layout_characters: (string | null)[];
-    readonly layout_width: number;
-    readonly layout_height: number;
-}
-
 export class SearchTree {
     private readonly layouts: KeyboardLayout[] = [];
     private readonly layout_depth: number;
@@ -154,26 +154,6 @@ export class SearchTree {
             layout_width,
             layout_height
         }
-    }
-
-    private recognize_layout(input: string) {
-        try {
-            for (let layout of this.layouts) {
-                const index = layout.layout_characters.indexOf(input.toLowerCase());
-                if (index >= 0) return layout;
-            }
-            for (let layout of this.layouts) {
-                const index = layout.layout_characters.length / 2;
-                if (layout.layout_characters[index] != null)
-                    return layout;
-            }
-        } catch (e) {
-            console.error(`unknown layout for input: ${input}`, e);
-            return this.layouts[0];
-        }
-
-        console.warn(`unknown layout for input: ${input}`);
-        return this.layouts[0];
     }
 
     private coord(input: string, layout: KeyboardLayout): [x: number, y: number] {
@@ -507,8 +487,9 @@ export class SearchTree {
         return this.add_node(layout, left.id, position, left, root, n + 1, limit);
     }
 
-    public assign(input: string, position: any): void {
-        this.add_node(this.recognize_layout(input), input, position, this.search_node, this.search_node);
+    public assign(input: string, position: any, layout_index?: number): void {
+        const layout = this.layouts[layout_index ?? this.recognize_layout(input)];
+        this.add_node(layout, input, position, this.search_node, this.search_node);
     }
 
     public narrow(input: string): BlazeNode<any> {
@@ -557,8 +538,30 @@ export class SearchTree {
         return 'h';
     }
 
+    public recognize_layout(input: string): number {
+        try {
+            for (let i = 0; i < this.layouts.length; i++){
+                const layout = this.layouts[i];
+                const index = layout.layout_characters.indexOf(input.toLowerCase());
+                if (index >= 0)
+                    return i;
+            }
+            for (let i = 0; i < this.layouts.length; i++){
+                const layout = this.layouts[i];
+                const index = layout.layout_characters.length / 2;
+                if (layout.layout_characters[index] != null)
+                    return i;
+            }
+        } catch (e) {
+            console.error(`unknown layout for input: ${input}`, e);
+            return 0;
+        }
+
+        console.warn(`unknown layout for input ${input}`);
+        return 0;
+    }
+
     public reset(): void {
         this.search_node = create_node("#");
-        // this.search_array = [];
     }
 }
