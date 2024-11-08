@@ -69,7 +69,7 @@ export default class BlazeJumpPlugin extends Plugin {
             this.registerEditorExtension(blaze_jump_view_plugin);
 
             this.addCommand({
-                id: "blaze-jump-toggle",
+                id: "toggle",
                 name: this.lang.command_toggle,
                 editorCallback: (editor, ctx) => this.blazeAction(editor, ctx),
 
@@ -81,39 +81,45 @@ export default class BlazeJumpPlugin extends Plugin {
             });
 
             this.addCommand({
-                id: "blaze-jump-start",
+                id: "start",
                 name: this.lang.command_word_start,
                 editorCallback: (editor, ctx) => this.startAction(editor, ctx)
             });
 
             this.addCommand({
-                id: "blaze-jump-end",
+                id: "end",
                 name: this.lang.command_word_end,
                 editorCallback: (editor, ctx) => this.endAction(editor, ctx)
             });
 
             this.addCommand({
-                id: "blaze-jump-any",
+                id: "any",
                 name: this.lang.command_any_char,
                 editorCallback: (editor, ctx) => this.anyAction(editor, ctx)
             });
 
             this.addCommand({
-                id: 'blaze-jump-abort',
+                id: 'abort',
                 name: this.lang.command_abort,
                 editorCallback: (editor) => this.resetAction(editor)
             });
 
             this.addCommand({
-                id: 'blaze-jump-line',
+                id: 'line',
                 name: this.lang.command_line_start,
                 editorCallback: (editor, ctx) => this.beginningAction(editor, ctx)
             });
 
             this.addCommand({
-                id: 'blaze-jump-terminator',
+                id: 'terminator',
                 name: this.lang.command_line_end,
                 editorCallback: (editor, ctx) => this.terminatorAction(editor, ctx)
+            });
+
+            this.addCommand({
+               id: 'layout',
+               name: this.lang.command_layout,
+               editorCallback: (editor, ctx) => this.layoutAction(editor, ctx)
             });
         } catch (e) {
             console.error(e);
@@ -309,6 +315,10 @@ export default class BlazeJumpPlugin extends Plugin {
 		inter_plugin_state.state.positions = undefined;
         inter_plugin_state.state.pointer = undefined;
 	}
+
+    private layoutAction(editor: Editor, _: any) {
+        // TODO
+    }
 
     private blazeAction(editor: Editor, _: any) {
         this.resetAction(editor, false);

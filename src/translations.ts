@@ -63,6 +63,7 @@ export interface Translations {
     readonly command_abort: string;
     readonly command_line_start: string;
     readonly command_line_end: string;
+    readonly command_layout: string;
 }
 
 export const EN_TRANSLATIONS: Translations = {
@@ -123,13 +124,14 @@ export const EN_TRANSLATIONS: Translations = {
     jump_to_word_end_desc: 'Jumps to the end of the word in \'Word end\' mode',
     reset: 'Reset',
     reset_defaults: 'Reset defaults',
-    command_toggle: 'BlazeJump toggle and jump',
-    command_word_start: 'BlazeJump start',
-    command_word_end: 'BlazeJump end',
-    command_any_char: 'BlazeJump any',
-    command_abort: 'BlazeJump abort search',
-    command_line_start: 'BlazeJump jump to line',
-    command_line_end: 'BlazeJump jump to the line end'
+    command_toggle: 'Toggle and jump',
+    command_word_start: 'Jump to words start',
+    command_word_end: 'Jump to words end',
+    command_any_char: 'Jump to any',
+    command_abort: 'Abort search',
+    command_line_start: 'Jump to line',
+    command_line_end: 'Jump to the line end',
+    command_layout: 'Switch layout'
 }
 
 
