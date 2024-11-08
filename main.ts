@@ -14,6 +14,7 @@ export default class BlazeJumpPlugin extends Plugin {
 	private search_tree: SearchTree;
 	private mode?: MODE_TYPE = undefined;
 
+    private layout_def: number = 0;
     private layout_cur: number = 0;
     private layout_num: number = 1;
 
@@ -50,6 +51,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
         this.layout_num = layouts.length;
         this.layout_cur = 0;
+        this.layout_def = 0;
 
         this.search_tree = new SearchTree(
             layouts,
@@ -142,7 +144,7 @@ export default class BlazeJumpPlugin extends Plugin {
 	public onunload() {
 		inter_plugin_state.state = {};
 		this.resetAction();
-        this.layoutReset();
+        this.layoutClear();
 	}
 
     private resolveStatusColor(): string {
@@ -203,7 +205,7 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.statusBar = undefined;
 	}
 
-    private layoutReset() {
+    private layoutClear() {
         this.layoutBar?.remove();
         this.layoutBar = undefined;
     }
@@ -221,9 +223,26 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.mode = <MODE_TYPE> mode;
 	}
 
+    private resetLayout() {
+        this.layout_cur = this.layout_def;
+        this.layoutSet(this.layout_cur);
+    }
+
+    private toggleLayout(sign: number = 1) {
+        this.layout_cur += sign;
+        if (this.layout_cur >= this.layout_num)
+            this.layout_cur = 0;
+        if (this.layout_cur < 0) {
+            this.layout_cur = this.layout_num - 1;
+        }
+        this.layoutSet(this.layout_cur);
+    }
+
     private toggleLineMode(left: boolean, _?: Editor) {
+        const current_mode = this.mode;
         this.resetAction(_);
         this.mode = left ? 'line' : 'terminator';
+        return current_mode !== this.mode;
     }
 
     private toggleDim(active: boolean) {
@@ -335,8 +354,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 window.removeEventListener("auxclick", this.callback_mouse_reset);
             }
             this.callback_mouse_reset = null;
-
-            this.layoutSet(this.layout_cur);
+            this.resetLayout();
         }
 
 		if (this.callback_start_search)
@@ -352,10 +370,8 @@ export default class BlazeJumpPlugin extends Plugin {
 	}
 
     private layoutAction(_?: Editor, __?: any) {
-        this.layout_cur += 1;
-        if (this.layout_cur >= this.layout_num)
-            this.layout_cur = 0;
-        this.layoutSet(this.layout_cur);
+        this.toggleLayout();
+        this.layout_def = this.layout_cur;
     }
 
     private blazeAction(editor: Editor, _: any) {
@@ -459,12 +475,56 @@ export default class BlazeJumpPlugin extends Plugin {
                 return;
             }
 
+            if (event.which === 38 ||
+                event.keyCode === 38 ||
+                `${event.code}`.toLowerCase() === 'arrowup' ||
+                `${event.key}`.toLowerCase() === 'arrowup') {
+                if (this.settings.keyboard_arrows_switch) {
+                    const curr_layout = this.layout_cur;
+                    const curr_mode = this.mode;
+                    this.resetAction(editor);
+                    this.layout_cur = curr_layout;
+                    this.mode = curr_mode;
+                    this.toggleLayout(+1);
+                    this.lineAction(editor);
+                    if (inter_plugin_state.state.plugin_draw_callback)
+                        inter_plugin_state.state.plugin_draw_callback();
+                    (editor as any)['cm'].dispatch();
+                    return;
+                }
+            }
+
+            if (event.which === 40 ||
+                event.keyCode === 40 ||
+                `${event.code}`.toLowerCase() === 'arrowdown' ||
+                `${event.key}`.toLowerCase() === 'arrowdown') {
+                if (this.settings.keyboard_arrows_switch) {
+                    const curr_layout = this.layout_cur;
+                    const curr_mode = this.mode;
+                    this.resetAction(editor);
+                    this.layout_cur = curr_layout;
+                    this.mode = curr_mode;
+                    this.toggleLayout(-1);
+                    this.lineAction(editor);
+                    if (inter_plugin_state.state.plugin_draw_callback)
+                        inter_plugin_state.state.plugin_draw_callback();
+                    (editor as any)['cm'].dispatch();
+                    return;
+                }
+            }
+
             if (event.which === 37 ||
                 event.keyCode === 37 ||
                 `${event.code}`.toLowerCase() === 'arrowleft' ||
                 `${event.key}`.toLowerCase() === 'arrowleft')
             {
-                this.toggleLineMode(true, editor);
+                const curr_layout = this.layout_cur;
+                const changed = this.toggleLineMode(true, editor);
+                if (this.settings.keyboard_arrows_switch && !changed) {
+                    this.layout_cur = curr_layout;
+                    this.toggleLayout();
+                }
+
                 this.lineAction(editor);
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
@@ -477,7 +537,13 @@ export default class BlazeJumpPlugin extends Plugin {
                 `${event.code}`.toLowerCase() === 'arrowright' ||
                 `${event.key}`.toLowerCase() === 'arrowright')
             {
-                this.toggleLineMode(false, editor);
+                const curr_layout = this.layout_cur;
+                const changed = this.toggleLineMode(false, editor);
+                if (this.settings.keyboard_arrows_switch && !changed) {
+                    this.layout_cur = curr_layout;
+                    this.toggleLayout()
+                }
+
                 this.lineAction(editor);
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
@@ -675,6 +741,46 @@ export default class BlazeJumpPlugin extends Plugin {
                     inter_plugin_state.state.plugin_draw_callback();
                 (editor as any)['cm'].dispatch();
                 return;
+            }
+
+            if (event.which === 38 ||
+                event.keyCode === 38 ||
+                `${event.code}`.toLowerCase() === 'arrowup' ||
+                `${event.key}`.toLowerCase() === 'arrowup')
+            {
+                if (this.settings.keyboard_arrows_switch) {
+                    const curr_layout = this.layout_cur;
+                    const curr_mode = this.mode;
+                    this.resetAction(editor);
+                    this.layout_cur = curr_layout;
+                    this.mode = curr_mode;
+                    this.toggleLayout(+1);
+
+                    this.searchAction(editor);
+                    if (inter_plugin_state.state.plugin_draw_callback)
+                        inter_plugin_state.state.plugin_draw_callback();
+                    return;
+                }
+            }
+
+            if (event.which === 40 ||
+                event.keyCode === 40 ||
+                `${event.code}`.toLowerCase() === 'arrowdown' ||
+                `${event.key}`.toLowerCase() === 'arrowdown')
+            {
+                if (this.settings.keyboard_arrows_switch) {
+                    const curr_layout = this.layout_cur;
+                    const curr_mode = this.mode;
+                    this.resetAction(editor);
+                    this.layout_cur = curr_layout;
+                    this.mode = curr_mode;
+                    this.toggleLayout(-1);
+
+                    this.searchAction(editor);
+                    if (inter_plugin_state.state.plugin_draw_callback)
+                        inter_plugin_state.state.plugin_draw_callback();
+                    return;
+                }
             }
 
             if (event.which === 37 ||
