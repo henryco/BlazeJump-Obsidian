@@ -31,6 +31,7 @@
 ---
 
 ### Features
+* Support of multiple keyboard layouts
 * Ergonomic indexing and tagging heuristics
 * Fully customizable (with support of custom keyboard layouts and styles)
 
