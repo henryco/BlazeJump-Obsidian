@@ -46,7 +46,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
     private async initialize() {
         const layouts = [this.settings.keyboard_layout_main,
-            ...(this.settings.keyboard_layout_custom?.filter(x => x.trim() !== '')?.filter(x => x.length > 1))];
+            ...(this.settings.keyboard_layout_custom?.filter(x => x.trim() !== ''))];
 
         this.layout_num = layouts.length;
         this.layout_cur = 0;
