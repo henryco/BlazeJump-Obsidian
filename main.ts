@@ -89,10 +89,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 name: this.lang.command_toggle,
                 editorCallback: (editor, ctx) => this.blazeAction(editor, ctx),
 
-                hotkeys: [{
-                    modifiers: ['Ctrl'],
-                    key: '`',
-                }]
+                // hotkeys: [{
+                //     modifiers: ['Ctrl'],
+                //     key: '`',
+                // }]
 
             });
 
