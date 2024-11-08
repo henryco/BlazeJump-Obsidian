@@ -14,7 +14,11 @@ export default class BlazeJumpPlugin extends Plugin {
 	private search_tree: SearchTree;
 	private mode?: MODE_TYPE = undefined;
 
+    private layout_cur: number = 0;
+    private layout_num: number = 1;
+
 	private statusBar?: HTMLElement;
+	private layoutBar?: HTMLElement;
 
 	private callback_provided_input: any;
 	private callback_start_search: any;
@@ -41,12 +45,19 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     private async initialize() {
+        const layouts = [this.settings.keyboard_layout_main,
+            ...(this.settings.keyboard_layout_custom?.filter(x => x.trim() !== ''))];
+
+        this.layout_num = layouts.length;
+        this.layout_cur = 0;
+
         this.search_tree = new SearchTree(
-            [this.settings.keyboard_layout_main,
-                ...(this.settings.keyboard_layout_custom?.filter(x => x.trim() !== ''))],
+            layouts,
             this.settings.keyboard_ignored,
             this.settings.keyboard_depth
         );
+
+        this.layoutSet(this.layout_cur);
     }
 
 	public async onload() {
@@ -131,6 +142,7 @@ export default class BlazeJumpPlugin extends Plugin {
 	public onunload() {
 		inter_plugin_state.state = {};
 		this.resetAction();
+        this.layoutReset();
 	}
 
     private resolveStatusColor(): string {
@@ -170,10 +182,31 @@ export default class BlazeJumpPlugin extends Plugin {
 		}});
 	}
 
+    private layoutSet(idx: number) {
+        const text = idx > 0 ? `${idx}` : 'M';
+
+        if (!this.layoutBar) {
+            this.layoutBar = this.addStatusBarItem();
+            this.layoutBar.addEventListener('click', () => this.layoutAction());
+        } else {
+            const nodes = this.layoutBar.childNodes;
+            for (let i = 0; i < nodes.length; i++) {
+                this.layoutBar.removeChild(nodes[i]);
+            }
+        }
+
+        this.layoutBar.createEl("span", {text: text, cls: 'blaze-jump-layout-bar'});
+    }
+
     private statusClear() {
 		this.statusBar?.remove();
 		this.statusBar = undefined;
 	}
+
+    private layoutReset() {
+        this.layoutBar?.remove();
+        this.layoutBar = undefined;
+    }
 
     private toggleMode(_?: Editor) {
 		const mode_map = {
@@ -316,8 +349,11 @@ export default class BlazeJumpPlugin extends Plugin {
         inter_plugin_state.state.pointer = undefined;
 	}
 
-    private layoutAction(editor: Editor, _: any) {
-        // TODO
+    private layoutAction(_?: Editor, __?: any) {
+        this.layout_cur += 1;
+        if (this.layout_cur >= this.layout_num)
+            this.layout_cur = 0;
+        this.layoutSet(this.layout_cur);
     }
 
     private blazeAction(editor: Editor, _: any) {

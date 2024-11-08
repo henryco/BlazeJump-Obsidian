@@ -11,6 +11,30 @@
     padding-right: 4px;
 }
 
+/*noinspection CssUnresolvedCustomProperty*/
+.blaze-jump-layout-bar {
+    border-radius: 5px;
+    font-family: Courier, monospace;
+    font-size: xx-small;
+    display: inline-grid;
+    align-items: center;
+    align-content: center;
+    text-align: center;
+    line-height: 10px;
+    margin-left: -4px;
+    padding-top: 3px;
+    padding-left: 4px;
+    padding-right: 4px;
+    background-color: transparent;
+    border: thin solid var(--color-base-60);
+    color: var(--color-base-70);
+}
+
+/*noinspection CssUnresolvedCustomProperty*/
+.blaze-jump-layout-bar:hover {
+    background-color: var(--background-modifier-hover);
+}
+
 .blaze-jump-search-tag {
     border-style: dashed;
     border-width: thin;
