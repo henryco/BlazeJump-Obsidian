@@ -13,6 +13,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
 	private search_tree: SearchTree;
 	private mode?: MODE_TYPE = undefined;
+    private current_char?: string = undefined;
 
     private layout_def: number = 0;
     private layout_cur: number = 0;
@@ -354,6 +355,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 window.removeEventListener("auxclick", this.callback_mouse_reset);
             }
             this.callback_mouse_reset = null;
+            this.current_char = undefined;
             this.resetLayout();
         }
 
@@ -676,6 +678,44 @@ export default class BlazeJumpPlugin extends Plugin {
                     return;
                 }
 
+
+                if (event.which === 38 ||
+                    event.keyCode === 38 ||
+                    `${event.code}`.toLowerCase() === 'arrowup' ||
+                    `${event.key}`.toLowerCase() === 'arrowup')
+                {
+                    if (this.settings.keyboard_arrows_switch) {
+                        const curr_layout = this.layout_cur;
+                        const curr_key = this.current_char;
+                        const curr_mode = this.mode;
+                        this.resetAction(editor);
+                        this.layout_cur = curr_layout;
+                        this.mode = curr_mode;
+                        this.toggleLayout(+1);
+
+                        return callback_on_start({key: curr_key, code: curr_key});
+                    }
+                }
+
+                if (event.which === 40 ||
+                    event.keyCode === 40 ||
+                    `${event.code}`.toLowerCase() === 'arrowdown' ||
+                    `${event.key}`.toLowerCase() === 'arrowdown')
+                {
+                    if (this.settings.keyboard_arrows_switch) {
+                        const curr_layout = this.layout_cur;
+                        const curr_key = this.current_char;
+                        const curr_mode = this.mode;
+                        this.resetAction(editor);
+                        this.layout_cur = curr_layout;
+                        this.mode = curr_mode;
+                        this.toggleLayout(-1);
+
+                        return callback_on_start({key: curr_key, code: curr_key});
+                    }
+                }
+
+
                 const char = `${event.key}`.toLowerCase();
 
                 this.offset += 1;
@@ -720,8 +760,8 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		const callback_on_start = (event: any) => {
             window.removeEventListener("keydown", callback_on_start);
-            event.preventDefault();
-            event.stopPropagation();
+            event?.preventDefault?.();
+            event?.stopPropagation?.();
 
             if (event.which === 16 ||
                 event.keyCode === 16 ||
@@ -814,6 +854,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 this.toggleDim(true);
 
                 const char = `${event.key}`.toLowerCase();
+                this.current_char = event.key;
 
 				if (char.length <= 2 && char.trim().length > 0) {
 					const positions = this.performSearch(editor, char);
