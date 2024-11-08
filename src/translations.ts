@@ -10,6 +10,10 @@ export interface Translations {
     readonly def_mode: string;
     readonly keyboard_layout_main: string;
     readonly keyboard_layouts: string;
+    readonly keyboard_recognize: string;
+    readonly keyboard_recognize_desc: string;
+    readonly keyboard_arrows: string;
+    readonly keyboard_arrows_desc: string;
     readonly layout: string;
     readonly add_layout: string;
     readonly remove_layout: string;
@@ -70,13 +74,17 @@ export const EN_TRANSLATIONS: Translations = {
     any_char: 'Any character',
     line_start: 'Line start',
     line_end: 'Line end',
-    def_mode: 'Default Mode',
-    keyboard_layout_main: 'Main',
-    keyboard_layouts: 'Keyboard Layouts',
+    def_mode: 'Default mode',
+    keyboard_layout_main: 'Layout Main',
+    keyboard_layouts: 'Keyboard',
+    keyboard_recognize: 'Recognize layout',
+    keyboard_recognize_desc: 'Try to automatically recognize keyboard layout',
+    keyboard_arrows: 'Cycle through keyboard layouts',
+    keyboard_arrows_desc: 'Use arrow keys to cycle through keyboard layouts',
     layout: 'Layout',
     add_layout: 'Add layout',
     remove_layout: 'Remove layout',
-    ignored_chars: 'Ignored characters',
+    ignored_chars: 'Excluded characters',
     search_depth: 'Search depth',
     opaque: 'Opaque',
     status_color: 'Color status',

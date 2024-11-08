@@ -12,6 +12,8 @@ export interface BlazeJumpPluginSettings {
     keyboard_layout_custom: string[];
     keyboard_ignored: string;
     keyboard_depth: number;
+    keyboard_recognize?: boolean;
+    keyboard_arrows_switch?: boolean;
 
     // set
     status_color_fallback: string;
@@ -76,6 +78,8 @@ export const DEFAULT_SETTINGS: BlazeJumpPluginSettings = {
     keyboard_layout_custom: [],
     keyboard_ignored: "",
     keyboard_depth: 2,
+    keyboard_recognize: true,
+    keyboard_arrows_switch: true,
 
     status_color_fallback: '#FF5733',
     status_color_bg: '#FFFFFF00',
@@ -229,6 +233,9 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         }
                     }));
 
+
+        this.ns(this.lang.keyboard_layouts).setHeading();
+
         let ka = this.ns(this.lang.ignored_chars, "keyboard_ignored", true)
             .addText(x =>
                 x.setValue(this.settings.keyboard_ignored)
@@ -238,9 +245,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.toggle_defaults(ka, true);
                         this.with_global_reset(head);
                     }));
-
-
-        this.ns(this.lang.keyboard_layouts).setHeading();
 
         let kl = this.ns(this.lang.keyboard_layout_main, 'keyboard_layout_main', true);
         kl.addTextArea(x => {
@@ -465,6 +469,28 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                     .setTooltip(this.lang.enable)
                     .onChange(async (value) => {
                         await this.saveProperty(`jump_after_word_on_end`, value);
+                        this.hide();
+                        this.display();
+                    }));
+
+        this.ns(this.lang.keyboard_recognize, 'keyboard_recognize')
+            .setDesc(this.lang.keyboard_recognize_desc)
+            .addToggle(x =>
+                x.setValue(this.settings.keyboard_recognize === true)
+                    .setTooltip(this.lang.enable)
+                    .onChange(async (value) => {
+                        await this.saveProperty(`keyboard_recognize`, value);
+                        this.hide();
+                        this.display();
+                    }));
+
+        this.ns(this.lang.keyboard_arrows, 'keyboard_arrows_switch')
+            .setDesc(this.lang.keyboard_arrows_desc)
+            .addToggle(x =>
+                x.setValue(this.settings.keyboard_arrows_switch === true)
+                    .setTooltip(this.lang.enable)
+                    .onChange(async (value) => {
+                        await this.saveProperty(`keyboard_arrows_switch`, value);
                         this.hide();
                         this.display();
                     }));
