@@ -162,7 +162,7 @@ export class SearchTree {
     private coord(input: string, layout: KeyboardLayout): [x: number, y: number] {
         let index = layout.layout_characters.indexOf(input.toLowerCase());
         if (index <= -1)
-            index = layout.layout_characters.length / 2;
+            index = Math.floor(layout.layout_characters.length / 2);
         const y = Math.floor(index / layout.layout_width);
         const x = index - (layout.layout_width * y);
         return [x, y];
@@ -553,12 +553,17 @@ export class SearchTree {
         return 'h';
     }
 
-    public recognize_layout(input: string): number {
+    public recognize_layout(input: string, def_layout: number = -1): number {
         try {
-            for (let i = 0; i < this.layouts.length; i++){
+            if (def_layout >= 0) {
+                if (this.layouts[def_layout].layout_original.indexOf(input.toLowerCase()) >= 0)
+                    return def_layout;
+            }
+            for (let i = 0; i < this.layouts.length; i++) {
+                if (def_layout >= 0 && i === def_layout)
+                    continue;
                 const layout = this.layouts[i];
-                const index = layout.layout_original.indexOf(input.toLowerCase());
-                if (index >= 0)
+                if (layout.layout_original.indexOf(input.toLowerCase()) >= 0)
                     return i;
             }
         } catch (e) {

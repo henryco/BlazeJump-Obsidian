@@ -46,7 +46,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
     private async initialize() {
         const layouts = [this.settings.keyboard_layout_main,
-            ...(this.settings.keyboard_layout_custom?.filter(x => x.trim() !== ''))];
+            ...(this.settings.keyboard_layout_custom?.filter(x => x.trim() !== '')?.filter(x => x.length > 1))];
 
         this.layout_num = layouts.length;
         this.layout_cur = 0;
@@ -335,6 +335,8 @@ export default class BlazeJumpPlugin extends Plugin {
                 window.removeEventListener("auxclick", this.callback_mouse_reset);
             }
             this.callback_mouse_reset = null;
+
+            this.layoutSet(this.layout_cur);
         }
 
 		if (this.callback_start_search)
@@ -776,7 +778,7 @@ export default class BlazeJumpPlugin extends Plugin {
             return [];
         }
 
-        const layout_idx = 0;
+        const layout_idx = this.layout_cur;
         const search_char = this.search_tree.mid_layout_char(layout_idx);
 
         const line_f = from.line;
@@ -882,8 +884,13 @@ export default class BlazeJumpPlugin extends Plugin {
 		const visible_text = editor.getValue().toLowerCase();
 		const search_area = visible_text.substring(this.range_from, this.range_to);
 
-        const layout_idx = this.search_tree.recognize_layout(search);
-        console.log('===>', layout_idx);
+        const layout_idx = this.settings.keyboard_recognize
+            ? this.search_tree.recognize_layout(search, this.layout_cur)
+            : this.layout_cur;
+
+        if (this.settings.keyboard_recognize) {
+            this.layoutSet(layout_idx);
+        }
 
 		let index = search_area.indexOf(search_lower);
 		const t0 = new Date().getTime();
