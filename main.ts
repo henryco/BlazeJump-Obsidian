@@ -15,6 +15,8 @@ export default class BlazeJumpPlugin extends Plugin {
 	private mode?: MODE_TYPE = undefined;
     private current_char?: string = undefined;
 
+    private override_recognize: boolean = false;
+
     private layout_def: number = 0;
     private layout_cur: number = 0;
     private layout_num: number = 1;
@@ -354,6 +356,8 @@ export default class BlazeJumpPlugin extends Plugin {
                 window.removeEventListener("contextmenu", this.callback_mouse_reset);
                 window.removeEventListener("auxclick", this.callback_mouse_reset);
             }
+
+            this.override_recognize = false;
             this.callback_mouse_reset = null;
             this.current_char = undefined;
             this.resetLayout();
@@ -689,6 +693,7 @@ export default class BlazeJumpPlugin extends Plugin {
                         const curr_key = this.current_char;
                         const curr_mode = this.mode;
                         this.resetAction(editor);
+                        this.override_recognize = true;
                         this.layout_cur = curr_layout;
                         this.mode = curr_mode;
                         this.toggleLayout(+1);
@@ -707,6 +712,7 @@ export default class BlazeJumpPlugin extends Plugin {
                         const curr_key = this.current_char;
                         const curr_mode = this.mode;
                         this.resetAction(editor);
+                        this.override_recognize = true;
                         this.layout_cur = curr_layout;
                         this.mode = curr_mode;
                         this.toggleLayout(-1);
@@ -1031,11 +1037,12 @@ export default class BlazeJumpPlugin extends Plugin {
 		const visible_text = editor.getValue().toLowerCase();
 		const search_area = visible_text.substring(this.range_from, this.range_to);
 
-        const layout_idx = this.settings.keyboard_recognize
+        const layout_idx = (this.settings.keyboard_recognize && !this.override_recognize)
             ? this.search_tree.recognize_layout(search, this.layout_cur)
             : this.layout_cur;
 
-        if (this.settings.keyboard_recognize) {
+        if (this.settings.keyboard_recognize && !this.override_recognize) {
+            this.layout_cur = layout_idx;
             this.layoutSet(layout_idx);
         }
 
