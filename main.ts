@@ -422,12 +422,15 @@ export default class BlazeJumpPlugin extends Plugin {
         this.pulseInit(true);
         this.toggleDim(true);
 
+        editor.blur();
+
         let positions: SearchPosition[];
 
         try {
             positions = this.performLineSearch(editor);
             if (!positions || positions.length <= 0) {
                 this.resetAction(editor);
+                editor.focus();
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
                 (editor as any)['cm'].dispatch();
@@ -436,6 +439,7 @@ export default class BlazeJumpPlugin extends Plugin {
         } catch (e) {
             console.error(e);
             this.resetAction(editor);
+            editor.focus();
             if (inter_plugin_state.state.plugin_draw_callback)
                 inter_plugin_state.state.plugin_draw_callback();
             (editor as any)['cm'].dispatch();
@@ -449,6 +453,7 @@ export default class BlazeJumpPlugin extends Plugin {
             }
             try {
                 this.resetAction(editor);
+                editor.focus();
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
             } finally {
@@ -475,6 +480,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 `${event.code}`.toLowerCase() === 'escape')
             {
                 this.resetAction(editor);
+                editor.focus();
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
                 (editor as any)['cm'].dispatch();
@@ -573,10 +579,12 @@ export default class BlazeJumpPlugin extends Plugin {
 
                 else if (new_positions.length === 1) {
                     this.jumpTo(editor, new_positions[0]);
+                    editor.focus();
                 }
 
                 else if (this.settings.search_not_found_text &&
                     this.settings.search_not_found_text.trim() !== '') {
+                    editor.focus();
                     new Notice(this.settings.search_not_found_text);
                 }
 
@@ -587,6 +595,7 @@ export default class BlazeJumpPlugin extends Plugin {
             catch (e) {
                 console.error(e);
                 this.resetAction(editor);
+                editor.focus();
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
                 throw e;
@@ -619,6 +628,8 @@ export default class BlazeJumpPlugin extends Plugin {
         this.statusSet(`${this.lang.mode}: `);
         this.pulseInit(true);
 
+        editor.blur();
+
         const callback_on_mouse_reset = (event: any) => {
             if (event) {
                 event.preventDefault();
@@ -626,6 +637,7 @@ export default class BlazeJumpPlugin extends Plugin {
             }
             try {
                 this.resetAction(editor);
+                editor.focus();
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
             } finally {
@@ -653,6 +665,7 @@ export default class BlazeJumpPlugin extends Plugin {
                     `${event.code}`.toLowerCase() === 'escape')
                 {
                     this.resetAction(editor);
+                    editor.focus();
                     if (inter_plugin_state.state.plugin_draw_callback)
                         inter_plugin_state.state.plugin_draw_callback();
                     return;
@@ -738,11 +751,13 @@ export default class BlazeJumpPlugin extends Plugin {
                 }
 
                 else if (new_positions.length === 1) {
+                    editor.focus();
                     this.jumpTo(editor, new_positions[0]);
                 }
 
                 else if (this.settings.search_not_found_text &&
                     this.settings.search_not_found_text.trim() !== '') {
+                    editor.focus();
                     new Notice(this.settings.search_not_found_text);
                 }
 
@@ -753,6 +768,7 @@ export default class BlazeJumpPlugin extends Plugin {
             catch (e) {
 				console.error(e);
 				this.resetAction(editor);
+                editor.focus();
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
 				throw e;
@@ -783,6 +799,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 `${event.code}`.toLowerCase() === 'escape')
             {
                 this.resetAction(editor);
+                editor.focus();
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
                 (editor as any)['cm'].dispatch();
@@ -866,6 +883,7 @@ export default class BlazeJumpPlugin extends Plugin {
 					const positions = this.performSearch(editor, char);
 					if (!positions || positions.length <= 0) {
 						this.resetAction(editor);
+                        editor.focus();
 						if (inter_plugin_state.state.plugin_draw_callback)
 							inter_plugin_state.state.plugin_draw_callback()
                         if (this.settings.search_not_found_text &&
@@ -877,6 +895,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
                     if (positions.length === 1 && (this.settings.auto_jump_on_single === true)) {
                         this.resetAction(editor);
+                        editor.focus();
                         this.jumpTo(editor, positions[0]);
                         return;
                     }
@@ -888,6 +907,7 @@ export default class BlazeJumpPlugin extends Plugin {
 					window.addEventListener('keydown', callback_on_provided, { once: true });
 				} else {
 					this.resetAction(editor);
+                    editor.focus();
 				}
 
                 if (inter_plugin_state.state.plugin_draw_callback)
@@ -897,6 +917,7 @@ export default class BlazeJumpPlugin extends Plugin {
             catch (e) {
 				console.error(e);
 				this.resetAction(editor);
+                editor.focus();
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
 				throw e;
