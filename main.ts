@@ -456,6 +456,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 editor.focus();
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
+
+                window.removeEventListener("click", callback_on_mouse_reset);
+                window.removeEventListener("contextmenu", callback_on_mouse_reset);
+                window.removeEventListener("auxclick", callback_on_mouse_reset);
             } finally {
                 (editor as any)['cm'].dispatch();
             }
@@ -470,6 +474,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 event.keyCode === 16 ||
                 `${event.key}`.toLowerCase() === 'shift'
             ) {
+                this.callback_provided_input = callback_on_provided;
                 window.addEventListener('keydown', callback_on_provided, { once: true });
                 return;
             }
@@ -574,6 +579,8 @@ export default class BlazeJumpPlugin extends Plugin {
                 if (new_positions.length > 1) {
                     this.statusSet(`${this.lang.mode}: ${char}`);
                     inter_plugin_state.state.positions = [...new_positions];
+
+                    this.callback_provided_input = callback_on_provided;
                     window.addEventListener('keydown', callback_on_provided, { once: true });
                 }
 
@@ -640,6 +647,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 editor.focus();
                 if (inter_plugin_state.state.plugin_draw_callback)
                     inter_plugin_state.state.plugin_draw_callback();
+
+                window.removeEventListener("click", callback_on_mouse_reset);
+                window.removeEventListener("contextmenu", callback_on_mouse_reset);
+                window.removeEventListener("auxclick", callback_on_mouse_reset);
             } finally {
                 (editor as any)['cm'].dispatch();
             }
@@ -655,6 +666,7 @@ export default class BlazeJumpPlugin extends Plugin {
                     event.keyCode === 16 ||
                     `${event.key}`.toLowerCase() === 'shift'
                 ) {
+                    this.callback_provided_input = callback_on_provided;
                     window.addEventListener('keydown', callback_on_provided, { once: true });
                     return;
                 }
@@ -711,7 +723,13 @@ export default class BlazeJumpPlugin extends Plugin {
                         this.mode = curr_mode;
                         this.toggleLayout(+1);
 
-                        return callback_on_start({key: curr_key, code: curr_key});
+                        this.callback_mouse_reset = callback_on_mouse_reset;
+                        window.addEventListener("click", callback_on_mouse_reset, { once: true });
+                        window.addEventListener("contextmenu", callback_on_mouse_reset, { once: true });
+                        window.addEventListener("auxclick", callback_on_mouse_reset, { once: true });
+
+                        callback_on_start({key: curr_key, code: curr_key});
+                        return;
                     }
                 }
 
@@ -730,10 +748,15 @@ export default class BlazeJumpPlugin extends Plugin {
                         this.mode = curr_mode;
                         this.toggleLayout(-1);
 
-                        return callback_on_start({key: curr_key, code: curr_key});
+                        this.callback_mouse_reset = callback_on_mouse_reset;
+                        window.addEventListener("click", callback_on_mouse_reset, { once: true });
+                        window.addEventListener("contextmenu", callback_on_mouse_reset, { once: true });
+                        window.addEventListener("auxclick", callback_on_mouse_reset, { once: true });
+
+                        callback_on_start({key: curr_key, code: curr_key});
+                        return;
                     }
                 }
-
 
                 const char = `${event.key}`.toLowerCase();
 
@@ -747,6 +770,8 @@ export default class BlazeJumpPlugin extends Plugin {
                 if (new_positions.length > 1) {
                     this.statusSet(`${this.lang.mode}: ${char}`);
                     inter_plugin_state.state.positions = [...new_positions];
+
+                    this.callback_provided_input = callback_on_provided;
                     window.addEventListener('keydown', callback_on_provided, { once: true });
                 }
 
@@ -789,6 +814,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 event.keyCode === 16 ||
                 `${event.key}`.toLowerCase() === 'shift'
             ) {
+                this.callback_start_search = callback_on_start;
                 window.addEventListener('keydown', callback_on_start, { once: true });
                 return;
             }
@@ -904,6 +930,8 @@ export default class BlazeJumpPlugin extends Plugin {
                     inter_plugin_state.state.pointer = undefined;
 
 					this.statusSet(`${this.lang.mode}: ${char}`);
+
+                    this.callback_provided_input = callback_on_provided;
 					window.addEventListener('keydown', callback_on_provided, { once: true });
 				} else {
 					this.resetAction(editor);
