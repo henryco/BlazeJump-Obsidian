@@ -232,19 +232,21 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                 return x;
             });
 
-        let kd = this.ns(this.lang.search_depth, 'keyboard_depth', true)
-            .addText(x =>
-                x.setValue(`${this.settings.keyboard_depth}`)
-                    .onChange(async (value) => {
-                        try {
-                            await this.saveProperty('keyboard_depth', Number(value));
-                        } catch (e) {
-                            console.error(e);
-                        } finally {
-                            this.toggle_defaults(kd, true);
-                            this.with_global_reset(head);
-                        }
-                    }));
+        if (this.settings.keyboard_heuristic === 'spiral') {
+            let kd = this.ns(this.lang.search_depth, 'keyboard_depth', true)
+                .addText(x =>
+                    x.setValue(`${this.settings.keyboard_depth}`)
+                        .onChange(async (value) => {
+                            try {
+                                await this.saveProperty('keyboard_depth', Number(value));
+                            } catch (e) {
+                                console.error(e);
+                            } finally {
+                                this.toggle_defaults(kd, true);
+                                this.with_global_reset(head);
+                            }
+                        }));
+        }
 
         let ka = this.ns(this.lang.ignored_chars, "keyboard_ignored", true)
             .addText(x =>
