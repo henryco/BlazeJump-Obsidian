@@ -1,5 +1,6 @@
 import {KeyboardHeuristic} from "./heuristics";
 import {SpiralHeuristic} from "./alg/spiral";
+import {StraightHeuristic} from "./alg/straight";
 
 export type {KeyboardHeuristic};
 
@@ -7,6 +8,7 @@ export type {KeyboardHeuristic};
 // **** HEURISTICS SHOULD BE REGISTERED THERE ****
 export const HEURISTICS: {[name: string]: KeyboardHeuristic} = {
     'spiral': SpiralHeuristic,
+    'straight': StraightHeuristic,
     // **** MORE HEURISTICS HERE ****
 }
 // **** HEURISTICS SHOULD BE REGISTERED THERE ****

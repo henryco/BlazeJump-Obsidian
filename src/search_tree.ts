@@ -212,11 +212,15 @@ export class SearchTree {
         let char: string | null = null;
         let loop = 0;
 
+        console.log(' ');
+        console.log('+++>', k_depth);
+
         while (true) {
             if (loop > max_spin) {
                 console.error("max spin");
                 throw "Max spin";
             }
+            console.log('--->', k_depth);
 
             const [i_x, i_y, i_depth] = this.heuristic.next_char(
                 (k_pos ?? [x, y]),
@@ -235,6 +239,8 @@ export class SearchTree {
             if (char === null) {
                 continue;
             }
+
+            console.log('===>', i_depth, char);
 
             break;
         }
