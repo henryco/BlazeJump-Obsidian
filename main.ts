@@ -4,7 +4,7 @@ import {EditorView, Rect} from "@codemirror/view";
 import {SearchTree} from "./src/search_tree";
 import {blaze_jump_view_plugin} from "./src/view"
 import {BlazeJumpPluginSettings, BlazeJumpSettingTab} from "./src/settings";
-import {EN_TRANSLATIONS, provide_translations, Translations} from "./src/translations";
+import {provide_translations, Translations} from "./src/translations";
 
 // noinspection DuplicatedCode,JSUnusedGlobalSymbols
 export default class BlazeJumpPlugin extends Plugin {
@@ -40,12 +40,7 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     private get lang(): Translations {
-        try {
-            return provide_translations(this.settings.language);
-        } catch (e) {
-            console.error("Provide translations error", e);
-            return EN_TRANSLATIONS;
-        }
+        return provide_translations(this.settings.language);
     }
 
     private async initialize() {

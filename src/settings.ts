@@ -1,6 +1,6 @@
 import {MODE_TYPE} from "./commons";
 import {App, Plugin, PluginSettingTab, Setting} from "obsidian";
-import {EN_TRANSLATIONS, provide_translations, provide_languages, Translations} from "./translations";
+import {provide_translations, provide_languages, Translations} from "./translations";
 
 export interface BlazeJumpPluginSettings {
     default_action: MODE_TYPE;
@@ -138,12 +138,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
     }
 
     private get lang(): Translations {
-        try {
-            return provide_translations(this.settings.language);
-        } catch (e) {
-            console.error("Provide translations error", e);
-            return EN_TRANSLATIONS;
-        }
+        return provide_translations(this.settings.language);
     }
 
     public getSettings(): BlazeJumpPluginSettings {
