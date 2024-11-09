@@ -1,6 +1,7 @@
 import {MODE_TYPE} from "./commons";
 import {App, Plugin, PluginSettingTab, Setting} from "obsidian";
 import {provide_translations, provide_languages, Translations} from "./translations";
+import {provide_heuristics} from "./heuristics";
 
 export interface BlazeJumpPluginSettings {
     default_action: MODE_TYPE;
@@ -8,6 +9,7 @@ export interface BlazeJumpPluginSettings {
     language: string;
 
     // set
+    keyboard_heuristic: string;
     keyboard_layout_main: string;
     keyboard_layout_custom: string[];
     keyboard_ignored: string;
@@ -74,6 +76,7 @@ export const DEFAULT_SETTINGS: BlazeJumpPluginSettings = {
 
     language: 'en',
 
+    keyboard_heuristic: 'spiral',
     keyboard_layout_main: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
     keyboard_layout_custom: [],
     keyboard_ignored: "",
@@ -214,6 +217,21 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.display();
                     }));
 
+        this.ns(this.lang.keyboard_layouts).setHeading();
+
+        this.ns(this.lang.keyboard_heuristic, 'keyboard_heuristic')
+            .addDropdown(x => {
+                for (let h of provide_heuristics())
+                    x.addOption(h, h);
+                x.setValue(this.settings.keyboard_heuristic);
+                x.onChange(async (value) => {
+                    await this.saveProperty('keyboard_heuristic', value);
+                    this.hide();
+                    this.display();
+                });
+                return x;
+            });
+
         let kd = this.ns(this.lang.search_depth, 'keyboard_depth', true)
             .addText(x =>
                 x.setValue(`${this.settings.keyboard_depth}`)
@@ -227,9 +245,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                             this.with_global_reset(head);
                         }
                     }));
-
-
-        this.ns(this.lang.keyboard_layouts).setHeading();
 
         let ka = this.ns(this.lang.ignored_chars, "keyboard_ignored", true)
             .addText(x =>

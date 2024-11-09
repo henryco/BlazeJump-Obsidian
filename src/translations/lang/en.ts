@@ -10,6 +10,7 @@ export const EN_TRANSLATIONS: Translations = {
     line_start: 'Line start',
     line_end: 'Line end',
     def_mode: 'Default mode',
+    keyboard_heuristic: 'Keyboard heuristic',
     keyboard_layout_main: 'Layout Main',
     keyboard_layouts: 'Keyboard',
     keyboard_recognize: 'Recognize layout',

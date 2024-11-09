@@ -5,6 +5,7 @@ import {SearchTree} from "./src/search_tree";
 import {blaze_jump_view_plugin} from "./src/view"
 import {BlazeJumpPluginSettings, BlazeJumpSettingTab} from "./src/settings";
 import {provide_translations, Translations} from "./src/translations";
+import {provide_heuristic} from "./src/heuristics";
 
 // noinspection DuplicatedCode,JSUnusedGlobalSymbols
 export default class BlazeJumpPlugin extends Plugin {
@@ -52,6 +53,7 @@ export default class BlazeJumpPlugin extends Plugin {
         this.layout_def = 0;
 
         this.search_tree = new SearchTree(
+            provide_heuristic(this.settings.keyboard_heuristic),
             layouts,
             this.settings.keyboard_ignored,
             this.settings.keyboard_depth

@@ -1,3 +1,5 @@
+import {KeyboardHeuristic} from "./heuristics";
+
 export interface KeyboardLayout {
     readonly layout_characters: (string | null)[];
     readonly layout_original: string[];
@@ -129,17 +131,19 @@ const collect_nodes = <T> (
 }
 
 export class SearchTree {
+    private readonly heuristic: KeyboardHeuristic;
     private readonly layouts: KeyboardLayout[] = [];
     private readonly layout_depth: number;
 
     private search_node: BlazeNode<any>;
 
-    public constructor(keyboard_layouts: string[], keyboard_ignored: string, distance: number) {
+    public constructor(heuristic: KeyboardHeuristic, keyboard_layouts: string[], keyboard_ignored: string, distance: number) {
         for (const layout of keyboard_layouts) {
             this.layouts.push(SearchTree.initKeyboardLayout(layout, keyboard_ignored));
         }
         this.search_node = create_node("#");
         this.layout_depth = distance;
+        this.heuristic = heuristic;
     }
 
     private static initKeyboardLayout(keyboard_layout: string, keyboard_ignored: string): KeyboardLayout {
@@ -172,189 +176,6 @@ export class SearchTree {
         if (x < 0 || y < 0 || y >= layout.layout_height || x >= layout.layout_width)
             return null;
         return layout.layout_characters[x + (layout.layout_width * y)];
-    }
-
-    private static predict_xy_spiral(
-        pos: [number, number],
-        mid: [number, number],
-        r: number
-    ): [x: number,
-        y: number,
-        d: number
-    ] {
-        const x0 = mid[0] - r;
-        const y0 = mid[1] - r;
-        const x1 = mid[0] + r;
-        const y1 = mid[1] + r;
-        const [x, y] = pos;
-
-        let rx = x;
-        let ry = y;
-
-        if (r <= 0) {
-            // very beginning
-            return [mid[0], mid[1], 1];
-        }
-
-        if (r <= 1 && x === mid[0] && y === mid[1]) {
-            return [mid[0] - 1, mid[1] - 1, 1];
-        }
-
-        if (x === x0 && y <= y1 && y > y0) {
-            ry = y - 1;
-            rx = x;
-        }
-
-        else if (x === x1 && y >= y0 && y < y1) {
-            ry = y + 1;
-            rx = x;
-        }
-
-        else if (y === y0 && x >= x0 && x < x1) {
-            rx = x + 1;
-            ry = y;
-        }
-
-        else if (y === y1 && x <= x1 && x > x0) {
-            rx = x - 1;
-            ry = y;
-        }
-
-        if (rx === x0 && ry === y0) {
-            // next circle
-            return [x0 - 1, y0 - 1, r + 1];
-        }
-
-        return [rx, ry, r];
-    }
-
-    private static validate_xy_spiral(
-        pos: [number, number],
-        mid: [number, number],
-        r: number,
-        w: number,
-        h: number,
-        n: number = 0
-    ): [x: number,
-        y: number,
-        d: number
-    ] {
-        const [mx, my] = mid;
-        const [x, y] = pos;
-
-        if (x >= 0 && y >= 0 && x < w && y < h) {
-            return [...pos, r];
-        }
-
-        if ((mx - r) < 0 && (mx + r) > w && (my - r) < 0 && (my + r) > h) {
-            return [...mid, -1]; // circle too big
-        }
-
-        if (n > 100) {
-            console.warn('overflow', [...mid, -1]);
-            return [...mid, -1]; // prevent stack overflow, normally shouldn't happen
-        }
-        let nx = x;
-        let ny = y;
-        let nr = r;
-
-        if (x < 0) {
-            // not a starting point
-            if (!(x === mx - r && y === my - r)) {
-                nr = r + 1;
-                nx = mx - nr;
-                ny = my - nr;
-            }
-
-            if (ny >= 0) {
-                nx = 0;
-            }
-
-            else if (ny < 0) {
-                nx = mx + nr;
-            }
-
-            return SearchTree.validate_xy_spiral(
-                [nx, ny], [mx, my], nr, w, h, n + 1
-            );
-        }
-
-        if (y < 0) {
-            nx = mx + nr;
-
-            if (nx < w) {
-                ny = 0;
-            }
-
-            else if (nx >= w) {
-                ny = my + nr;
-            }
-
-            return SearchTree.validate_xy_spiral(
-                [nx, ny], [mx, my], nr, w, h, n + 1
-            );
-        }
-
-        if (x >= w) {
-            ny = my + nr;
-
-            if (ny < h) {
-                nx = w - 1;
-            }
-
-            else if (ny >= h) {
-                nx = mx - nr;
-            }
-
-            return SearchTree.validate_xy_spiral(
-                [nx, ny], [mx, my], nr, w, h, n + 1
-            );
-        }
-
-        if (y >= h) {
-            nx = mx - nr;
-
-            if (nx >= 0) {
-                ny = h - 1;
-            }
-
-            return SearchTree.validate_xy_spiral(
-                [nx, ny], [mx, my], nr, w, h, n + 1
-            );
-        }
-
-        return [...pos, r];
-    }
-
-    private static next_spiral(
-        pos: [number, number],
-        mid: [number, number],
-        radius: number,
-        w: number,
-        h: number,
-        max_depth: number = -1
-    ): [x: number,
-        y: number,
-        d: number
-    ] {
-        const [u_x, u_y, u_depth] = SearchTree.predict_xy_spiral(
-            [...pos],
-            [...mid],
-            radius
-        );
-
-        const [n_x, n_y, depth] = SearchTree.validate_xy_spiral(
-            [u_x, u_y],
-            [...mid],
-            u_depth,
-            w,
-            h
-        );
-
-        if (max_depth > 0 && depth > max_depth)
-            return [...mid, -1];
-
-        return [n_x, n_y, depth];
     }
 
     private next_key(
@@ -397,7 +218,7 @@ export class SearchTree {
                 throw "Max spin";
             }
 
-            const [i_x, i_y, i_depth] = SearchTree.next_spiral(
+            const [i_x, i_y, i_depth] = this.heuristic.next_char(
                 (k_pos ?? [x, y]),
                 [x, y],
                 k_depth,

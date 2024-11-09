@@ -8,6 +8,7 @@ export interface Translations {
     readonly line_start: string;
     readonly line_end: string;
     readonly def_mode: string;
+    readonly keyboard_heuristic: string;
     readonly keyboard_layout_main: string;
     readonly keyboard_layouts: string;
     readonly keyboard_recognize: string;
