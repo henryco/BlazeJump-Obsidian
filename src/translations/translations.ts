@@ -8,8 +8,11 @@ export interface Translations {
     readonly line_start: string;
     readonly line_end: string;
     readonly def_mode: string;
+    readonly def_mode_desc: string;
     readonly keyboard_heuristic: string;
+    readonly keyboard_heuristic_desc: string;
     readonly keyboard_layout_main: string;
+    readonly keyboard_layout_main_desc: string;
     readonly keyboard_layouts: string;
     readonly keyboard_recognize: string;
     readonly keyboard_recognize_desc: string;
@@ -19,7 +22,9 @@ export interface Translations {
     readonly add_layout: string;
     readonly remove_layout: string;
     readonly ignored_chars: string;
+    readonly ignored_chars_desc: string;
     readonly search_depth: string;
+    readonly search_depth_desc: string;
     readonly opaque: string;
     readonly status_color: string;
     readonly status_color_bg: string;

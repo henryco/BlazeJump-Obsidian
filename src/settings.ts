@@ -206,6 +206,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
             });
 
         this.ns(this.lang.def_mode, 'default_action')
+            .setDesc(this.lang.def_mode_desc)
             .addDropdown(x =>
                 x.addOption('start', map_modes['start'])
                     .addOption('end', map_modes['end'])
@@ -220,6 +221,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         this.ns(this.lang.keyboard_layouts).setHeading();
 
         this.ns(this.lang.keyboard_heuristic, 'keyboard_heuristic')
+            .setDesc(this.lang.keyboard_heuristic_desc)
             .addDropdown(x => {
                 for (let h of provide_heuristics())
                     x.addOption(h, h);
@@ -234,6 +236,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
 
         if (this.settings.keyboard_heuristic === 'spiral') {
             let kd = this.ns(this.lang.search_depth, 'keyboard_depth', true)
+                .setDesc(this.lang.search_depth_desc)
                 .addText(x =>
                     x.setValue(`${this.settings.keyboard_depth}`)
                         .onChange(async (value) => {
@@ -249,6 +252,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         }
 
         let ka = this.ns(this.lang.ignored_chars, "keyboard_ignored", true)
+            .setDesc(this.lang.ignored_chars_desc)
             .addText(x =>
                 x.setValue(this.settings.keyboard_ignored)
                     .onChange(async (value) => {
@@ -259,6 +263,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                     }));
 
         let kl = this.ns(this.lang.keyboard_layout_main, 'keyboard_layout_main', true);
+        kl.setDesc(this.lang.keyboard_layout_main_desc);
         kl.addTextArea(x => {
             x.setValue((this.settings.keyboard_layout_main ?? '').trim().replace(/\s+/g, '\n'));
             return x.onChange(async (value) => {
