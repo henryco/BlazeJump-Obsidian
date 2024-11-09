@@ -1,11 +1,4 @@
-import {KeyboardHeuristic} from "./heuristics";
-
-export interface KeyboardLayout {
-    readonly layout_characters: (string | null)[];
-    readonly layout_original: string[];
-    readonly layout_width: number;
-    readonly layout_height: number;
-}
+import {KeyboardHeuristic, KeyboardLayout} from "./heuristics";
 
 export interface NodeContext {
     position?: [x: number, y: number];
@@ -141,9 +134,9 @@ export class SearchTree {
         for (const layout of keyboard_layouts) {
             this.layouts.push(SearchTree.initKeyboardLayout(layout, keyboard_ignored));
         }
+        this.heuristic = heuristic.initialize(this.layouts);
         this.search_node = create_node("#");
         this.layout_depth = distance;
-        this.heuristic = heuristic;
     }
 
     private static initKeyboardLayout(keyboard_layout: string, keyboard_ignored: string): KeyboardLayout {
@@ -180,19 +173,19 @@ export class SearchTree {
 
     private next_key(
 
-        layout: KeyboardLayout,
+        layout: number,
         input: string,
         depth?: number,
         pos?: [number, number]
 
     ): [char: string, pos: [number, number], depth: number] {
-        const [x, y] = this.coord(input, layout);
+        const [x, y] = this.coord(input, this.layouts[layout] ?? this.layouts[0]);
         return this.next_key_xy(layout, [x, y], depth, pos);
     }
 
     private next_key_xy(
 
-        layout: KeyboardLayout,
+        layout_index: number,
         mid_point: [number, number],
         depth?: number,
         pos?: [number, number]
@@ -204,6 +197,7 @@ export class SearchTree {
         let k_pos: [number, number] | undefined = pos ? [...pos] : undefined;
         let k_depth: number = depth ?? 0;
 
+        const layout = this.layouts[layout_index] ?? this.layouts[0];
         const max_spin = Math.min(
             Math.pow(1 + (Math.max(0, k_depth) * 2), 2) + 1,
             (layout.layout_height + layout.layout_width) * 2
@@ -222,8 +216,7 @@ export class SearchTree {
                 (k_pos ?? [x, y]),
                 [x, y],
                 k_depth,
-                layout.layout_width,
-                layout.layout_height,
+                layout_index,
                 this.layout_depth
             );
 
@@ -244,7 +237,7 @@ export class SearchTree {
 
     private add_node(
 
-        layout: KeyboardLayout,
+        layout: number,
         input: string,
         position: any,
         node: BlazeNode<any>,
@@ -324,7 +317,7 @@ export class SearchTree {
     }
 
     public assign(input: string, position: any, layout_index?: number): void {
-        const layout = this.layouts[layout_index ?? this.recognize_layout(input)];
+        const layout = layout_index ?? this.recognize_layout(input);
         this.add_node(layout, input, position, this.search_node, this.search_node);
     }
 
@@ -358,6 +351,7 @@ export class SearchTree {
 
     public mid_layout_char(layout_index: number): string {
         const layout = this.layouts[layout_index] ?? this.layouts[0];
+        const li = this.layouts[layout_index] ? layout_index : 0;
 
         const mid_x = Math.floor(layout.layout_width / 2);
         const mid_y = Math.floor(layout.layout_height / 2);
@@ -366,7 +360,7 @@ export class SearchTree {
         if (char)
             return char;
 
-        const [c, _, d] = this.next_key_xy(layout, [mid_x, mid_y]);
+        const [c, _, d] = this.next_key_xy(li, [mid_x, mid_y]);
         if (c && d >= 0)
             return c;
 

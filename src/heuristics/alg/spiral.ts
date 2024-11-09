@@ -1,4 +1,4 @@
-import {KeyboardHeuristic} from "../heuristics";
+import {KeyboardHeuristic, KeyboardLayout} from "../heuristics";
 
 const predict_xy_spiral = (
     pos: [number, number],
@@ -183,6 +183,32 @@ const next_spiral = (
     return [n_x, n_y, depth];
 }
 
-export const SpiralHeuristic: KeyboardHeuristic = {
-    next_char: next_spiral
+export class Spirale implements KeyboardHeuristic {
+    private static instance: Spirale;
+    private keyboard_layouts: KeyboardLayout[] = [];
+
+    private constructor() {}
+
+    public initialize(layouts: KeyboardLayout[]) {
+        this.keyboard_layouts = layouts;
+        return this;
+    }
+
+    public next_char(position: [number, number],
+              mid_point: [number, number],
+              search_radius: number,
+              layout_index: number,
+              maximum_depth: number
+    ): [x: number, y: number, depth: number] {
+        const l = this.keyboard_layouts[layout_index];
+        return next_spiral(position, mid_point, search_radius, l.layout_width, l.layout_height, maximum_depth);
+    }
+
+    public static getInstance() {
+        if (!Spirale.instance)
+            Spirale.instance = new Spirale();
+        return Spirale.instance;
+    }
 }
+
+export const SpiralHeuristic = Spirale.getInstance();

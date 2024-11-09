@@ -1,8 +1,8 @@
-import {KeyboardHeuristic} from "./heuristics";
+import {KeyboardHeuristic, KeyboardLayout} from "./heuristics";
 import {SpiralHeuristic} from "./alg/spiral";
 import {StraightHeuristic} from "./alg/straight";
 
-export type {KeyboardHeuristic};
+export type {KeyboardHeuristic, KeyboardLayout};
 
 
 // **** HEURISTICS SHOULD BE REGISTERED THERE ****
