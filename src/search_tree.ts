@@ -1,4 +1,4 @@
-import {KeyboardHeuristic, KeyboardLayout} from "./heuristics";
+import {KeyboardHeuristic, KeyboardLayout, char_from, char_coord} from "./heuristics";
 
 export interface NodeContext {
     position?: [x: number, y: number];
@@ -156,21 +156,6 @@ export class SearchTree {
         }
     }
 
-    private coord(input: string, layout: KeyboardLayout): [x: number, y: number] {
-        let index = layout.layout_characters.indexOf(input.toLowerCase());
-        if (index <= -1)
-            index = Math.floor(layout.layout_characters.length / 2);
-        const y = Math.floor(index / layout.layout_width);
-        const x = index - (layout.layout_width * y);
-        return [x, y];
-    }
-
-    private from(x: number, y: number, layout: KeyboardLayout): string | null {
-        if (x < 0 || y < 0 || y >= layout.layout_height || x >= layout.layout_width)
-            return null;
-        return layout.layout_characters[x + (layout.layout_width * y)];
-    }
-
     private next_key(
 
         layout: number,
@@ -179,7 +164,7 @@ export class SearchTree {
         pos?: [number, number]
 
     ): [char: string, pos: [number, number], depth: number] {
-        const [x, y] = this.coord(input, this.layouts[layout] ?? this.layouts[0]);
+        const [x, y] = char_coord(input, this.layouts[layout] ?? this.layouts[0]);
         return this.next_key_xy(layout, [x, y], depth, pos);
     }
 
@@ -220,7 +205,7 @@ export class SearchTree {
                 this.layout_depth
             );
 
-            char = this.from(i_x, i_y, layout);
+            char = char_from(i_x, i_y, layout);
 
             k_pos = [i_x, i_y];
             k_depth = i_depth;
@@ -356,7 +341,7 @@ export class SearchTree {
         const mid_x = Math.floor(layout.layout_width / 2);
         const mid_y = Math.floor(layout.layout_height / 2);
 
-        const char = this.from(mid_x, mid_y, layout);
+        const char = char_from(mid_x, mid_y, layout);
         if (char)
             return char;
 

@@ -1,27 +1,26 @@
 import {KeyboardHeuristic, KeyboardLayout} from "../heuristics";
 
-const next_straight = (
+const next_continuous = (
     position: [number, number],
     depth: number,
     layout_width: number,
     layout_height: number
 ): [x: number, y: number, depth: number] => {
-    if (depth <= 0)
-        return [0, 0, 1];
+    const inc = depth > 0 ? 1 : 0;
     const [px, py] = position;
-    return ((px + 1) >= layout_width || px >= layout_width)
-        ? (((py + 1) >= layout_height || py >= layout_height) ? [0, 0, 1] : [0, py + 1, 1])
-        : [px + 1, py, 1];
+    return ((px + inc) >= layout_width || px >= layout_width)
+        ? (((py + inc) >= layout_height || py >= layout_height) ? [0, 0, 1] : [0, py + inc, 1])
+        : [px + inc, py, 1];
 }
 
-export class Straight implements KeyboardHeuristic {
-    private static instance: Straight;
+export class Continuous implements KeyboardHeuristic {
+    private static instance: Continuous;
     private keyboard_layouts: KeyboardLayout[] = [];
 
     private constructor() {
     }
 
-    public initialize(layouts: KeyboardLayout[]): KeyboardHeuristic {
+    public initialize(layouts: KeyboardLayout[]) {
         this.keyboard_layouts = layouts;
         return this;
     }
@@ -34,14 +33,14 @@ export class Straight implements KeyboardHeuristic {
         __: number
     ): [x: number, y: number, depth: number] {
         const l = this.keyboard_layouts[layout_index];
-        return  next_straight(position, search_radius, l.layout_width, l.layout_height);
+        return next_continuous(position, search_radius, l.layout_width, l.layout_height);
     }
 
     public static getInstance() {
-        if (!Straight.instance)
-            Straight.instance = new Straight();
-        return Straight.instance;
+        if (!Continuous.instance)
+            Continuous.instance = new Continuous();
+        return Continuous.instance;
     }
 }
 
-export const StraightHeuristic = Straight.getInstance();
+export const ContinuousHeuristic = Continuous.getInstance();
