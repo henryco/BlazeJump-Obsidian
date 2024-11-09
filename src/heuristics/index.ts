@@ -1,24 +1,27 @@
-export interface KeyboardHeuristic {
+import {KeyboardHeuristic} from "./heuristics";
+import {SpiralHeuristic} from "./alg/spiral";
 
-}
-
-export const SpiralHeuristic: KeyboardHeuristic = {
-    // TODO
-}
+export type {KeyboardHeuristic};
 
 
 // **** HEURISTICS SHOULD BE REGISTERED THERE ****
 export const HEURISTICS: {[name: string]: KeyboardHeuristic} = {
-    'spiral': SpiralHeuristic
+    'spiral': SpiralHeuristic,
+    // **** MORE HEURISTICS HERE ****
 }
 // **** HEURISTICS SHOULD BE REGISTERED THERE ****
 
 
 export const provide_heuristic = (name: string): KeyboardHeuristic => {
-    const obj = HEURISTICS[`${name}`.toLowerCase()];
-    if (obj !== null && obj !== undefined)
-        return obj;
-    return SpiralHeuristic; // TODO
+    try {
+        const obj = HEURISTICS[`${name}`.toLowerCase()];
+        if (obj !== null && obj !== undefined)
+            return obj;
+        return SpiralHeuristic;
+    } catch (e) {
+        console.error('Error providing heuristic, using fallback version instead', e);
+        return SpiralHeuristic;
+    }
 }
 
 export const provide_heuristics = (): string[] => {
