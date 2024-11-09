@@ -1,17 +1,19 @@
-import {KeyboardHeuristic, KeyboardLayout} from "./heuristics";
+import {KeyboardHeuristic, KeyboardLayout, char_from, char_coord} from "./heuristics";
+import {BackwardHeuristic} from "./alg/backward";
+import {ForwardHeuristic} from "./alg/forward";
 import {SpiralHeuristic} from "./alg/spiral";
-import {ContinuousHeuristic} from "./alg/continuous";
-import {StraightHeuristic} from "./alg/straight";
-import {char_from, char_coord} from "./heuristics";
+import {PlainHeuristic} from "./alg/plain";
 
 export type {KeyboardHeuristic, KeyboardLayout};
 export {char_from, char_coord};
 
+
 // **** HEURISTICS SHOULD BE REGISTERED THERE ****
-export const HEURISTICS: {[name: string]: KeyboardHeuristic} = {
+export const HEURISTICS: { [name: string]: KeyboardHeuristic } = {
     'spiral': SpiralHeuristic,
-    'straight': StraightHeuristic,
-    'continuous': ContinuousHeuristic,
+    'plain': PlainHeuristic,
+    'forward': ForwardHeuristic,
+    'backward': BackwardHeuristic,
     // **** MORE HEURISTICS HERE ****
 }
 // **** HEURISTICS SHOULD BE REGISTERED THERE ****

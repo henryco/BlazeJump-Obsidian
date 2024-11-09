@@ -1,6 +1,6 @@
 import {KeyboardHeuristic, KeyboardLayout} from "../heuristics";
 
-const next_continuous = (
+const next_forward = (
     position: [number, number],
     depth: number,
     layout_width: number,
@@ -13,8 +13,8 @@ const next_continuous = (
         : [px + inc, py, 1];
 }
 
-export class Continuous implements KeyboardHeuristic {
-    private static instance: Continuous;
+export class Forward implements KeyboardHeuristic {
+    private static instance: Forward;
     private keyboard_layouts: KeyboardLayout[] = [];
 
     private constructor() {
@@ -33,14 +33,14 @@ export class Continuous implements KeyboardHeuristic {
         __: number
     ): [x: number, y: number, depth: number] {
         const l = this.keyboard_layouts[layout_index];
-        return next_continuous(position, search_radius, l.layout_width, l.layout_height);
+        return next_forward(position, search_radius, l.layout_width, l.layout_height);
     }
 
     public static getInstance() {
-        if (!Continuous.instance)
-            Continuous.instance = new Continuous();
-        return Continuous.instance;
+        if (!Forward.instance)
+            Forward.instance = new Forward();
+        return Forward.instance;
     }
 }
 
-export const ContinuousHeuristic = Continuous.getInstance();
+export const ForwardHeuristic = Forward.getInstance();

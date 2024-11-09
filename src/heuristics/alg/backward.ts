@@ -1,27 +1,29 @@
 import {KeyboardHeuristic, KeyboardLayout} from "../heuristics";
 
-const next_straight = (
+const next_backward = (
     position: [number, number],
     depth: number,
     layout_width: number,
     layout_height: number
 ): [x: number, y: number, depth: number] => {
-    if (depth <= 0)
-        return [0, 0, 1];
+    const inc = depth > 0 ? 1 : 0;
     const [px, py] = position;
-    return ((px + 1) >= layout_width || px >= layout_width)
-        ? (((py + 1) >= layout_height || py >= layout_height) ? [0, 0, 1] : [0, py + 1, 1])
-        : [px + 1, py, 1];
+    if ((px - inc) < 0 || px < 0) {
+        if ((py - inc) < 0 || py < 0)
+            return [layout_width - 1, layout_height - 1, 1];
+        return [layout_width - 1, py - inc, 1];
+    }
+    return [px - inc, py, 1];
 }
 
-export class Straight implements KeyboardHeuristic {
-    private static instance: Straight;
+export class Backward implements KeyboardHeuristic {
+    private static instance: Backward;
     private keyboard_layouts: KeyboardLayout[] = [];
 
     private constructor() {
     }
 
-    public initialize(layouts: KeyboardLayout[]): KeyboardHeuristic {
+    public initialize(layouts: KeyboardLayout[]) {
         this.keyboard_layouts = layouts;
         return this;
     }
@@ -34,14 +36,14 @@ export class Straight implements KeyboardHeuristic {
         __: number
     ): [x: number, y: number, depth: number] {
         const l = this.keyboard_layouts[layout_index];
-        return  next_straight(position, search_radius, l.layout_width, l.layout_height);
+        return next_backward(position, search_radius, l.layout_width, l.layout_height);
     }
 
     public static getInstance() {
-        if (!Straight.instance)
-            Straight.instance = new Straight();
-        return Straight.instance;
+        if (!Backward.instance)
+            Backward.instance = new Backward();
+        return Backward.instance;
     }
 }
 
-export const StraightHeuristic = Straight.getInstance();
+export const BackwardHeuristic = Backward.getInstance();
