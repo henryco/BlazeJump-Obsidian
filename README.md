@@ -32,8 +32,8 @@
 
 ### Features
 * Support for multiple keyboard layouts
-* Ergonomic indexing and tagging heuristics
-* Fully customizable (with support of custom keyboard layouts and styles)
+* Ergonomic indexing and tagging
+* Fully customizable
 
 ### How it works
 BlazeJump provide 5 navigation modes. </br>
