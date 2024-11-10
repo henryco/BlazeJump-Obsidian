@@ -17,7 +17,6 @@ export interface SearchStyle {
     border: string;
     offset: number;
     fix?: number;
-    idx: number;
 }
 
 export interface PulseStyle {
@@ -39,7 +38,7 @@ export interface InterState {
     plugin_draw_observers?: ({ id: string, fn: () => void })[];
     plugin_draw_callback?: () => void;
     editor_callback?: (view: EditorView) => void;
-    style_provider?: (i: number) => SearchStyle;
+    style_provider?: () => SearchStyle;
     pulse_provider?: () => PulseStyle;
     positions?: SearchPosition[];
     pointer?: SearchPosition;

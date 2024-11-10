@@ -69,7 +69,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
             await this.initialize();
 
-            inter_plugin_state.state.style_provider = (idx: number = 0) => this.resolveSearchColor(idx);
+            inter_plugin_state.state.style_provider = () => this.resolveSearchColor();
             inter_plugin_state.state.pulse_provider = () => this.resolvePulseStyle();
 
             inter_plugin_state.state.editor_callback = (view: EditorView) => {
@@ -159,7 +159,7 @@ export default class BlazeJumpPlugin extends Plugin {
         return <string>(this.settings as any)[`status_color_${this.mode ?? this.settings.default_action}`];
     }
 
-    private resolveSearchColor(idx: number = 0): SearchStyle {
+    private resolveSearchColor(): SearchStyle {
         const settings = <any> this.settings;
         const st = this.resolveStatusColor();
         return {
@@ -167,8 +167,7 @@ export default class BlazeJumpPlugin extends Plugin {
             bg: settings[`search_color_bg_${this.mode ?? this.settings.default_action}`] ?? '#FFFFFF',
             text: settings[`search_color_text_${this.mode ?? this.settings.default_action}`] ?? st,
             border: settings[`search_color_border_${this.mode ?? this.settings.default_action}`] ?? st,
-            offset: this.offset,
-            idx: idx
+            offset: this.offset
         }
     }
 
@@ -1056,17 +1055,27 @@ export default class BlazeJumpPlugin extends Plugin {
                 }
 
                 const prev_i = line.length;
-                const prev_p = <EditorPosition> { line: i, ch: prev_i };
-                const prev_e = <EditorPosition> { line: i, ch: prev_i + 1 };
+                const prev_p = <EditorPosition> { line: i, ch: prev_i - 1 };
+                const prev_e = <EditorPosition> { line: i, ch: prev_i };
                 const prev_o = editor.posToOffset(prev_p);
                 const prev_b = view.coordsAtPos(prev_o);
 
+                let off = 0;
+                while (true) {
+                    const c = line[line.length - 1 - off];
+                    if (term_exceptions.includes(c)) {
+                        off++;
+                        continue;
+                    }
+                    break;
+                }
+
                 this.search_tree.assign(search_char, <SearchPosition> {
-                    index_e: prev_o,
-                    index_s: prev_o - 1,
+                    index_e: prev_o + 1 + off,
+                    index_s: prev_o + off,
                     origin: first,
                     coord: prev_b,
-                    start: prev_p,
+                    start: prev_e,
                     end: prev_e
                 }, layout_idx);
             }

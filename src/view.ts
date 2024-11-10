@@ -53,15 +53,22 @@ export class BlazePointerPulseWidget extends WidgetType {
 }
 
 export class BlazeFoundAreaWidget extends WidgetType {
-    private search_position: SearchPosition;
-    private style: SearchStyle;
-    private text: string;
+    private readonly search_position: SearchPosition;
+    private readonly style: SearchStyle;
+    private readonly text: string;
+    private readonly idx: number;
 
-    public constructor(text: string, search_position: SearchPosition, style: SearchStyle) {
+    public constructor(
+        idx: number,
+        text: string,
+        search_position: SearchPosition,
+        style: SearchStyle
+    ) {
         super();
         this.search_position = search_position;
         this.style = style;
         this.text = text;
+        this.idx = idx;
     }
 
     private provide_text(): string {
@@ -83,7 +90,7 @@ export class BlazeFoundAreaWidget extends WidgetType {
         el.style.backgroundColor = `${this.style.bg}`;
         el.style.color = `${this.style.text}`;
         el.style.borderColor = `${this.style.border}`;
-        el.style.zIndex = `${5000 + this.style.idx}`;
+        el.style.zIndex = `${5000 + this.idx}`;
         el.style.left = `${offset_x}px`;
         el.style.top = `${offset_y}px`;
 
@@ -138,21 +145,38 @@ class BlazeViewPlugin implements PluginValue {
         const builder = new RangeSetBuilder<Decoration>();
 
         if (positions && positions.length > 0) {
+            let prev_top = null;
+            let j = -1;
             let i = 0;
+
+            const grouped: SearchPosition[][] = [];
             for (let position of positions) {
+
+                // const top = position.coord.top;
+                // if (prev_top === null || !top || prev_top !== top) {
+                //     grouped.push([]);
+                //     prev_top = top;
+                //     j++;
+                // }
+                //
+                // grouped[j].push(position);
+
                 builder.add(
                     position.index_s,
                     position.index_s,
                     Decoration.widget({
                         widget: new BlazeFoundAreaWidget(
+                            i++,
                             position.name,
                             position,
                             <SearchStyle> {
-                                ...(inter_plugin_state.state.style_provider?.(i++)),
+                                ...(inter_plugin_state.state.style_provider?.()),
                             })
                     })
                 );
             }
+
+            // console.log(grouped);
         }
 
         else if (pointer) {
