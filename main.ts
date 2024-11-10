@@ -1042,6 +1042,9 @@ export default class BlazeJumpPlugin extends Plugin {
                     const prev_o = editor.posToOffset(prev_p);
                     const prev_b = view.coordsAtPos(prev_o);
 
+                    if (!prev_b)
+                        continue;
+
                     this.search_tree.assign(search_char, <SearchPosition> {
                         index_e: prev_o + 1,
                         index_s: prev_o,
@@ -1059,6 +1062,9 @@ export default class BlazeJumpPlugin extends Plugin {
                 const prev_e = <EditorPosition> { line: i, ch: prev_i };
                 const prev_o = editor.posToOffset(prev_p);
                 const prev_b = view.coordsAtPos(prev_o);
+
+                if (!prev_b)
+                    continue;
 
                 let off = 0;
                 while (true) {

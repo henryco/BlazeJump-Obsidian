@@ -145,22 +145,22 @@ class BlazeViewPlugin implements PluginValue {
         const builder = new RangeSetBuilder<Decoration>();
 
         if (positions && positions.length > 0) {
-            let prev_top = null;
-            let j = -1;
-            let i = 0;
 
+            let j = -1;
+            let prev_top = null;
             const grouped: SearchPosition[][] = [];
             for (let position of positions) {
+                const top = position.coord.top;
+                if (prev_top === null || !top || prev_top !== top) {
+                    grouped.push([]);
+                    prev_top = top;
+                    j++;
+                }
+                grouped[j].push(position);
+            }
 
-                // const top = position.coord.top;
-                // if (prev_top === null || !top || prev_top !== top) {
-                //     grouped.push([]);
-                //     prev_top = top;
-                //     j++;
-                // }
-                //
-                // grouped[j].push(position);
-
+            let i = 0;
+            for (let position of positions) {
                 builder.add(
                     position.index_s,
                     position.index_s,
@@ -176,7 +176,7 @@ class BlazeViewPlugin implements PluginValue {
                 );
             }
 
-            // console.log(grouped);
+            // TODO GROUPED ADD
         }
 
         else if (pointer) {
