@@ -1071,8 +1071,8 @@ export default class BlazeJumpPlugin extends Plugin {
                 }
 
                 this.search_tree.assign(search_char, <SearchPosition> {
-                    index_e: prev_o + 1 + off,
-                    index_s: prev_o + off,
+                    index_e: prev_o + 1 - off,
+                    index_s: prev_o - off,
                     origin: first,
                     coord: prev_b,
                     start: prev_e,
