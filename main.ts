@@ -944,7 +944,8 @@ export default class BlazeJumpPlugin extends Plugin {
 
         for (let i = line_f; i <= line_t; i++) {
             const start = <EditorPosition> { line: i, ch: 0 };
-            const length = editor.getLine(i).length;
+            const line = editor.getLine(i);
+            const length = line.length;
 
             if (length > 0) {
                 first = view.coordsAtPos(editor.posToOffset(start));
@@ -986,43 +987,87 @@ export default class BlazeJumpPlugin extends Plugin {
             }
 
             if (this.mode === 'line') {
-                const end = <EditorPosition> { line: i, ch: 1 };
-                const pos = editor.posToOffset(start);
-                const zero = view.coordsAtPos(pos);
+                let prev_pos = null;
+                for (let j = 0; j < line.length; j++) {
+                    const point = <EditorPosition> { line: i, ch: j };
+                    const p_off = editor.posToOffset(point);
+                    const base = view.coordsAtPos(p_off);
 
-                if (!zero)
-                    continue;
+                    if (!base?.top)
+                        continue;
 
-                const off = this.calc_offset(editor.getLine(i), term_exceptions);
-                this.search_tree.assign(search_char, <SearchPosition> {
-                    index_e: pos + 1 + off,
-                    index_s: pos + off,
-                    origin: zero,
-                    coord: zero,
-                    start: start,
-                    end: end
-                }, layout_idx);
+                    if (!(prev_pos === null || prev_pos < base.top))
+                        continue;
+
+                    const end = <EditorPosition> { line: i, ch: 1 + j };
+
+                    this.search_tree.assign(search_char, <SearchPosition> {
+                        index_e: p_off + 1,
+                        index_s: p_off,
+                        origin: first,
+                        coord: base,
+                        start: point,
+                        end: end
+                    }, layout_idx);
+
+                    prev_pos = base.top;
+                }
             }
 
             else if (this.mode === 'terminator') {
-                const stp = <EditorPosition> { line: i, ch: Math.max(0, length - 1) };
-                const edp = <EditorPosition> { line: i, ch: Math.max(0, length ) };
-                const zero = view.coordsAtPos(editor.posToOffset(start));
-                const tos = editor.posToOffset(start);
-                const pos = editor.posToOffset(stp);
-                const coord = view.coordsAtPos(pos);
+                let prev_pos = null;
+                for (let j = 0; j < line.length; j++) {
+                    const point = <EditorPosition> { line: i, ch: j };
+                    const p_off = editor.posToOffset(point);
+                    const base = view.coordsAtPos(p_off);
 
-                if (!coord || !zero)
-                    continue;
+                    if (!base?.top)
+                        continue;
 
-                const off = this.calc_offset(editor.getLine(i), term_exceptions);
+                    if (j <= 1)
+                        continue;
+
+                    if (!(prev_pos === null || prev_pos < base.top))
+                        continue;
+
+                    // WebStorm BUG
+                    // noinspection PointlessBooleanExpressionJS
+                    if (prev_pos === null) {
+                        prev_pos = base.top;
+                        continue;
+                    }
+
+                    const prev_i = j - 1;
+                    const prev_p = <EditorPosition> { line: i, ch: prev_i };
+                    const prev_e = <EditorPosition> { line: i, ch: prev_i + 1 };
+                    const prev_o = editor.posToOffset(prev_p);
+                    const prev_b = view.coordsAtPos(prev_o);
+
+                    this.search_tree.assign(search_char, <SearchPosition> {
+                        index_e: prev_o + 1,
+                        index_s: prev_o,
+                        origin: first,
+                        coord: prev_b,
+                        start: prev_p,
+                        end: prev_e
+                    }, layout_idx);
+
+                    prev_pos = base.top;
+                }
+
+                const prev_i = line.length;
+                const prev_p = <EditorPosition> { line: i, ch: prev_i };
+                const prev_e = <EditorPosition> { line: i, ch: prev_i + 1 };
+                const prev_o = editor.posToOffset(prev_p);
+                const prev_b = view.coordsAtPos(prev_o);
+
                 this.search_tree.assign(search_char, <SearchPosition> {
-                    index_e: tos + 1 + off,
-                    index_s: tos + off,
-                    origin: zero,
-                    coord: coord,
-                    start: edp,
-                    end: edp
+                    index_e: prev_o,
+                    index_s: prev_o - 1,
+                    origin: first,
+                    coord: prev_b,
+                    start: prev_p,
+                    end: prev_e
                 }, layout_idx);
             }
         }
