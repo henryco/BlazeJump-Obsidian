@@ -1,5 +1,5 @@
 import {MODE_TYPE, PulseStyle, SearchPosition, SearchStyle, state as inter_plugin_state} from "./src/commons";
-import {Editor, EditorPosition, Notice, Plugin} from 'obsidian';
+import {Editor, EditorPosition, MarkdownView, Notice, Plugin} from 'obsidian';
 import {EditorView, Rect} from "@codemirror/view";
 import {SearchTree} from "./src/search_tree";
 import {blaze_jump_view_plugin} from "./src/view"
@@ -146,6 +146,14 @@ export default class BlazeJumpPlugin extends Plugin {
 		this.resetAction();
         this.layoutClear();
 	}
+
+    public redraw(editor?: Editor) {
+        this.app.workspace.getActiveViewOfType(MarkdownView)?.previewMode.rerender(true);
+        if (inter_plugin_state.state.plugin_draw_callback)
+            inter_plugin_state.state.plugin_draw_callback();
+        if (editor)
+            (editor as any)['cm'].dispatch();
+    }
 
     private resolveStatusColor(): string {
         return <string>(this.settings as any)[`status_color_${this.mode ?? this.settings.default_action}`];
@@ -327,9 +335,7 @@ export default class BlazeJumpPlugin extends Plugin {
         inter_plugin_state.state.pointer = position;
         inter_plugin_state.state.positions = undefined;
 
-        if (inter_plugin_state.state.plugin_draw_callback)
-            inter_plugin_state.state.plugin_draw_callback();
-        (editor as any)['cm'].dispatch();
+        this.redraw(editor);
 
         window.setTimeout(() => {
             inter_plugin_state.state.pointer = undefined;
@@ -428,18 +434,14 @@ export default class BlazeJumpPlugin extends Plugin {
             if (!positions || positions.length <= 0) {
                 this.resetAction(editor);
                 editor.focus();
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
-                (editor as any)['cm'].dispatch();
+                this.redraw(editor);
                 return;
             }
         } catch (e) {
             console.error(e);
             this.resetAction(editor);
             editor.focus();
-            if (inter_plugin_state.state.plugin_draw_callback)
-                inter_plugin_state.state.plugin_draw_callback();
-            (editor as any)['cm'].dispatch();
+            this.redraw(editor);
             return;
         }
 
@@ -451,14 +453,12 @@ export default class BlazeJumpPlugin extends Plugin {
             try {
                 this.resetAction(editor);
                 editor.focus();
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
 
                 window.removeEventListener("click", callback_on_mouse_reset);
                 window.removeEventListener("contextmenu", callback_on_mouse_reset);
                 window.removeEventListener("auxclick", callback_on_mouse_reset);
             } finally {
-                (editor as any)['cm'].dispatch();
+                this.redraw(editor);
             }
         };
 
@@ -483,9 +483,7 @@ export default class BlazeJumpPlugin extends Plugin {
             {
                 this.resetAction(editor);
                 editor.focus();
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
-                (editor as any)['cm'].dispatch();
+                this.redraw(editor);
                 return;
             }
 
@@ -501,9 +499,7 @@ export default class BlazeJumpPlugin extends Plugin {
                     this.mode = curr_mode;
                     this.toggleLayout(+1);
                     this.lineAction(editor);
-                    if (inter_plugin_state.state.plugin_draw_callback)
-                        inter_plugin_state.state.plugin_draw_callback();
-                    (editor as any)['cm'].dispatch();
+                    this.redraw(editor);
                     return;
                 }
             }
@@ -520,9 +516,7 @@ export default class BlazeJumpPlugin extends Plugin {
                     this.mode = curr_mode;
                     this.toggleLayout(-1);
                     this.lineAction(editor);
-                    if (inter_plugin_state.state.plugin_draw_callback)
-                        inter_plugin_state.state.plugin_draw_callback();
-                    (editor as any)['cm'].dispatch();
+                    this.redraw(editor);
                     return;
                 }
             }
@@ -540,9 +534,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 }
 
                 this.lineAction(editor);
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
-                (editor as any)['cm'].dispatch();
+                this.redraw(editor);
                 return;
             }
 
@@ -559,9 +551,7 @@ export default class BlazeJumpPlugin extends Plugin {
                 }
 
                 this.lineAction(editor);
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
-                (editor as any)['cm'].dispatch();
+                this.redraw(editor);
                 return;
             }
 
@@ -591,32 +581,25 @@ export default class BlazeJumpPlugin extends Plugin {
                     editor.focus();
                     new Notice(this.settings.search_not_found_text);
                 }
-
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
             }
 
             catch (e) {
                 console.error(e);
                 this.resetAction(editor);
                 editor.focus();
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
                 throw e;
             }
 
             finally {
                 // forcing re-render
-                (editor as any)['cm'].dispatch();
+                this.redraw(editor);
             }
         };
 
         inter_plugin_state.state.positions = [...positions];
         inter_plugin_state.state.pointer = undefined;
 
-        if (inter_plugin_state.state.plugin_draw_callback)
-            inter_plugin_state.state.plugin_draw_callback();
-        (editor as any)['cm'].dispatch();
+        this.redraw(editor);
 
         this.callback_provided_input = callback_on_provided;
         this.callback_mouse_reset = callback_on_mouse_reset;
@@ -642,14 +625,12 @@ export default class BlazeJumpPlugin extends Plugin {
             try {
                 this.resetAction(editor);
                 editor.focus();
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
 
                 window.removeEventListener("click", callback_on_mouse_reset);
                 window.removeEventListener("contextmenu", callback_on_mouse_reset);
                 window.removeEventListener("auxclick", callback_on_mouse_reset);
             } finally {
-                (editor as any)['cm'].dispatch();
+                this.redraw(editor);
             }
         };
 
@@ -674,9 +655,6 @@ export default class BlazeJumpPlugin extends Plugin {
                     `${event.code}`.toLowerCase() === 'escape')
                 {
                     this.resetAction(editor);
-                    editor.focus();
-                    if (inter_plugin_state.state.plugin_draw_callback)
-                        inter_plugin_state.state.plugin_draw_callback();
                     return;
                 }
 
@@ -687,8 +665,6 @@ export default class BlazeJumpPlugin extends Plugin {
                 {
                     this.toggleLineMode(true, editor);
                     this.lineAction(editor);
-                    if (inter_plugin_state.state.plugin_draw_callback)
-                        inter_plugin_state.state.plugin_draw_callback();
                     return;
                 }
 
@@ -699,8 +675,6 @@ export default class BlazeJumpPlugin extends Plugin {
                 {
                     this.toggleLineMode(false, editor);
                     this.lineAction(editor);
-                    if (inter_plugin_state.state.plugin_draw_callback)
-                        inter_plugin_state.state.plugin_draw_callback();
                     return;
                 }
 
@@ -783,22 +757,19 @@ export default class BlazeJumpPlugin extends Plugin {
                     new Notice(this.settings.search_not_found_text);
                 }
 
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
+
             }
 
             catch (e) {
 				console.error(e);
 				this.resetAction(editor);
                 editor.focus();
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
 				throw e;
 			}
 
             finally {
                 // forcing re-render
-                (editor as any)['cm'].dispatch();
+                this.redraw(editor);
             }
 		}
 
@@ -823,9 +794,7 @@ export default class BlazeJumpPlugin extends Plugin {
             {
                 this.resetAction(editor);
                 editor.focus();
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
-                (editor as any)['cm'].dispatch();
+                this.redraw(editor);
                 return;
             }
 
@@ -843,8 +812,7 @@ export default class BlazeJumpPlugin extends Plugin {
                     this.toggleLayout(+1);
 
                     this.searchAction(editor);
-                    if (inter_plugin_state.state.plugin_draw_callback)
-                        inter_plugin_state.state.plugin_draw_callback();
+                    this.redraw(editor);
                     return;
                 }
             }
@@ -863,8 +831,7 @@ export default class BlazeJumpPlugin extends Plugin {
                     this.toggleLayout(-1);
 
                     this.searchAction(editor);
-                    if (inter_plugin_state.state.plugin_draw_callback)
-                        inter_plugin_state.state.plugin_draw_callback();
+                    this.redraw(editor);
                     return;
                 }
             }
@@ -876,9 +843,7 @@ export default class BlazeJumpPlugin extends Plugin {
             {
                 this.toggleLineMode(true, editor);
                 this.lineAction(editor);
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
-                (editor as any)['cm'].dispatch();
+                this.redraw(editor);
                 return;
             }
 
@@ -889,9 +854,7 @@ export default class BlazeJumpPlugin extends Plugin {
             {
                 this.toggleLineMode(false, editor);
                 this.lineAction(editor);
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
-                (editor as any)['cm'].dispatch();
+                this.redraw(editor);
                 return;
             }
 
@@ -907,8 +870,6 @@ export default class BlazeJumpPlugin extends Plugin {
 					if (!positions || positions.length <= 0) {
 						this.resetAction(editor);
                         editor.focus();
-						if (inter_plugin_state.state.plugin_draw_callback)
-							inter_plugin_state.state.plugin_draw_callback()
                         if (this.settings.search_not_found_text &&
                             this.settings.search_not_found_text.trim() !== '') {
                             new Notice(this.settings.search_not_found_text);
@@ -934,23 +895,18 @@ export default class BlazeJumpPlugin extends Plugin {
 					this.resetAction(editor);
                     editor.focus();
 				}
-
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
 			}
 
             catch (e) {
 				console.error(e);
 				this.resetAction(editor);
                 editor.focus();
-                if (inter_plugin_state.state.plugin_draw_callback)
-                    inter_plugin_state.state.plugin_draw_callback();
 				throw e;
 			}
 
             finally {
                 // forcing re-render
-                (editor as any)['cm'].dispatch();
+                this.redraw(editor);
             }
 		};
 
