@@ -30,7 +30,6 @@ export interface SearchPosition {
     end: EditorPosition;
     index_s: number;
     index_e: number;
-    offset: number;
     coord: Coord;
     origin: Coord;
     name: string;

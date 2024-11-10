@@ -141,8 +141,8 @@ class BlazeViewPlugin implements PluginValue {
             let i = 0;
             for (let position of positions) {
                 builder.add(
-                    position.index_s + position.offset,
-                    position.index_s + position.offset,
+                    position.index_s,
+                    position.index_s,
                     Decoration.widget({
                         widget: new BlazeFoundAreaWidget(
                             position.name,
@@ -157,8 +157,8 @@ class BlazeViewPlugin implements PluginValue {
 
         else if (pointer) {
             builder.add(
-                pointer.index_s + pointer.offset,
-                pointer.index_s + pointer.offset,
+                pointer.index_s,
+                pointer.index_s,
                 Decoration.widget({
                     widget: new BlazePointerPulseWidget(
                         pointer,

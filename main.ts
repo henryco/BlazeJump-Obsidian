@@ -972,10 +972,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 if (!zero)
                     continue;
 
+                const off = this.calc_offset(editor.getLine(anchor.line), term_exceptions);
                 this.search_tree.assign(search_char, <SearchPosition> {
-                    offset: this.calc_offset(editor.getLine(anchor.line), term_exceptions),
-                    index_e: pos + 1,
-                    index_s: pos,
+                    index_e: pos + 1 + off,
+                    index_s: pos + off,
                     origin: first,
                     coord: zero,
                     start: start,
@@ -993,10 +993,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 if (!zero)
                     continue;
 
+                const off = this.calc_offset(editor.getLine(i), term_exceptions);
                 this.search_tree.assign(search_char, <SearchPosition> {
-                    offset: this.calc_offset(editor.getLine(i), term_exceptions),
-                    index_e: pos + 1,
-                    index_s: pos,
+                    index_e: pos + 1 + off,
+                    index_s: pos + off,
                     origin: zero,
                     coord: zero,
                     start: start,
@@ -1015,10 +1015,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 if (!coord || !zero)
                     continue;
 
+                const off = this.calc_offset(editor.getLine(i), term_exceptions);
                 this.search_tree.assign(search_char, <SearchPosition> {
-                    offset: this.calc_offset(editor.getLine(i), term_exceptions),
-                    index_e: tos + 1,
-                    index_s: tos,
+                    index_e: tos + 1 + off,
+                    index_s: tos + off,
                     origin: zero,
                     coord: coord,
                     start: edp,
@@ -1062,10 +1062,10 @@ export default class BlazeJumpPlugin extends Plugin {
                 continue;
             }
 
+            const off = this.calc_offset(editor.getLine(start.line), term_exceptions);
 			let search_position = <SearchPosition> {
-                offset: this.calc_offset(editor.getLine(start.line), term_exceptions),
-				index_e: index + this.range_from - start.ch + search.length,
-				index_s: index + this.range_from - start.ch,
+				index_e: index + this.range_from - start.ch + search.length + off,
+				index_s: index + this.range_from - start.ch + off,
                 origin: zero,
 				coord: coord,
 				start: start,
