@@ -35,7 +35,44 @@
     background-color: var(--background-modifier-hover);
 }
 
-.blaze-jump-search-tag {
+/*.blaze-jump-search-box {*/
+/*    position: absolute;*/
+/*    display: flex;*/
+/*    flex-direction: row;*/
+/*}*/
+
+/*.blaze-jump-search-tag {*/
+/*    border-style: dashed;*/
+/*    border-width: thin;*/
+/*    position: relative;*/
+/*    font-weight: bold;*/
+/*    padding-left: 3px;*/
+/*    padding-right: 3px;*/
+/*    font-family: monospace;*/
+/*    margin-top: -1px;*/
+/*    overflow-wrap: normal;*/
+/*    word-break: keep-all;*/
+/*    white-space: pre;*/
+/*    cursor: default;*/
+/*}*/
+
+/*!*noinspection CssUnresolvedCustomProperty*!*/
+/*.blaze-jump-search-empty {*/
+/*    background-color: var(--background-primary);*/
+/*    font-family: var(--font-text-theme), monospace;*/
+/*    font-size: var(--font-text-size) !important;*/
+/*    color: var(--text-accent) !important;*/
+/*    border-style: dashed;*/
+/*    border-width: thin;*/
+/*    position: relative;*/
+/*    margin-top: -1px;*/
+/*    overflow-wrap: normal;*/
+/*    word-break: keep-all;*/
+/*    white-space: pre;*/
+/*    cursor: default;*/
+/*}*/
+
+.blaze-jump-area-tag {
     border-style: dashed;
     border-width: thin;
     position: absolute;

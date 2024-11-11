@@ -42,6 +42,7 @@ export interface InterState {
     pulse_provider?: () => PulseStyle;
     positions?: SearchPosition[];
     pointer?: SearchPosition;
+    target?: string;
 }
 
 class InterPluginState {

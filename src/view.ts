@@ -1,104 +1,8 @@
-import {Decoration, DecorationSet, EditorView, PluginSpec, PluginValue, ViewPlugin, ViewUpdate, WidgetType} from "@codemirror/view";
+import {Decoration, DecorationSet, EditorView, PluginSpec, PluginValue, ViewPlugin, ViewUpdate} from "@codemirror/view";
 import {PulseStyle, SearchPosition, SearchStyle, state as inter_plugin_state} from "./commons";
+import {BlazePointerPulseWidget} from "./widgets/pulse_widget";
+import {BlazeFoundAreaWidget} from "./widgets/found_widget";
 import {RangeSetBuilder} from "@codemirror/state";
-
-export class BlazePointerPulseWidget extends WidgetType {
-    private static readonly style_id: string = 'pulse-widget-style';
-
-    private position: SearchPosition;
-    private style: PulseStyle;
-
-    public constructor(position: SearchPosition, style: PulseStyle) {
-        super();
-        this.position = position;
-        this.style = style;
-    }
-
-    public toDOM(_: EditorView): HTMLElement {
-        const offset_x = this.position.coord.left - this.position.origin.left;
-        const offset_y = this.position.coord.top - this.position.origin.top;
-
-        const existingStyle = document.getElementById(BlazePointerPulseWidget.style_id);
-
-        if (!existingStyle) {
-            const style = document.createElement('style');
-            style.id = BlazePointerPulseWidget.style_id;
-            style.textContent = `                  
-                    .blaze-jump-widget-pulse {
-                      animation: blaze-jump-pulse-pointer ${this.style.duration ?? 0.15}s 1 forwards;
-                      background-color: ${this.style.bg ?? 'red'};
-                    }
-                `;
-            document.head.appendChild(style);
-        }
-
-        const el = document.createElement("span");
-        el.className = 'blaze-jump-widget-pulse';
-
-        el.style.left = `${offset_x}px`;
-        el.style.top = `${offset_y}px`;
-
-        el.innerText = " ";
-
-        return el;
-    }
-
-    public destroy(dom: HTMLElement) {
-        const existingStyle = document.getElementById(BlazePointerPulseWidget.style_id);
-        if (existingStyle)
-            existingStyle.remove();
-        super.destroy(dom);
-    }
-
-}
-
-export class BlazeFoundAreaWidget extends WidgetType {
-    private readonly search_position: SearchPosition;
-    private readonly style: SearchStyle;
-    private readonly text: string;
-    private readonly idx: number;
-
-    public constructor(
-        idx: number,
-        text: string,
-        search_position: SearchPosition,
-        style: SearchStyle
-    ) {
-        super();
-        this.search_position = search_position;
-        this.style = style;
-        this.text = text;
-        this.idx = idx;
-    }
-
-    private provide_text(): string {
-        if (this.style.capitalize)
-            return this.text.toUpperCase();
-        return this.text.toLowerCase();
-    }
-
-    public toDOM(_: EditorView): HTMLElement {
-        const prefix = Array(this.style.offset).fill(' ').reduce((p, c) => p + c, '');
-        const text = prefix + this.provide_text().substring(this.style.offset);
-
-        const offset_x = this.search_position.coord.left - this.search_position.origin.left;
-        const offset_y = this.search_position.coord.top - this.search_position.origin.top;
-
-        const el = document.createElement("span");
-        el.className = 'blaze-jump-search-tag';
-
-        el.style.backgroundColor = `${this.style.bg}`;
-        el.style.color = `${this.style.text}`;
-        el.style.borderColor = `${this.style.border}`;
-        el.style.zIndex = `${5000 + this.idx}`;
-        el.style.left = `${offset_x}px`;
-        el.style.top = `${offset_y}px`;
-
-        el.innerText = text;
-
-        return el;
-    }
-}
 
 class BlazeViewPlugin implements PluginValue {
     private static id_counter: number = 0;
@@ -144,6 +48,32 @@ class BlazeViewPlugin implements PluginValue {
 
         const builder = new RangeSetBuilder<Decoration>();
 
+        // if (positions && positions.length > 0) {
+        //     const style = <SearchStyle>(inter_plugin_state.state.style_provider?.());
+        //     const grouped: SearchPosition[][] = [];
+        //
+        //     let prev_node = null;
+        //     let prev_top = null;
+        //
+        //     for (let position of positions) {
+        //         const top = position.coord.top;
+        //         if (prev_top === null || prev_top !== top) {
+        //             prev_node = <SearchPosition[]>[];
+        //             grouped.push(prev_node);
+        //         }
+        //         prev_node?.push(position);
+        //         prev_top = top;
+        //     }
+        //
+        //     for (let i = 0; i < grouped.length; i++) {
+        //         const char = inter_plugin_state.state.target;
+        //         const group = grouped[i];
+        //         const zero = group[0];
+        //         const pos = zero.index_s;
+        //         builder.add(pos, pos, Decoration.widget({widget: new BlazeTagWidget(i, group, style, char)}));
+        //     }
+        // }
+
         if (positions && positions.length > 0) {
 
             let j = -1;
@@ -175,8 +105,6 @@ class BlazeViewPlugin implements PluginValue {
                     })
                 );
             }
-
-            // TODO GROUPED ADD
         }
 
         else if (pointer) {

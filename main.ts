@@ -375,6 +375,7 @@ export default class BlazeJumpPlugin extends Plugin {
 
 		inter_plugin_state.state.positions = undefined;
         inter_plugin_state.state.pointer = undefined;
+		inter_plugin_state.state.target = undefined;
 	}
 
     private layoutAction(_?: Editor, __?: any) {
@@ -1091,7 +1092,9 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
 	private performSearch(editor: Editor, search: string) {
-		const term_exceptions = [...this.settings.exceptions ?? ''];
+		inter_plugin_state.state.target = search;
+
+        const term_exceptions = [...this.settings.exceptions ?? ''];
         const word_end_offset = this.settings.jump_after_word_on_end ? 1 : 0;
 
         const view = (<EditorView> (<any> editor)['cm']);
