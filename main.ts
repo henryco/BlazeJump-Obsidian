@@ -41,7 +41,7 @@ export default class BlazeJumpPlugin extends Plugin {
     }
 
     private get lang(): Translations {
-        return provide_translations(this.settings.language);
+        return provide_translations();
     }
 
     private async initialize() {

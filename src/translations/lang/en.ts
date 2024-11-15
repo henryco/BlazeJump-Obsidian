@@ -3,7 +3,6 @@ import {Translations} from "../translations";
 export const EN_TRANSLATIONS: Translations = {
     bj: 'BlazeJump',
     mode: 'BlazeMode',
-    language: 'Language',
     word_start: 'Word start',
     word_end: 'Word end',
     any_char: 'Any character',

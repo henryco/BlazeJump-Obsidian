@@ -1,12 +1,10 @@
 import {MODE_TYPE} from "./commons";
 import {App, Plugin, PluginSettingTab, Setting} from "obsidian";
-import {provide_translations, provide_languages, Translations} from "./translations";
+import {provide_translations, Translations} from "./translations";
 import {provide_heuristics} from "./heuristics";
 
 export interface BlazeJumpPluginSettings {
     default_action: MODE_TYPE;
-
-    language: string;
 
     // set
     keyboard_heuristic: string;
@@ -74,8 +72,6 @@ export interface BlazeJumpPluginSettings {
 export const DEFAULT_SETTINGS: BlazeJumpPluginSettings = {
     default_action: "start",
 
-    language: 'en',
-
     keyboard_heuristic: 'spiral',
     keyboard_layout_main: "1234567890 qwertyuiop asdfghjkl zxcvbnm",
     keyboard_layout_custom: [],
@@ -141,7 +137,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
     }
 
     private get lang(): Translations {
-        return provide_translations(this.settings.language);
+        return provide_translations();
     }
 
     public getSettings(): BlazeJumpPluginSettings {
@@ -192,18 +188,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         let head = this.ns(this.lang.bj)
             .setDesc(`Version: ${this.plugin?.manifest?.version ?? 'latest'}`)
             .setHeading();
-
-        this.ns(this.lang.language, 'language')
-            .addDropdown(x => {
-                for (let l of provide_languages())
-                    x.addOption(l, l);
-                x.setValue(this.settings.language)
-                    .onChange(async (value) => {
-                        await this.saveProperty('language', value);
-                        this.hide();
-                        this.display();
-                    });
-            });
 
         this.ns(this.lang.def_mode, 'default_action')
             .setDesc(this.lang.def_mode_desc)

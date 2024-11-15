@@ -1,5 +1,6 @@
 import {Translations} from "./translations";
 import {EN_TRANSLATIONS} from "./lang/en";
+import {moment} from "obsidian";
 
 export type {Translations} from "./translations";
 
@@ -11,19 +12,15 @@ export const TRANSLATIONS: {[lang: string]: Translations} = {
 // **** LANGUAGES SHOULD BE REGISTERED THERE ****
 
 
-export const provide_translations = (lang: string): Translations => {
+export const provide_translations = (): Translations => {
     try {
-        const obj = TRANSLATIONS[`${lang}`.toLowerCase()];
+        const obj = TRANSLATIONS[`${moment.locale()}`.toLowerCase()];
         if (obj !== null && obj !== undefined)
             return obj;
+        console.warn("Using fallback language");
         return EN_TRANSLATIONS;
     } catch (e) {
         console.error("Cannot provide translations error, using fallback option", e);
         return EN_TRANSLATIONS;
     }
-}
-
-export const provide_languages = (): string[] => {
-    return Object.keys(TRANSLATIONS)
-        .filter(x => TRANSLATIONS.hasOwnProperty(x));
 }

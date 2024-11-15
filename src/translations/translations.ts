@@ -1,7 +1,6 @@
 export interface Translations {
     readonly bj: string;
     readonly mode: string;
-    readonly language: string;
     readonly word_start: string;
     readonly word_end: string;
     readonly any_char: string;
