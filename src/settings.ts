@@ -185,10 +185,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         const {containerEl} = this;
         containerEl.empty();
 
-        let head = this.ns(this.lang.bj)
-            .setDesc(`Version: ${this.plugin?.manifest?.version ?? 'latest'}`)
-            .setHeading();
-
         this.ns(this.lang.def_mode, 'default_action')
             .setDesc(this.lang.def_mode_desc)
             .addDropdown(x =>
@@ -230,7 +226,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                                 console.error(e);
                             } finally {
                                 this.toggle_defaults(kd, true);
-                                this.with_global_reset(head);
                             }
                         }));
         }
@@ -243,7 +238,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
 
                         await this.saveProperty('keyboard_ignored', value);
                         this.toggle_defaults(ka, true);
-                        this.with_global_reset(head);
                     }));
 
         let kl = this.ns(this.lang.keyboard_layout_main, 'keyboard_layout_main', true);
@@ -253,7 +247,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
             return x.onChange(async (value) => {
                 await this.saveProperty('keyboard_layout_main', value);
                 this.toggle_defaults(kl, true);
-                this.with_global_reset(head);
             });
         });
 
@@ -310,7 +303,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                             console.error(e);
                         } finally {
                             this.toggle_defaults(pu, true);
-                            this.with_global_reset(head);
                         }
                     }));
 
@@ -335,7 +327,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                             console.error(e);
                         } finally {
                             this.toggle_defaults(pj, true);
-                            this.with_global_reset(head);
                         }
                     }));
 
@@ -377,7 +368,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         await this.saveProperty('exceptions', value);
                         this.toggle_defaults(we, true);
-                        this.with_global_reset(head);
                     }));
 
         let nf = this.ns(this.lang.not_found_msg, 'search_not_found_text', true)
@@ -397,7 +387,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         await this.saveProperty('search_not_found_text', value);
                         this.toggle_defaults(nf, true);
-                        this.with_global_reset(head);
                     }));
 
         let di = this.ns(this.lang.dim_editor_style, ['search_dim_enabled', 'search_dim_style'], true)
@@ -416,7 +405,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                     .onChange(async (value) => {
                         await this.saveProperty('search_dim_style', value);
                         this.toggle_defaults(di, true);
-                        this.with_global_reset(head);
                     }));
 
         this.ns(this.lang.convert_utf8, 'convert_utf8_to_ascii')
@@ -602,9 +590,6 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                             this.display();
                         }));
         }
-
-        if (this.difference)
-            head = this.with_global_reset(head);
     }
 
     private async loadSettings() {
@@ -622,13 +607,16 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         this.settings = Object.assign({}, this.default_settings, await this.plugin.loadData());
     }
 
-    private async resetSettings() {
-        this.settings = {...this.default_settings};
-        await this.plugin.saveData(this.settings);
-        this.settings = Object.assign({}, this.default_settings, await this.plugin.loadData());
-
-        this.refresh_call?.();
-    }
+    /* I have no idea what to do with this, maybe ill find another way to incorporate
+    /* Reset-all-settings button in the future, so ill keep this function for now
+     */
+    // private async resetSettings() {
+    //     this.settings = {...this.default_settings};
+    //     await this.plugin.saveData(this.settings);
+    //     this.settings = Object.assign({}, this.default_settings, await this.plugin.loadData());
+    //
+    //     this.refresh_call?.();
+    // }
 
     private async resetProperty(name: string) {
         console.debug('resetProperty', name);
@@ -664,20 +652,25 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         return setting;
     }
 
-    private with_global_reset(setting: Setting): Setting {
-        const label = this.lang.reset;
-        if (setting.components?.length >= 1)
-            return setting;
-        return setting
-            .addButton(x =>
-                x.setButtonText(label)
-                    .setWarning()
-                    .onClick(async () => {
-                        await this.resetSettings();
-                        this.hide();
-                        this.display();
-                    }))
-    }
+    /* I have no idea what to do with this, maybe ill find another way to incorporate
+    /* Reset-all-settings button in the future, so ill keep this function for now
+     */
+    // private with_global_reset(setting?: Setting): Setting | undefined {
+    //     if (!setting)
+    //         return undefined;
+    //     const label = this.lang.reset;
+    //     if (setting.components?.length >= 1)
+    //         return setting;
+    //     return setting
+    //         .addButton(x =>
+    //             x.setButtonText(label)
+    //                 .setWarning()
+    //                 .onClick(async () => {
+    //                     await this.resetSettings();
+    //                     this.hide();
+    //                     this.display();
+    //                 }))
+    // }
 
     private with_reset(names: string[], setting: Setting, always: boolean = false): Setting {
         const label = this.lang.reset_defaults;
