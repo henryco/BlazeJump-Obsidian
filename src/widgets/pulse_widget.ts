@@ -22,7 +22,7 @@ export class BlazePointerPulseWidget extends WidgetType {
         if (!existingStyle) {
             const style = document.createElement('style');
             style.id = BlazePointerPulseWidget.style_id;
-            style.textContent = `                  
+            style.textContent = `
                     .blaze-jump-widget-pulse {
                       animation: blaze-jump-pulse-pointer ${this.style.duration ?? 0.15}s 1 forwards;
                       background-color: ${this.style.bg ?? 'red'};
