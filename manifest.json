@@ -1,14 +1,14 @@
 {
 	"id": "blaze-jump",
 	"name": "BlazeJump",
-	"version": "1.0.7",
-	"minAppVersion": "0.15.0",
+	"version": "1.0.8",
+	"minAppVersion": "1.2.3",
 	"description": "Navigate through text at blazing speed.",
 	"author": "henryco",
 	"authorUrl": "https://github.com/henryco",
 	"fundingUrl": {
-        "GitHub Sponsor": "https://github.com/sponsors/henryco",
-        "Buy Me a Coffee": "https://buymeacoffee.com/henrycoxd"
-    },
+		"GitHub Sponsor": "https://github.com/sponsors/henryco",
+		"Buy Me a Coffee": "https://buymeacoffee.com/henrycoxd"
+	},
 	"isDesktopOnly": true
 }

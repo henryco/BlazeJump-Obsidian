@@ -1,9 +1,10 @@
-import {MODE_TYPE} from "./commons";
-import {App, Plugin, PluginSettingTab, Setting} from "obsidian";
-import {provide_translations, Translations} from "./translations";
-import {provide_heuristics} from "./heuristics";
+import { MODE_TYPE } from "./commons";
+import { App, ExtraButtonComponent, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { provide_translations, Translations } from "./translations";
+import { provide_heuristics } from "./heuristics";
 
 export interface BlazeJumpPluginSettings {
+    [key: string]: unknown;
     default_action: MODE_TYPE;
 
     // set
@@ -164,7 +165,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
 
         if (!this.initialized) {
             console.error("Settings are not initialized");
-            throw "Should call initialize() before!"
+            throw new Error("Should call initialize() before!");
         }
 
         const all_modes = [
@@ -174,7 +175,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
             'line',
             'terminator'
         ];
-        const map_modes = {
+        const map_modes: Record<string, string> = {
             [all_modes[0]]: this.lang.word_start,
             [all_modes[1]]: this.lang.word_end,
             [all_modes[2]]: this.lang.any_char,
@@ -182,7 +183,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
             [all_modes[4]]: this.lang.line_end,
         };
 
-        const {containerEl} = this;
+        const { containerEl } = this;
         containerEl.empty();
 
         this.ns(this.lang.def_mode, 'default_action')
@@ -250,7 +251,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
             });
         });
 
-        for (let i = 0; i < this.settings.keyboard_layout_custom?.length ?? 0; i++) {
+        for (let i = 0; i < (this.settings.keyboard_layout_custom?.length ?? 0); i++) {
             const layout = this.settings.keyboard_layout_custom[i] ?? ''
             this.ns(`${this.lang.layout} ${i + 1}`)
                 .addExtraButton(x =>
@@ -342,7 +343,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.display();
                     }))
             .addColorPicker(x =>
-                x.setValue((this.settings as any)[`search_jump_pulse_color`])
+                x.setValue(this.settings.search_jump_pulse_color ?? '#FF0000')
                     .setDisabled(!this.is_opaque(`search_jump_pulse_color`))
                     .onChange(async (value) => {
                         await this.saveProperty(`search_jump_pulse_color`, value);
@@ -496,7 +497,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                         this.display();
                     }))
             .addColorPicker(x =>
-                x.setValue((this.settings as any)[`status_color_bg`])
+                x.setValue((this.settings['status_color_bg'] as string | undefined) ?? '#FFFFFF00')
                     .setDisabled(!this.is_opaque(`status_color_bg`))
                     .onChange(async (value) => {
                         await this.saveProperty(`status_color_bg`, value);
@@ -516,7 +517,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                             this.display();
                         }))
                 .addColorPicker(x =>
-                    x.setValue((this.settings as any)[`status_color_${mode}`])
+                    x.setValue((this.settings[`status_color_${mode}`] as string | undefined) ?? '#FF5733')
                         .setDisabled(!this.is_opaque(`status_color_${mode}`))
                         .onChange(async (value) => {
                             await this.saveProperty(`status_color_${mode}`, value);
@@ -538,7 +539,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                             this.display();
                         }))
                 .addColorPicker(x =>
-                    x.setValue((this.settings as any)[`search_color_bg_${mode}`])
+                    x.setValue((this.settings[`search_color_bg_${mode}`] as string | undefined) ?? '#FFFF00')
                         .setDisabled(!this.is_opaque(`search_color_bg_${mode}`))
                         .onChange(async (value) => {
                             await this.saveProperty(`search_color_bg_${mode}`, value);
@@ -560,7 +561,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                             this.display();
                         }))
                 .addColorPicker(x =>
-                    x.setValue((this.settings as any)[`search_color_text_${mode}`])
+                    x.setValue((this.settings[`search_color_text_${mode}`] as string | undefined) ?? '#FF5733')
                         .setDisabled(!this.is_opaque(`search_color_text_${mode}`))
                         .onChange(async (value) => {
                             await this.saveProperty(`search_color_text_${mode}`, value);
@@ -582,7 +583,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
                             this.display();
                         }))
                 .addColorPicker(x =>
-                    x.setValue((this.settings as any)[`search_color_border_${mode}`])
+                    x.setValue((this.settings[`search_color_border_${mode}`] as string | undefined) ?? '#FF5733')
                         .setDisabled(!this.is_opaque(`search_color_border_${mode}`))
                         .onChange(async (value) => {
                             await this.saveProperty(`search_color_border_${mode}`, value);
@@ -595,15 +596,15 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
     private async loadSettings() {
         const all_modes = ['start', 'end', 'any', 'line', 'terminator'];
 
-        let def_set = {...DEFAULT_SETTINGS};
+        let def_set: BlazeJumpPluginSettings = { ...DEFAULT_SETTINGS };
         for (let mode of all_modes) {
-            const st = ((def_set as any)[`status_color_${mode}`]) ?? ((def_set as any)['status_color_fallback']);
-            (def_set as any)[`search_color_bg_${mode}`] = ((def_set as any)[`search_color_bg_${mode}`] ?? '#FFFFFF');
-            (def_set as any)[`search_color_text_${mode}`] = ((def_set as any)[`search_color_text_${mode}`] ?? st);
-            (def_set as any)[`search_color_border_${mode}`] = ((def_set as any)[`search_color_text_${mode}`] ?? st);
+            const st = (def_set[`status_color_${mode}`] as string | undefined) ?? def_set.status_color_fallback;
+            def_set[`search_color_bg_${mode}`] = (def_set[`search_color_bg_${mode}`] as string | undefined) ?? '#FFFFFF';
+            def_set[`search_color_text_${mode}`] = (def_set[`search_color_text_${mode}`] as string | undefined) ?? st;
+            def_set[`search_color_border_${mode}`] = (def_set[`search_color_text_${mode}`] as string | undefined) ?? st;
         }
 
-        this.default_settings = {...def_set};
+        this.default_settings = { ...def_set };
         this.settings = Object.assign({}, this.default_settings, await this.plugin.loadData());
     }
 
@@ -622,22 +623,24 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         console.debug('resetProperty', name);
         if (!name || name.trim().length <= 0)
             return;
-        (this.settings as any)[name] = (this.default_settings as any)[name];
+        this.settings[name] = this.default_settings[name];
         await this.plugin.saveData(this.settings);
 
         this.refresh_call?.();
     }
 
-    private async saveProperty(name: string, value?: any, index: number = -1) {
+    private async saveProperty(name: string, value?: unknown, index: number = -1) {
         console.debug("saveProperty:", name, value, (index >= 0 ? index : ''));
         if (!name || name.trim().length <= 0)
             return;
 
-        if (index >= 0) {
-            (this.settings as any)[name][index] = value;
+        if (index >= 0 && Array.isArray(this.settings[name])) {
+            const arr = [...(this.settings[name] as string[])];
+            arr[index] = value as string;
+            this.settings[name] = arr;
             await this.plugin.saveData(this.settings);
         } else {
-            (this.settings as any)[name] = value;
+            this.settings[name] = value;
             await this.plugin.saveData(this.settings);
         }
 
@@ -645,10 +648,13 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
     }
 
     private toggle_defaults(setting: Setting, enable: boolean = false): Setting {
-        if (!enable)
-            (setting.components[0] as any)?.extraSettingsEl?.hide();
-        else
-            (setting.components[0] as any)?.extraSettingsEl?.show();
+        const component = setting.components[0];
+        if (component instanceof ExtraButtonComponent) {
+            if (!enable)
+                component.extraSettingsEl.hide();
+            else
+                component.extraSettingsEl.show();
+        }
         return setting;
     }
 
@@ -676,18 +682,20 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
         const label = this.lang.reset_defaults;
 
         for (let name of names) {
-            const basic = (this.default_settings as any)[name];
-            const current = (this.settings as any)[name];
+            const basic = this.default_settings[name];
+            const current = this.settings[name];
 
             if (`${basic}` != `${current}` && !this.difference) {
                 this.difference = true;
             }
 
             if (`${basic}` != `${current}` || always) {
+                const first = setting.components[0];
+                const last = setting.components[setting.components.length - 1];
 
-                if ((setting.components?.[0] as any)?.extraSettingsEl?.ariaLabel === label)
+                if (first instanceof ExtraButtonComponent && first.extraSettingsEl.getAttribute('aria-label') === label)
                     return setting;
-                if ((setting.components?.[setting.components?.length - 1] as any)?.extraSettingsEl?.ariaLabel === label)
+                if (last instanceof ExtraButtonComponent && last.extraSettingsEl.getAttribute('aria-label') === label)
                     return setting;
 
                 let extra_button = setting.addExtraButton(x =>
@@ -711,14 +719,14 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
     }
 
     private is_opaque(name: string): boolean {
-        const value = `${(this.settings as any)[name]}`;
+        const value = `${(this.settings[name] as string | undefined) ?? ''}`;
         if (value.startsWith("#") && value.length < 9)
             return true;
         return value.startsWith("#") && value.length === 9 && value.endsWith("FF");
     }
 
     private make_transparent(name: string, transparent: boolean): string {
-        const value = `${(this.settings as any)[name]}`;
+        const value = `${(this.settings[name] as string | undefined) ?? ''}`;
         if (!value)
             return transparent ? '#FFFFFF00' : '#FFFFFFFF';
 
@@ -731,7 +739,7 @@ export class BlazeJumpSettingTab extends PluginSettingTab {
     }
 
     private ns(name: string, fields?: string[] | string, extra: boolean = false): Setting {
-        const {containerEl} = this;
+        const { containerEl } = this;
         let setting = new Setting(containerEl).setName(name);
         return fields
             ? this.with_reset(Array.isArray(fields) ? [...fields] : [fields], setting, extra)

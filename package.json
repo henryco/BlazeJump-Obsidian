@@ -1,6 +1,6 @@
 {
 	"name": "blaze-jump",
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"description": "Navigate through text at blazing speed.",
 	"main": "main.js",
 	"scripts": {
@@ -12,10 +12,11 @@
 	"author": "henryco",
 	"license": "LGPL-2.1-only",
 	"devDependencies": {
+		"@codemirror/state": "^6.0.0",
+		"@codemirror/view": "^6.0.0",
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
-		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
 		"obsidian": "latest",
 		"tslib": "2.4.0",

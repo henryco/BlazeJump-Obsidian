@@ -1,4 +1,5 @@
-import {KeyboardHeuristic, KeyboardLayout, char_from, char_coord} from "./heuristics";
+import { KeyboardHeuristic, KeyboardLayout, char_from, char_coord } from "./heuristics";
+import { SearchPosition } from "./commons";
 
 export interface NodeContext {
     position?: [x: number, y: number];
@@ -21,46 +22,44 @@ export interface BlazeNode<T> {
     children?: BlazeNode<T>[];
     value?: T;
     search?: SearchContext;
+    rec_id?: string;
 
     get full_id(): string;
 }
 
-export const create_node = <T> (
+export const create_node = <T>(
     id: string,
     parent?: BlazeNode<T>,
     context?: NodeContext,
     value?: T,
     children?: BlazeNode<T>[],
-): BlazeNode<T> => (<BlazeNode<T>> {
-
+): BlazeNode<T> => ({
     id: id,
     value: value,
     children: children,
     parent: parent ?? null,
-    context: (context ?? <NodeContext>{
+    context: context ?? {
         position: undefined,
         full: false,
         counter: 0,
         depth: 0
-    }),
+    },
 
     get full_id(): string {
-        const rec_id = (this as any)['rec_id'];
-        if (rec_id) {
-            return rec_id;
+        if (this.rec_id) {
+            return this.rec_id;
         }
         if (!this.parent) {
-            (this as any)['rec_id'] = this.id;
+            this.rec_id = this.id;
             return this.id;
         }
         const new_id = `${this.parent.full_id}${this.id}`;
-        (this as any)['rec_id'] = new_id;
+        this.rec_id = new_id;
         return new_id;
     }
-
 });
 
-export const find_node = <T> (node: BlazeNode<T>, name: string): BlazeNode<T> | undefined => {
+export const find_node = <T>(node: BlazeNode<T>, name: string): BlazeNode<T> | undefined => {
     if (!node.children || node.children.length <= 0)
         return undefined;
     const children: BlazeNode<T>[] = node.children;
@@ -72,17 +71,17 @@ export const find_node = <T> (node: BlazeNode<T>, name: string): BlazeNode<T> | 
     return undefined;
 }
 
-export const swap_children = <T> (node: BlazeNode<T>): BlazeNode<T> => {
+export const swap_children = <T>(node: BlazeNode<T>): BlazeNode<T> => {
     const last_node = node.children?.pop();
     if (!last_node)
-        throw "Impossible! Last node not exists!";
+        throw new Error("Impossible! Last node not exists!");
     node.children?.unshift(last_node);
     return node;
 }
 
-export const rotate_node = <T> (node: BlazeNode<T>, n: number = 0, limit: number = 100): BlazeNode<T> => {
+export const rotate_node = <T>(node: BlazeNode<T>, n: number = 0, limit: number = 100): BlazeNode<T> => {
     if (n > limit)
-        throw "Overflow";
+        throw new Error("Overflow");
 
     if (!node.children)
         return node;
@@ -99,14 +98,14 @@ export const rotate_node = <T> (node: BlazeNode<T>, n: number = 0, limit: number
     return !node.parent ? node : rotate_node(node.parent, n + 1);
 }
 
-const collect_nodes = <T> (
+const collect_nodes = <T>(
     node: BlazeNode<T>,
     arr: BlazeNode<T>[] = [],
     n: number = 0,
     limit: number = 1000
 ): BlazeNode<T>[] => {
     if (n > limit)
-        throw "Overflow";
+        throw new Error("Overflow");
 
     const children = node.children;
     if (!children) {
@@ -128,7 +127,7 @@ export class SearchTree {
     private readonly layouts: KeyboardLayout[] = [];
     private readonly layout_depth: number;
 
-    private search_node: BlazeNode<any>;
+    private search_node: BlazeNode<SearchPosition>;
 
     public constructor(heuristic: KeyboardHeuristic, keyboard_layouts: string[], keyboard_ignored: string, distance: number) {
         for (const layout of keyboard_layouts) {
@@ -148,35 +147,30 @@ export class SearchTree {
             .map(x => x !== '#' ? x : null);
         const layout_height = arr.length;
         const layout_width = width;
-        return <KeyboardLayout> {
+        return {
             layout_characters,
             layout_original,
             layout_width,
             layout_height
-        }
+        };
     }
 
     private next_key(
-
         layout: number,
         input: string,
         depth?: number,
         pos?: [number, number]
-
     ): [char: string, pos: [number, number], depth: number] {
         const [x, y] = char_coord(input, this.layouts[layout] ?? this.layouts[0]);
         return this.next_key_xy(layout, [x, y], depth, pos);
     }
 
     private next_key_xy(
-
         layout_index: number,
         mid_point: [number, number],
         depth?: number,
         pos?: [number, number]
-
     ): [char: string, pos: [number, number], depth: number] {
-
         const [x, y] = mid_point;
 
         let k_pos: [number, number] | undefined = pos ? [...pos] : undefined;
@@ -194,7 +188,7 @@ export class SearchTree {
         while (true) {
             if (loop > max_spin) {
                 console.error("max spin");
-                throw "Max spin";
+                throw new Error("Max spin");
             }
 
             const [i_x, i_y, i_depth] = this.heuristic.next_char(
@@ -220,25 +214,23 @@ export class SearchTree {
         return [char, k_pos, k_depth];
     }
 
-    private add_node(
-
+    private add_node<T>(
         layout: number,
         input: string,
-        position: any,
-        node: BlazeNode<any>,
-        root: BlazeNode<any>,
+        position: T,
+        node: BlazeNode<T>,
+        root: BlazeNode<T>,
         n: number = 0,
         limit: number = 100
-
-    ): BlazeNode<any> {
+    ): BlazeNode<T> {
         if (n >= limit) {
             node.context.depth = -1;
-            throw "Stack overflow";
+            throw new Error("Stack overflow");
         }
 
         if (node.context.full) {
             if (!node.children || node.children.length <= 0)
-                throw "Impossible state, full node MUST contain children";
+                throw new Error("Impossible state, full node MUST contain children");
             let left = node.children[0];
             return this.add_node(layout, left.id, position, left, root, n + 1, limit);
         }
@@ -247,16 +239,15 @@ export class SearchTree {
         node.context.position = i_pos;
         node.context.depth = i_depth;
 
-        if (!!node.value) {
+        if (node.value !== undefined) {
             // Existing singular value in node
-
             const [_, n_pos, n_depth] = this.next_key(layout, node.id);
-            let n_context = <NodeContext> {
+            let n_context: NodeContext = {
                 position: n_pos,
                 depth: n_depth,
                 counter: 0,
                 full: false
-            }
+            };
 
             let prev_node = create_node(node.id, node, n_context, node.value);
             node.children = [...(node.children ?? []), prev_node];
@@ -265,7 +256,7 @@ export class SearchTree {
 
         if (!find_node(node, char)) {
             // There is no children which also means that there were no singular values previously
-            if (!node.children && !!node.parent) {
+            if (!node.children && node.parent) {
                 node.value = position;
                 return node;
             }
@@ -276,12 +267,12 @@ export class SearchTree {
             }
 
             const [_, n_pos, n_depth] = this.next_key(layout, char);
-            let n_context = <NodeContext> {
+            let n_context: NodeContext = {
                 position: n_pos,
                 depth: n_depth,
                 counter: 0,
                 full: false
-            }
+            };
 
             let prev_node = create_node(char, node, n_context, position);
             node.children?.push(prev_node);
@@ -296,17 +287,17 @@ export class SearchTree {
         }
 
         if (!node.children || node.children.length <= 0)
-            throw "Impossible state, full node MUST contain children";
+            throw new Error("Impossible state, full node MUST contain children");
         let left = node.children[0];
         return this.add_node(layout, left.id, position, left, root, n + 1, limit);
     }
 
-    public assign(input: string, position: any, layout_index?: number): void {
+    public assign(input: string, position: SearchPosition, layout_index?: number): void {
         const layout = layout_index ?? this.recognize_layout(input);
         this.add_node(layout, input, position, this.search_node, this.search_node);
     }
 
-    public narrow(input: string): BlazeNode<any> {
+    public narrow(input: string): BlazeNode<SearchPosition> {
         let node = this.search_node;
 
         if (node.id === input && (!node.children || node.children.length <= 0)) {
@@ -330,7 +321,7 @@ export class SearchTree {
         return this.search_node;
     }
 
-    public freeze_nodes(): BlazeNode<any>[] {
+    public freeze_nodes(): BlazeNode<SearchPosition>[] {
         return collect_nodes(this.search_node);
     }
 
