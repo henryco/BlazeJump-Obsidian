@@ -1,5 +1,5 @@
-import {EditorView, WidgetType} from "@codemirror/view";
-import {SearchPosition, SearchStyle} from "../commons";
+import { EditorView, WidgetType } from "@codemirror/view";
+import { SearchPosition, SearchStyle } from "../commons";
 
 export class BlazeTagWidget extends WidgetType {
     private readonly positions: SearchPosition[];
@@ -28,23 +28,22 @@ export class BlazeTagWidget extends WidgetType {
     }
 
     private empty(): HTMLElement {
-        const el = document.createElement("span");
+        const el = createSpan();
         if (!this.char)
             return el;
 
         el.className = 'blaze-jump-search-empty';
         el.style.borderColor = `${this.style.border}`;
-        el.innerText = `${this.char}`;
+        el.setText(`${this.char}`);
         return el;
     }
 
     private tag(text: string): HTMLElement {
-        const el = document.createElement("span");
-        el.className = 'blaze-jump-search-tag';
+        const el = createSpan({ cls: 'blaze-jump-search-tag' });
         el.style.backgroundColor = `${this.style.bg}`;
         el.style.borderColor = `${this.style.border}`;
         el.style.color = `${this.style.text}`;
-        el.innerText = text;
+        el.setText(text);
         return el;
     }
 
@@ -56,8 +55,7 @@ export class BlazeTagWidget extends WidgetType {
         const offset_x = first.coord.left - first.origin.left;
         const offset_y = first.coord.top - first.origin.top;
 
-        const div = document.createElement('div');
-        div.className = 'blaze-jump-search-box';
+        const div = createDiv({ cls: 'blaze-jump-search-box' });
         div.style.zIndex = `${5000 + this.idx}`
         div.style.left = `${offset_x}px`;
         div.style.top = `${offset_y}px`;
@@ -67,7 +65,7 @@ export class BlazeTagWidget extends WidgetType {
 
             const el = this.tag(`${prefix}${this.provide_text(position)}`);
 
-            if (!!this.char)
+            if (this.char)
                 div.appendChild(this.empty());
 
             div.appendChild(el);

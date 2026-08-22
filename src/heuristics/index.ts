@@ -1,11 +1,11 @@
-import {KeyboardHeuristic, KeyboardLayout, char_from, char_coord} from "./heuristics";
-import {BackwardHeuristic} from "./alg/backward";
-import {ForwardHeuristic} from "./alg/forward";
-import {SpiralHeuristic} from "./alg/spiral";
-import {PlainHeuristic} from "./alg/plain";
+import { KeyboardHeuristic, KeyboardLayout, char_from, char_coord } from "./heuristics";
+import { BackwardHeuristic } from "./alg/backward";
+import { ForwardHeuristic } from "./alg/forward";
+import { SpiralHeuristic } from "./alg/spiral";
+import { PlainHeuristic } from "./alg/plain";
 
-export type {KeyboardHeuristic, KeyboardLayout};
-export {char_from, char_coord};
+export type { KeyboardHeuristic, KeyboardLayout };
+export { char_from, char_coord };
 
 
 // **** HEURISTICS SHOULD BE REGISTERED THERE ****
@@ -32,6 +32,5 @@ export const provide_heuristic = (name: string): KeyboardHeuristic => {
 }
 
 export const provide_heuristics = (): string[] => {
-    return Object.keys(HEURISTICS)
-        .filter(x => HEURISTICS.hasOwnProperty(x));
+    return Object.keys(HEURISTICS);
 }
